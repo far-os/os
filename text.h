@@ -55,23 +55,27 @@ short get_cur() {
   return pos;
 }
 
-/*
-void write_hx(int input) {
+char nybble_to_hex(int num) {
+  int value = num;
+  value &= 0x0f;
+  value += 0x30;
+  if (value >= 0x3a) {
+    value += 0x27;
+  }
+  return (char) value;
+}
+
+void write_hex(int input) {
   write_cell('0', 0, 0x2d);
   write_cell('x', 1, 0x2d);
   int temporary;
   for (int i = 28; i >= 0; i -= 4) {
     temporary = input;
     temporary >>= i;
-    temporary &= 0x0f;
-    temporary += 0x30;
-    if (temporary >= 0x3a) {
-      temporary += 0x27;
-    }
-    write_cell((char) temporary, (36 - i) / 4, 0x2d);
+    write_cell(nybble_to_hex(temporary), (36 - i) / 4, 0x2d);
   }
 }
-*/
+
 
 void write_str(char *str, short pos, unsigned char style) {
   short cur;
