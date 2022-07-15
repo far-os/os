@@ -32,12 +32,15 @@
 #define VRAM_CTRL_PORT 0x3d4
 #define VRAM_DATA_PORT 0x3d5
 
-char *vram = (char *) 0xb8000;
+struct idt_entry {
+  unsigned short offset_high;
+  unsigned char flags;
+  unsigned char reserved;
+  unsigned short segment;
+  unsigned short offset_low;
+} __attribute__((packed));
 
-void write_cell(char ch, short pos, unsigned char style) {
-  vram[pos * 2] = ch;
-  vram[pos * 2 + 1] = style;
-}
+char *vram = (char *) 0xb8000;
 
 void set_cur(short pos) {
   pbyte_out(VRAM_CTRL_PORT, 0xe); // we are sending the high 8 bits of position
@@ -50,9 +53,19 @@ short get_cur() {
   short pos;
   pbyte_out(VRAM_CTRL_PORT, 0xe); // we are getting the high 8 bits of position
   pos |= ((short) pbyte_in(VRAM_DATA_PORT)) << 8; // the high eight bits
-  pbyte_out(VRAM_CTRL_PORT, 0xf); // we are sending the low 8 bits of position
+  pbyte_out(VRAM_CTRL_PORT, 0xf); // we are getting the low 8 bits of position
   pos |= pbyte_in(VRAM_DATA_PORT); // the low eight bits
   return pos;
+}
+
+void line_feed() {
+  short i = get_cur() / 80;
+  set_cur(++i * 80);
+}
+
+void write_cell(char ch, short pos, unsigned char style) {
+  vram[pos * 2] = ch;
+  vram[pos * 2 + 1] = style;
 }
 
 char nybble_to_hex(int num) {
@@ -86,8 +99,32 @@ void write_str(char *str, short pos, unsigned char style) {
   }
 
   for (int i = 0; str[i] != 0; ++i) {
+    if (str[i] == '\n') {
+      line_feed();
+      continue;
+    }
     write_cell(str[i], cur + i, style);
     if (pos == -1) { set_cur(cur + i + 1); }
+  }
+}
+
+void clear_scr() {
+  for (int i = 0; i < VGA_WIDTH * VGA_HEIGHT * 2; i += 2) {
+    vram[i] = 0;
+    vram[i+1] = COLOUR(BLACK, WHITE);
+  }
+}
+
+void cp437() {
+  // prints cp437
+
+  write_str("  Codepage 437  ", POS((VGA_WIDTH - 16), (VGA_HEIGHT - 16 - 2)), COLOUR(MAGENTA, B_GREEN));
+  for (int cph = 0; cph < 16; ++cph) {
+    write_cell(nybble_to_hex(cph), POS((VGA_WIDTH - 16 - 1), (VGA_HEIGHT - (16 - cph))), COLOUR(RED, WHITE));
+    write_cell(nybble_to_hex(cph), POS((VGA_WIDTH - (16 - cph)), (VGA_HEIGHT - 16 - 1)), COLOUR(RED, WHITE));
+    for (int cpw = 0; cpw < 16; ++cpw) {
+      write_cell((cph * 16) + cpw, POS((VGA_WIDTH - (16 - cpw)), (VGA_HEIGHT - (16 - cph))), COLOUR(YELLOW, B_CYAN));
+    }
   }
 }
 
