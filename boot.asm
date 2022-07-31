@@ -1,6 +1,7 @@
 ;
 ; OS
 ;
+[bits 16]
 [org 0x7c00]
 OFFSET equ 0x1a000 ; the offset at which our kernel is loaded
 
@@ -195,7 +196,7 @@ protected:
 
 seg_init:
         ; 32-bit segments
-        mov ax, DATA ; data segment: moved to all other sement registers 
+        mov ax, DATA ; data segment: moved to all other segment registers 
         mov ds, ax
         mov ss, ax
         mov es, ax
@@ -211,7 +212,7 @@ code_32:
         mov ebx, protected ; log a message
         call print_32
         
-        call OFFSET
+        call OFFSET ; call the kernel
 
         jmp $ ; jmp to the same place over an over (hangs)
 
