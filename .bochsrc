@@ -1,0 +1,2 @@
+floppya: type=1_44, 1_44="/vm/os/os.bin", status=inserted, write_protected=1
+boot: floppy

@@ -1,13 +1,13 @@
 .DEFAULT_GOAL := os.bin
 .PHONY: qemu bochs clean
 
-boot.bin: boot32.asm
+boot.bin: boot.asm
 	nasm $^ -f bin -o $@
 
-entry.o: entry.asm
+entry.o: kernel/entry.asm
 	nasm $^ -f elf -o $@
 
-kernel.o: kernel.c $(wildcard *.h)
+kernel.o: kernel/kernel.c $(wildcard kernel/*.h)
 	gcc -ffreestanding -m32 -c $< -o $@
 
 kernel.entry.o: link.ld entry.o kernel.o
