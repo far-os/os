@@ -32,14 +32,6 @@
 #define VRAM_CTRL_PORT 0x3d4
 #define VRAM_DATA_PORT 0x3d5
 
-/*struct idt_entry {
-  unsigned short offset_high;
-  unsigned char flags;
-  unsigned char reserved;
-  unsigned short segment;
-  unsigned short offset_low;
-} __attribute__((packed));*/
-
 char *vram = (char *) 0xb8000;
 
 void set_cur(short pos) {

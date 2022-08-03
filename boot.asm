@@ -9,7 +9,7 @@ OFFSET equ 0x1a000 ; the offset at which our kernel is loaded
         mov bl, [boot_drv]
         call print_hx_32_real
 
-        mov bp, 0x9000 ; stack, remember it grows down
+        mov bp, 0x6000 ; stack, remember it grows down
         mov sp, bp
 
         mov bx, string ; log a message
@@ -62,7 +62,7 @@ prot:
         cli ; no more interrupts
         lgdt [gdt_descriptor] ; gdt time
 
-        mov ebx, 0x0
+        xor ebx, ebx
         call print_hx_32_real
 
         mov ebx, cr0 ; set the protected mode flag
@@ -98,7 +98,7 @@ print_hx_32_real: ; prints hex string from ebx
         int 0x10
   print_nyb_32_real:
         ; this whole routine shifts ebx by a certain amount
-        ; the ammount starts at twenty-eight and decreases in increments of four (i.e. nybbles) all the way until zero
+        ; the amount starts at twenty-eight and decreases in increments of four (i.e. nybbles) all the way until zero
         ; that then provides each nybble, which is piped into continue
 
         sub cl, 4 ; subtract four
@@ -128,13 +128,12 @@ load_krn:
         mov bx, kernel_in_progress ; kernel boot message
         call print_16 
 
-        mov ecx, OFFSET ; does some fancy work to be able to write to the adress
-        shr ecx, 4 ; rightshift ecx by 4
+        mov cx, (OFFSET >> 4) ; writes to the address
         mov es, cx ; puts the address in es, which is where the read interrupt looks
 
         mov bx, 0x0 ; where to put the sectors (with es)
         mov dh, 15 ; load 15 sectors
-        mov dl, [boot_drv] ; load to the boot drive
+        mov dl, [boot_drv] ; load from the boot drive
         call read
 
         ret
@@ -174,21 +173,21 @@ kernel_in_progress:
         db "Loading external kernel...",0xd,0xa,0
 [bits 32]
 print_32:
-        pusha
+        pushad ; pusha but 32bit this time
 
         ; location of vram
-        mov edx, 0xb8000 + (80 * 24 * 2) ; the last row of the 80x25 display
+        mov edi, 0xb8000 + (80 * 24 * 2) ; the last row of the 80x25 display
+        xor ecx, ecx ; blank out counter
   char_32:
-        mov al, [ebx] 
+        mov al, [ebx + ecx] ; move what is in the string
         mov ah, 0x4a ; dark red back green fore
-        mov [edx], ax ; place our character package (styles + character) in the vram
+        mov [edi + 2 * ecx], ax ; place our character package (styles + character) in the vram
 
-        inc ebx ; move along our string
-        add edx, 0x2 ; move along vram
+        inc ecx ; move along our string and vram
 
-        cmp byte[ebx], 0x0 ; is character null?
+        cmp byte[ebx + ecx], 0x0 ; is character null?
         jnz char_32 ; if not, continue string
-        popa
+        popad ; popa but 32bit
         ret
 
 protected:
@@ -203,18 +202,18 @@ seg_init:
         mov fs, ax
         mov gs, ax
 
-        mov ebp, 0x90000 ; stack is now miles away
+        mov ebp, OFFSET ; stack is now miles away
         mov esp, ebp
 
-        jmp code_32 ; actual 32-bit code!!!!!!
 
-code_32:
+  code_32:
         mov ebx, protected ; log a message
         call print_32
         
         call OFFSET ; call the kernel
 
-        jmp $ ; jmp to the same place over an over (hangs)
+        ;jmp $ ; jmp to the same place over an over (hangs)
+        hlt
 
         times 510-($-$$) db 0 ; pad to the 510th byte
 
