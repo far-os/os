@@ -20,7 +20,7 @@ OFFSET equ 0x1a000 ; the offset at which our kernel is loaded
         ; start protected!
         call prot
 
-; GDT (Global Descriptor Table)b
+; GDT (Global Descriptor Table)
 boot_drv: db 0
 
 gdt_start:

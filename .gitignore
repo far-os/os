@@ -1,2 +1,3 @@
 *.bin
 *.o
+kernel/ih.h
