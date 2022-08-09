@@ -34,6 +34,11 @@ void pic_init() {
   idle();
   pbyte_out(P2_DAT, 0x01);
   idle();
+
+  pbyte_out(P1_DAT, 0xFF); // mask ***everything***
+  idle();
+  pbyte_out(P2_DAT, 0xFF);
+  idle();
 }
 
 void pic_ack(unsigned int i) { // acknowledge the interrupt
@@ -48,8 +53,18 @@ void pic_ack(unsigned int i) { // acknowledge the interrupt
   }
 }
 
-void irq_mask(unsigned char line) {
+void irq_m_free(unsigned char line) {
   unsigned short port;
   unsigned char value;
+
+  if (line < 0x8) {
+    port = P1_DAT;
+  } else {
+    port = P2_DAT;
+    line -= 8;
+  }
+  value = pbyte_in(port) & ~(1 << line);
+  pbyte_out(port, value);
 }
+
 #endif

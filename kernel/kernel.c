@@ -45,6 +45,7 @@ void main() {
   asm volatile ("sti"); // set interrupt (opposite of cli)
 
   pic_init(); // pic
+  irq_m_free(0x1); // keyboard
 
   write_str("!> ", -1, COLOUR(BLACK, WHITE));
 

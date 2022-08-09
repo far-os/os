@@ -1,4 +1,5 @@
 #include "text.h"
+#include "kbd.h"
 
 #ifndef IH_H
 #define IH_H
@@ -22,6 +23,18 @@ struct stack_state {
 } __attribute__((packed)); // stack */
 
 void eh_c(unsigned int i) {
+  if (i < 0x20) {
+    return; // general protection fault? sounds like a skill issue
+  }
+
+  switch (i) {
+  case 0x21:
+    read_kbd();
+    break;
+  default:
+    break;
+  }
+
   write_hex(0x12ae0000 | i, VGA_WIDTH - 10);
   //asm("cli"); // no more interrupts
   //asm("hlt"); // adios
