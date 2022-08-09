@@ -1,6 +1,7 @@
 #include "text.h"
 #include "util.h"
-//#include "ih.h"
+#include "pic.h"
+#include "ih.h"
 
 struct idt_entry {
   unsigned short offset_low; // low 16 bits of offset
@@ -18,7 +19,7 @@ struct idtr_contents {
 extern void *eh_list[];
 
 void main() {
-//  clear_scr();
+  clear_scr();
 
   set_cur(POS(0, 0)); // cursor at top left
   write_str("Welcome to the Kernel!\n", -1, COLOUR(CYAN, B_YELLOW)); // welcome message
@@ -31,7 +32,7 @@ void main() {
   idtr.offset = (unsigned int) &idt;
   idtr.size   = (unsigned short) sizeof(struct idt_entry) * 256 - 1;
 
-  for (unsigned char d = 0; d < 32; ++d) {
+  for (unsigned char d = 0; d < 48; ++d) {
     struct idt_entry *desc = &idt[d];
     desc->offset_low = (unsigned int) eh_list[d] & 0xffff;
     desc->segment    = 0x08; // first in gdt
@@ -42,4 +43,10 @@ void main() {
 
   asm volatile ("lidt %0" : : "m"(idtr)); // load idt
   asm volatile ("sti"); // set interrupt (opposite of cli)
+
+  pic_init(); // pic
+
+  write_str("!> ", -1, COLOUR(BLACK, WHITE));
+
+//  eh_c(0xaa);
 }

@@ -70,14 +70,22 @@ char nybble_to_hex(int num) {
   return (char) value;
 }
 
-void write_hex(int input) {
-  write_cell('0', 0, 0x2d);
-  write_cell('x', 1, 0x2d);
+void write_hex(int input, short pos) {
+  short cur;
+  if (pos == -1) {
+    cur = get_cur();
+  } else {
+    cur = pos;
+  }
+
+  write_cell('0', cur, 0x2d);
+  write_cell('x', cur+1, 0x2d);
   int temporary;
   for (int i = 28; i >= 0; i -= 4) {
     temporary = input;
     temporary >>= i;
-    write_cell(nybble_to_hex(temporary), (36 - i) / 4, 0x2d);
+    write_cell(nybble_to_hex(temporary), ((36 - i) / 4) + cur, 0x2d);
+    if (pos == -1) { set_cur(cur + i + 1); }
   }
 }
 

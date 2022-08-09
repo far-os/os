@@ -8,7 +8,7 @@ entry.o: kernel/entry.asm
 	nasm $^ -f elf -o $@
 
 kernel.o: kernel/kernel.c $(wildcard kernel/*.h)
-	gcc -ffreestanding -m32 -c $< -o $@
+	gcc -ffreestanding -m32 -fno-zero-initialized-in-bss -c $< -o $@
 
 kernel.entry.o: link.ld entry.o kernel.o
 	ld -o $@ -melf_i386 -T $^
