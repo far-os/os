@@ -5,10 +5,14 @@ A simple OS built in nasm and C.
 The kernel code is located in `kernel/`, and the boot sector is located in `boot.asm`.
 
 The files are explained below: 
-- `entry.asm`: The very first piece of kernel code loaded: its purpose is to call `main`, since `main` is not located at the start of the file.
+- `entry.asm`: The very first piece of kernel code loaded: its purpose is to call `main` and to setup the IDT.
 - `kernel.c`: The kernel itself.
 - `port.h`: Code to communicate to the I/O ports.
 - `text.h`: Code for writing to the screen.
+- `util.h`: Miscellaneous utilities, such as the Codepage437 function.
+- `ih.h`: Interrupt handling functions.
+- `pic.h`: Utilities for initialising the PIC, masking the PIC, etc.
+- `kbd.h`: Utilities for reading input from the 8042 PS/2 device.
 
 ## Build instructions
 You will need access to the following tools:
