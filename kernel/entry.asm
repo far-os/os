@@ -1,8 +1,51 @@
 [bits 32]
 [extern main]
+csdfs_superblock: ; the superblock for CSDFS (Compact System Disk FS)
+        magic: dd 0xc5df50ac ; magic number
+        vol_label: db "FarOS Boot Disk " ; volume label
+        vol_id: dq 0x1dc5926a300e4af3 ; volume id
+        fs_start: dw 0x10 ; LBA where the fs actually starts
+        fs_size: dd (2880 - 0x10) ; length of disk in sectors
+        media_type: db 0xa3 ; a3 means 3¼" HD 1.44M floppy diskette
+
+        times 63-($-$$) db 0 ; pad to the 63rd byte - end of superblock
+
+        sig: nop ; the signature at the end
+
+;
+; Code
+;
 kernel_entry:
+        mov ebx, protected ; log a message
+        call print_32
+        
         call main
+
+        cli
+        hlt
+
+print_32:
+        pushad ; pusha but 32bit this time
+
+        ; location of vram
+        mov edi, 0xb8000 + (80 * 24 * 2) ; the last row of the 80x25 display
+        xor ecx, ecx ; blank out counter
+  char_32:
+        mov al, [ebx + ecx] ; move what is in the string
+        mov ah, 0x4a ; dark red back green fore
+        mov [edi + 2 * ecx], ax ; place our character package (styles + character) in the vram
+
+        inc ecx ; move along our string and vram
+
+        cmp byte[ebx + ecx], 0x0 ; is character null?
+        jnz char_32 ; if not, continue string
+        popad ; popa but 32bit
         ret
+
+protected:
+        db "Successfully moved into Protected Mode!",0
+
+        times 512-($-$$) db 0 ; pad to the 512th byte - end of csdfs extended boot
 
 %macro eh_macro 1 ; exception handler
 global eh_%1

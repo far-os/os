@@ -128,7 +128,7 @@ load_krn:
         mov bx, kernel_in_progress ; kernel boot message
         call print_16 
 
-        mov cx, (OFFSET >> 4) ; writes to the address
+        mov cx, ((OFFSET >> 4) - 4) ; writes to the address
         mov es, cx ; puts the address in es, which is where the read interrupt looks
 
         mov bx, 0x0 ; where to put the sectors (with es)
@@ -145,7 +145,7 @@ read:
         mov al, dh ; read dh number of sectors
         mov ch, 0x00 ; cylinder #0
         mov dh, 0x00 ; head #0
-        mov cl, 0x02 ; second sector (first after boot)
+        mov cl, 0x02 ; second sector (first after boot sector: includes csdfs superblock)
 
         int 0x13 ; read
 
@@ -172,27 +172,6 @@ string:
 kernel_in_progress:
         db "Loading external kernel...",0xd,0xa,0
 [bits 32]
-print_32:
-        pushad ; pusha but 32bit this time
-
-        ; location of vram
-        mov edi, 0xb8000 + (80 * 24 * 2) ; the last row of the 80x25 display
-        xor ecx, ecx ; blank out counter
-  char_32:
-        mov al, [ebx + ecx] ; move what is in the string
-        mov ah, 0x4a ; dark red back green fore
-        mov [edi + 2 * ecx], ax ; place our character package (styles + character) in the vram
-
-        inc ecx ; move along our string and vram
-
-        cmp byte[ebx + ecx], 0x0 ; is character null?
-        jnz char_32 ; if not, continue string
-        popad ; popa but 32bit
-        ret
-
-protected:
-        db "Successfully moved into Protected Mode!",0
-
 seg_init:
         ; 32-bit segments
         mov ax, DATA ; data segment: moved to all other segment registers 
@@ -202,18 +181,10 @@ seg_init:
         mov fs, ax
         mov gs, ax
 
-        mov ebp, OFFSET ; stack is now miles away
+        mov ebp, 0x19f00 ; stack is now just behind superblock
         mov esp, ebp
 
-
-  code_32:
-        mov ebx, protected ; log a message
-        call print_32
-        
-        call OFFSET ; call the kernel
-
-        ;jmp $ ; jmp to the same place over an over (hangs)
-        hlt
+        jmp OFFSET
 
         times 510-($-$$) db 0 ; pad to the 510th byte
 
