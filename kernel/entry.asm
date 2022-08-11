@@ -21,7 +21,7 @@ kernel_entry:
         
         call main
 
-        cli
+        sti ; ensure interrupts are on
         hlt
 
 print_32:
