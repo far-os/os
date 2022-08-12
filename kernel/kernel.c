@@ -23,8 +23,8 @@ void main() {
   clear_scr();
 
   set_cur(POS(0, 0)); // cursor at top left
-  write_str("Welcome to the Kernel!\n", -1, COLOUR(CYAN, B_YELLOW)); // welcome message
-  cp437(); // codepage 437: for testing purposes
+  write_str("Welcome to the Kernel!\n", COLOUR(CYAN, B_YELLOW)); // welcome message
+//  cp437(); // codepage 437: for testing purposes
 
   __attribute__((aligned(0x10)))
   static struct idt_entry idt[256]; // the entire idt

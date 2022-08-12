@@ -32,7 +32,7 @@ void eh_c(unsigned int i) {
     read_kbd();
     break;
   default:
-    write_hex(0x12ae0000 | i, VGA_WIDTH - 10);
+//    write_hex(0x12ae0000 | i, VGA_WIDTH - 10);
     break;
   }
 

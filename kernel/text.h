@@ -51,13 +51,21 @@ short get_cur() {
 }
 
 void line_feed() {
-  short i = get_cur() / 80;
-  set_cur(++i * 80);
+  short i = get_cur() / VGA_WIDTH;
+  set_cur(++i * VGA_WIDTH);
 }
 
 void write_cell(char ch, short pos, unsigned char style) {
   vram[pos * 2] = ch;
   vram[pos * 2 + 1] = style;
+}
+
+
+void write_cell_cur(char ch, unsigned char style) {
+  short cur = get_cur();
+  vram[cur * 2] = ch;
+  vram[cur * 2 + 1] = style;
+  set_cur(cur + 1);
 }
 
 char nybble_to_hex(int num) {
@@ -70,6 +78,7 @@ char nybble_to_hex(int num) {
   return (char) value;
 }
 
+/*
 void write_hex(int input, short pos) {
   short cur;
   if (pos == -1) {
@@ -87,24 +96,28 @@ void write_hex(int input, short pos) {
     write_cell(nybble_to_hex(temporary), ((36 - i) / 4) + cur, 0x2d);
     if (pos == -1) { set_cur(cur + i + 1); }
   }
+}*/
+
+void write_str_at(char *str, short pos, unsigned char style) {
+  for (int i = 0; str[i] != 0; ++i) {
+    if (str[i] == '\n') {
+      pos += 80;
+      pos -= i;
+      continue;
+    }
+    write_cell(str[i], pos + i, style);
+    if (pos == -1) { set_cur(pos + i + 1); }
+  }
 }
 
-
-void write_str(char *str, short pos, unsigned char style) {
-  short cur;
-  if (pos == -1) {
-    cur = get_cur();
-  } else {
-    cur = pos;
-  }
-
+void write_str(char *str, unsigned char style) {
   for (int i = 0; str[i] != 0; ++i) {
     if (str[i] == '\n') {
       line_feed();
       continue;
     }
-    write_cell(str[i], cur + i, style);
-    if (pos == -1) { set_cur(cur + i + 1); }
+
+    write_cell_cur(str[i], style);
   }
 }
 

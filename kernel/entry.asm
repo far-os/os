@@ -1,17 +1,5 @@
 [bits 32]
 [extern main]
-csdfs_superblock: ; the superblock for CSDFS (Compact System Disk FS)
-        magic: db 0xc5, 0xdf, 0x50, 0xac ; magic number
-        vol_label: db "FarOS Boot Disk " ; volume label
-        vol_id: dq 0x1dc5926a300e4af3 ; volume id
-        fs_start: dw 0x10 ; LBA where the fs actually starts
-        fs_size: dd (2880 - 0x10) ; length of disk in sectors
-        media_type: db 0xa3 ; a3 means 3¼" HD 1.44M floppy diskette
-
-        times 63-($-$$) db 0 ; pad to the 63rd byte - end of superblock
-
-        sig: nop ; the signature at the end
-
 ;
 ; Code
 ;
@@ -48,7 +36,7 @@ print_32:
 protected:
         db "Successfully moved into Protected Mode!",0
 
-        times 512-($-$$) db 0 ; pad to the 512th byte - end of csdfs extended boot
+        times (512-64)-($-$$) db 0 ; pad to the 512th byte - end of csdfs extended boot
 
 %macro eh_macro 1 ; exception handler
 global eh_%1

@@ -10,10 +10,10 @@ CSDFS (**C**ompact **S**ystem **D**isk **F**ile **S**ystem) is the file system u
 - `f` - The actual file system.
 
 ## File hierarchy
-The kernel code is located in `kernel/`, and the boot sector is located in `boot.asm`.
+The kernel code is located in `kernel/`, and the boot sector and CSDFS superblock are located in `boot.asm`.
 
 The files are explained below: 
-- `entry.asm`: The CSDFS superblock and extended bootloader which calls `main`. It also contains the IDT as well.
+- `entry.asm`: The extended bootloader which calls `main`. It also contains the IDT as well.
 - `kernel.c`: The kernel itself.
 - `port.h`: Code to communicate to the I/O ports.
 - `text.h`: Code for writing to the screen.
