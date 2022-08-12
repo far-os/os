@@ -1,7 +1,7 @@
 [bits 32]
 [extern main]
 csdfs_superblock: ; the superblock for CSDFS (Compact System Disk FS)
-        magic: dd 0xc5df50ac ; magic number
+        magic: db 0xc5, 0xdf, 0x50, 0xac ; magic number
         vol_label: db "FarOS Boot Disk " ; volume label
         vol_id: dq 0x1dc5926a300e4af3 ; volume id
         fs_start: dw 0x10 ; LBA where the fs actually starts
@@ -21,8 +21,11 @@ kernel_entry:
         
         call main
 
+  shell_loop:
         sti ; ensure interrupts are on
+;        cli
         hlt
+        jmp shell_loop
 
 print_32:
         pushad ; pusha but 32bit this time

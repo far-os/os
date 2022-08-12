@@ -16,4 +16,11 @@ void cp437() {
   }
 }
 
+void memcpy(void *src, void *dest, unsigned int amount) {
+  asm volatile ("rep movsb" :
+    : "c" (amount),
+      "S" (src),
+      "D" (dest));
+}
+
 #endif

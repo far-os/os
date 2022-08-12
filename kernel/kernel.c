@@ -2,6 +2,7 @@
 #include "util.h"
 #include "pic.h"
 #include "ih.h"
+#include "shell.h"
 
 struct idt_entry {
   unsigned short offset_low; // low 16 bits of offset
@@ -47,7 +48,7 @@ void main() {
   pic_init(); // pic
   irq_m_free(0x1); // keyboard
 
-  write_str("!> ", -1, COLOUR(BLACK, WHITE));
+  shell();
 
 //  eh_c(0xaa);
 }
