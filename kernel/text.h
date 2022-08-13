@@ -34,6 +34,9 @@
 
 char *vram = (char *) 0xb8000;
 
+#pragma GCC push_options
+#pragma GCC optimize "O3"
+
 void set_cur(short pos) {
   pbyte_out(VRAM_CTRL_PORT, 0xe); // we are sending the high 8 bits of position
   pbyte_out(VRAM_DATA_PORT, ((pos >> 8) & 0x00ff)); // the high eight bits
@@ -50,6 +53,8 @@ short get_cur() {
   return pos;
 }
 
+#pragma GCC pop_options
+
 void line_feed() {
   short i = get_cur() / VGA_WIDTH;
   set_cur(++i * VGA_WIDTH);
@@ -60,13 +65,20 @@ void write_cell(char ch, short pos, unsigned char style) {
   vram[pos * 2 + 1] = style;
 }
 
+void adv_cur() {
+  short cur = get_cur();
+  ++cur;
+  set_cur(cur);
+}
+
 
 void write_cell_cur(char ch, unsigned char style) {
   short cur = get_cur();
   vram[cur * 2] = ch;
   vram[cur * 2 + 1] = style;
-  set_cur(cur + 1);
+  adv_cur();
 }
+
 
 char nybble_to_hex(int num) {
   int value = num;
@@ -96,7 +108,7 @@ void write_hex(int input, short pos) {
     write_cell(nybble_to_hex(temporary), ((36 - i) / 4) + cur, 0x2d);
     if (pos == -1) { set_cur(cur + i + 1); }
   }
-}*/
+} */
 
 void write_str_at(char *str, short pos, unsigned char style) {
   for (int i = 0; str[i] != 0; ++i) {
@@ -122,10 +134,17 @@ void write_str(char *str, unsigned char style) {
 }
 
 void clear_scr() {
+  /*
   for (int i = 0; i < VGA_WIDTH * VGA_HEIGHT * 2; i += 2) {
     vram[i] = 0;
     vram[i+1] = COLOUR(BLACK, WHITE);
   }
+  */
+  asm volatile ("cld\n" "rep stosw" :
+  : "a" ((short) (COLOUR(BLACK, WHITE) << 8)),
+    "c" ((int) VGA_WIDTH * VGA_HEIGHT),
+    "D" ((int) vram)
+  : "memory");
 }
 
 #endif

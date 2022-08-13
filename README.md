@@ -22,6 +22,7 @@ The files are explained below:
 - `pic.h`: Utilities for initialising the PIC, masking the PIC, etc.
 - `kbd.h`: Utilities for reading input from the 8042 PS/2 device.
 - `shell.h`: Contains FarSH, the shell.
+- `fs.sh`: Contains the CSDFS driver.
 
 ## Build instructions
 You will need access to the following tools:

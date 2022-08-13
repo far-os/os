@@ -3,6 +3,7 @@
 #include "pic.h"
 #include "ih.h"
 #include "shell.h"
+#include "fs.h"
 
 struct idt_entry {
   unsigned short offset_low; // low 16 bits of offset

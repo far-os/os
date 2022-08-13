@@ -184,21 +184,15 @@ seg_init:
         mov ebp, (OFFSET - 0x100) ; stack is now just behind superblock
         mov esp, ebp
 
-        jmp OFFSET
+        mov eax, 0xac50dfc5 ; magic number
+        mov edi, (OFFSET - 0x40) ; load the magic number
+        scasd
+        je OFFSET
+
+        hlt
 
         times 510-($-$$) db 0 ; pad to the 510th byte
 
         dw 0xaa55 ; magic number
 
-csdfs_superblock: ; the superblock for CSDFS (Compact System Disk FS)
-        magic: db 0xc5, 0xdf, 0x50, 0xac ; magic number
-        vol_label: db "FarOS Boot Disk " ; volume label
-        vol_id: dq 0x1dc5926a300e4af3 ; volume id
-        fs_start: dw 0x10 ; LBA where the fs actually starts
-        fs_size: dd (2880 - 0x10) ; length of disk in sectors
-        media_type: db 0xa3 ; a3 means 3¼" HD 1.44M floppy diskette
-
-        times 63-($-csdfs_superblock) db 0 ; pad to the 63rd byte - end of superblock
-
-        sig: nop ; the signature at the end
 
