@@ -26,4 +26,10 @@ void memcpy(void *src, void *dest, unsigned int amount) {
     src -= amount;
 }
 
+int strlen(char *str) {
+  int i = 0;
+  for (; str[i] != 0; ++i);
+  return i;
+}
+
 #endif

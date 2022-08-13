@@ -1,12 +1,14 @@
 #include "port.h"
 #include "text.h"
+#include "util.h"
+#include "shell.h" //cyclic include
 
 #ifndef KBD_H
 #define KBD_H
 
 #define K_PORT 0x60
 
-char scan_map_enUK[96] = { // scancode map for UK keyboard.
+char scan_map_en_UK[96] = { // scancode map for UK keyboard.
   '\0',
   '\x1b',
   '1',
@@ -100,7 +102,9 @@ char scan_map_enUK[96] = { // scancode map for UK keyboard.
 
 void read_kbd() {
   unsigned char scan = pbyte_in(K_PORT);
-  write_cell(scan_map_enUK[scan], get_cur(), COLOUR(BLACK, WHITE));
+  combuf[strlen(combuf)] = scan_map_en_UK[scan];
+  comupd();
+  //write_cell(scan_map_en_UK[scan], get_cur(), COLOUR(BLACK, WHITE));
   set_cur(get_cur() + 1);
 }
 

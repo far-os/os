@@ -60,6 +60,16 @@ void line_feed() {
   set_cur(++i * VGA_WIDTH);
 }
 
+void carriage_return() {
+  short i = get_cur() / VGA_WIDTH;
+  set_cur(i * VGA_WIDTH);
+}
+
+void tab() {
+  short i = get_cur();
+  set_cur(i + 8);
+}
+
 void write_cell(char ch, short pos, unsigned char style) {
   vram[pos * 2] = ch;
   vram[pos * 2 + 1] = style;
@@ -124,12 +134,20 @@ void write_str_at(char *str, short pos, unsigned char style) {
 
 void write_str(char *str, unsigned char style) {
   for (int i = 0; str[i] != 0; ++i) {
-    if (str[i] == '\n') {
+    switch (str[i]) {
+    case '\n':
       line_feed();
-      continue;
+      break;
+    case '\t':
+      tab();
+      break;
+    case '\r':
+      carriage_return();
+      break;
+    default:
+      write_cell_cur(str[i], style);
+      break;
     }
-
-    write_cell_cur(str[i], style);
   }
 }
 
