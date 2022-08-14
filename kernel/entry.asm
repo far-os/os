@@ -56,7 +56,7 @@ print_32:
 protected:
         db "Successfully moved into Protected Mode!",0
 
-        times (512-64)-($-$$) db 0 ; pad to the 512th byte - end of csdfs extended boot
+        times (512)-($-$$) db 0 ; pad to the 512th byte - end of csdfs extended boot
 
 %macro eh_macro 1 ; exception handler
 global eh_%1
