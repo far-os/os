@@ -101,11 +101,11 @@ char scan_map_en_UK[96] = { // scancode map for UK keyboard.
 };
 
 void read_kbd() {
-  unsigned char scan = pbyte_in(K_PORT);
+  unsigned char scan = pbyte_in(K_PORT) % 0x80;
   combuf[strlen(combuf)] = scan_map_en_UK[scan];
   comupd();
   //write_cell(scan_map_en_UK[scan], get_cur(), COLOUR(BLACK, WHITE));
-  set_cur(get_cur() + 1);
+//  set_cur(get_cur() + 1);
 }
 
 #endif

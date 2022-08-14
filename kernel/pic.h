@@ -46,7 +46,7 @@ void pic_ack(unsigned int i) { // acknowledge the interrupt
     return;
   }
 
-  if (i < P1_I) {
+  if (i < P2_I) {
     pbyte_out(P1_COM, 0x20); // acknowledge
   } else {
     pbyte_out(P2_COM, 0x20);

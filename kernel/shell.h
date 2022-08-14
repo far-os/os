@@ -18,11 +18,32 @@ void shell() {
 //  write_hex(buf, -1);
   
   comupd();
+
+  while (1) {
+    asm volatile ("hlt");
+  }
+}
+
+void shexec() {
+  char outbuf[24] = "\n echo _______________\n";
+  memcpy(combuf, outbuf + 7, COM_LEN - 1);
 }
 
 void comupd() {
-  if (strlen(combuf) == COM_LEN) {
+  if (strlen(combuf) >= COM_LEN) {
     write_str("Command too long\n", COLOUR(BLACK, B_RED));
+  }
+
+  int comlen = strlen(combuf);
+
+  switch (combuf[comlen - 1]) {
+  case '\b':
+    combuf[comlen - 2] = '\0';
+    combuf[comlen - 1] = '\0';
+    break;
+  case '\n':
+    shexec();
+    memzero(combuf, COM_LEN);
   }
 
   char printbuf[20] = "\r!> ";

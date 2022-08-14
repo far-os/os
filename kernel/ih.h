@@ -36,7 +36,8 @@ void eh_c(unsigned int i) {
     break;
   }
 
-  pic_ack(i - 0x20);
+  pic_ack(i);
+
 
   //asm("cli"); // no more interrupts
   //asm("hlt"); // adios

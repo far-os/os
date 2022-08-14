@@ -26,6 +26,15 @@ void memcpy(void *src, void *dest, unsigned int amount) {
     src -= amount;
 }
 
+void memzero(void *dest, unsigned int amount) {
+  asm volatile ("cld\n"
+                "rep stosb\n":
+    : "a" ((unsigned char) 0),
+      "c" (amount),
+      "D" (dest)
+    : "memory" );
+}
+
 int strlen(char *str) {
   int i = 0;
   for (; str[i] != 0; ++i);

@@ -20,11 +20,20 @@ kernel_entry:
         
         call main
 
-  shell_loop:
-        sti ; ensure interrupts are on
-;        cli
+        cli
         hlt
-        jmp shell_loop
+
+[global clear_scr]
+clear_scr: ; clear screen
+        pushad
+        mov ax, 0x0700
+        mov ecx, (80 * 25)
+        mov edi, 0xb8000
+        cld
+        rep stosw
+        popad
+        ret
+
 
 print_32:
         pushad ; pusha but 32bit this time

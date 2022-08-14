@@ -34,6 +34,8 @@
 
 char *vram = (char *) 0xb8000;
 
+extern void clear_scr();
+
 #pragma GCC push_options
 #pragma GCC optimize "O3"
 
@@ -151,18 +153,13 @@ void write_str(char *str, unsigned char style) {
   }
 }
 
-void clear_scr() {
-  /*
-  for (int i = 0; i < VGA_WIDTH * VGA_HEIGHT * 2; i += 2) {
-    vram[i] = 0;
-    vram[i+1] = COLOUR(BLACK, WHITE);
-  }
-  */
+/*void clear_scr() {
   asm volatile ("cld\n" "rep stosw" :
   : "a" ((short) (COLOUR(BLACK, WHITE) << 8)),
     "c" ((int) VGA_WIDTH * VGA_HEIGHT),
     "D" ((int) vram)
   : "memory");
-}
+}*/
+
 
 #endif
