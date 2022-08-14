@@ -8,6 +8,19 @@
 
 #define K_PORT 0x60
 
+/*
+  bit 0 set: caps lock
+  bit 1 set: num lock
+  bit 2 set: scroll lock
+  bit 3 set: shift held
+  bit 4 set: ctrl held
+  bit 5 set: meta held
+  bit 6 set: alt held
+  bit 7 set: reserved
+*/
+unsigned char modifs = 0b00000000;
+
+
 char scan_map_en_UK[96] = { // scancode map for UK keyboard.
   '\0',
   '\x1b',
@@ -101,9 +114,14 @@ char scan_map_en_UK[96] = { // scancode map for UK keyboard.
 };
 
 void read_kbd() {
-  unsigned char scan = pbyte_in(K_PORT) % 0x80;
-  combuf[strlen(combuf)] = scan_map_en_UK[scan];
-  comupd();
+  unsigned char scan = pbyte_in(K_PORT);
+  if (scan < 0x80) {
+    combuf[strlen(combuf)] = scan_map_en_UK[scan];
+    comupd();
+  } else {
+    // TODO: release values
+  }
+
   //write_cell(scan_map_en_UK[scan], get_cur(), COLOUR(BLACK, WHITE));
 //  set_cur(get_cur() + 1);
 }

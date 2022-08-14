@@ -1,3 +1,5 @@
 cpu: model=p4_willamette
 floppya: type=1_44, 1_44="./os.bin", status=inserted, write_protected=1
 boot: floppy
+display_library: x, options=nokeyrepeat
+keyboard: keymap=/usr/share/bochs/keymaps/x11-pc-uk.map

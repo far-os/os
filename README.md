@@ -40,3 +40,5 @@ Once you have all of these, run `make`, and you will have an `os.bin` file. This
 You can use any hardware or emulator, but the provided `Makefile` includes methods to use `qemu` or `bochs`. Both emulators *(should)* work, however `bochs` is recommended. You can use the provided `.bochsrc` file, or you can use your own.
 
 To build the image and use `qemu` or `bochs` simultaneously, run `make qemu` and `make bochs` respectively.
+
+***WARNING: Keypresses may be different. The `.bochsrc` and OS natively are both configured to use the en-UK keyboard layout. Reconfiguring the `.bochsrc` should also fix the fact that the OS is configured for en-UK keypresses.***
