@@ -26,6 +26,26 @@ void memcpy(void *src, void *dest, unsigned int amount) {
     src -= amount;
 }
 
+void strcpy(char *src, char *dest) {
+  memcpy(src, dest, strlen(src));
+}
+
+unsigned char memcmp(void *src, void *dest, unsigned int amount) {
+  unsigned char o;
+  asm volatile ("cld\n"
+                "rep cmpsb" :
+      "=@ccz" (o)
+    : "S" (src),
+      "D" (dest)
+    : "cc" );
+  return o;
+}
+
+unsigned char strcmp(char *src, char *dest) {
+  return memcmp(src, dest, strlen(src)) &&
+    strlen(src) == strlen(dest);
+}
+
 void memzero(void *dest, unsigned int amount) {
   asm volatile ("cld\n"
                 "rep stosb\n":

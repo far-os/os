@@ -25,13 +25,16 @@ void shell() {
 }
 
 void shexec() {
-  char outbuf[24] = "\n echo _______________\n";
-  memcpy(combuf, outbuf + 7, COM_LEN - 1);
+  char outbuf[24] = "echo "; // output buffer
+  strcpy(combuf, outbuf + 5);
+  write_str(outbuf, COLOUR(RED, B_YELLOW));
+  line_feed();
 }
 
 void comupd() {
   if (strlen(combuf) >= COM_LEN) {
-    write_str("Command too long\n", COLOUR(BLACK, B_RED));
+    write_str(" - FATAL: Command too long\n", COLOUR(BLACK, B_RED));
+    memzero(combuf, COM_LEN);
   }
 
   int comlen = strlen(combuf);
@@ -42,12 +45,14 @@ void comupd() {
     combuf[comlen - 1] = '\0';
     break;
   case '\n':
+    line_feed();
     shexec();
     memzero(combuf, COM_LEN);
+    break;
   }
 
   char printbuf[20] = "\r!> ";
-  memcpy(combuf, printbuf + 4, strlen(combuf));
+  strcpy(combuf, printbuf + 4);
   write_str(printbuf, COLOUR(BLACK, WHITE));
 }
 
