@@ -4,24 +4,22 @@
 [bits 16]
 [org 0x7c00]
 OFFSET equ 0x1a000 ; the offset at which our kernel is loaded
+BOOT_DRV equ 0x7bf0 ; the boot frive location
 
-        mov [boot_drv], dl
-        mov bl, [boot_drv]
+        mov [BOOT_DRV], dl
+        movzx si, [BOOT_DRV]
         call print_hx_32_real
 
         mov bp, 0x6000 ; stack, remember it grows down
         mov sp, bp
 
-        mov bx, string ; log a message
+        mov si, string ; log a message
         call print_16
 
         call load_krn
 
         ; start protected!
         call prot
-
-; GDT (Global Descriptor Table)
-boot_drv: db 0
 
 gdt_start:
   gdt_null_desc: ; the mandatory null descriptor: eight null bytes
@@ -77,19 +75,26 @@ prot:
 
 print_16:
         pusha
-        mov ah, 0x0e ; teletype mode - the character to print goes in al
-  char_16:
-        mov al, [bx] ; move what's at our string to al
-        int 0x10 ; print
-        inc bx ; move along the string
 
-        cmp byte[bx], 0 ; is character null?
+        mov ah, 0x0f ; get page number in bh
+        int 0x10
+
+        mov ah, 0x0e; teletype mode - the character to print goes in al
+  char_16:
+        mov al, [si] ; move what's at our string to al
+        int 0x10 ; print
+        inc si ; move along the string
+
+        cmp byte[si], 0 ; is character null?
         jnz char_16 ; if not continue string
         popa
         ret
  
 print_hx_32_real: ; prints hex string from ebx
         pusha
+        mov ah, 0x0f ; page number
+        int 0x10
+
         mov ah, 0x0e ; teletype mode
         mov cl, 0x20 ; length of ebx in bits
         mov al, 0x30 ; "0"
@@ -102,7 +107,7 @@ print_hx_32_real: ; prints hex string from ebx
         ; that then provides each nybble, which is piped into continue
 
         sub cl, 4 ; subtract four
-        mov edx, ebx ; move ebx into the temporary edx - we do the shift work here
+        mov edx, esi ; move esi into the temporary edx - we do the shift work here
         shr edx, cl ; shift by our amount - due to the cpu limitations this amount can only be in cx 
         and dl, 0x0F ; last nybble (since we discarded the ones after it this is the one we want)
         add dl, 0x30 ; push into the range of ascii numbers
@@ -125,7 +130,7 @@ print_hx_32_real: ; prints hex string from ebx
         ret
 
 load_krn:
-        mov bx, kernel_in_progress ; kernel boot message
+        mov si, kernel_in_progress ; kernel boot message
         call print_16 
 
         mov cx, ((OFFSET >> 4) - 4) ; writes to the address
@@ -133,10 +138,22 @@ load_krn:
 
         mov bx, 0x0 ; where to put the sectors (with es)
         mov dh, 15 ; load 15 sectors
-        mov dl, [boot_drv] ; load from the boot drive
+        mov dl, [BOOT_DRV] ; load from the boot drive
         call read
 
+        mov eax, 0xac50dfc5 ; magic number
+        xor edi, edi ; load the magic number: its address is alreaddy in es
+        scasd
+        jne krn_fail
+
         ret
+
+  krn_fail:
+        mov si, invalid_diskette
+        call print_16
+
+        cli
+        hlt
 
 read:
         push dx
@@ -155,13 +172,13 @@ read:
         cmp dh, al   ; check to see if we got how many we asked for?
         jne disk_fail ; if not, fail
   write_disk_error:
-        mov ebx, 0xd15c0000 ; blank out bx, add a "d15c" (for disk) so that we know it's the disk code
-        mov bl, ah ; move the return status into bl
+        mov esi, 0xd15c0000 ; blank out bx, add a "d15c" (for disk) so that we know it's the disk code
+        movzx si, ah ; move the return status into bl
         call print_hx_32_real ; print return status
 
         ret
   disk_fail:
-        mov bx, disk_error
+        mov si, disk_error
         call print_16
         jmp write_disk_error
   disk_error:
@@ -171,6 +188,8 @@ string:
         db "Starting in Real Mode...",0xd,0xa,0
 kernel_in_progress:
         db "Loading external kernel...",0xd,0xa,0
+invalid_diskette:
+        db 0xd,0xa,"FATAL: The disk inserted does not contain a valid CSDFS file system.",0xd,0xa,0
 [bits 32]
 seg_init:
         ; 32-bit segments
@@ -184,10 +203,7 @@ seg_init:
         mov ebp, (OFFSET - 0x100) ; stack is now just behind superblock
         mov esp, ebp
 
-        mov eax, 0xac50dfc5 ; magic number
-        mov edi, (OFFSET - 0x40) ; load the magic number
-        scasd
-        je OFFSET
+        jmp OFFSET
 
         hlt
 
