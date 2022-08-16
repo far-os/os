@@ -166,13 +166,13 @@ void read_kbd() {
     switch (scan) {
     case 0xaa:
     case 0xb6:
-      keys -> modifs &= ~(1 << 3);
+      keys -> modifs &= ~(1 << 3); // shift i think
       break;
     case 0x9d:
-      keys -> modifs &= ~(1 << 4);
+      keys -> modifs &= ~(1 << 4); // ctrl i think
       break;
     case 0xb8:
-      keys -> modifs &= ~(1 << 6);
+      keys -> modifs &= ~(1 << 6); // alt i think
       break;
     }
     // TODO: release values

@@ -43,7 +43,7 @@ unsigned char memcmp(void *src, void *dest, unsigned int amount) {
 }
 
 unsigned char strcmp(char *src, char *dest) {
-  return memcmp(src, dest, strlen(src) - 1);
+  return memcmp(src, dest, strlen(src)) && strlen(src) == strlen(dest);
 }
 
 void memzero(void *dest, unsigned int amount) {

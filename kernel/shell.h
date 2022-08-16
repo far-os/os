@@ -25,8 +25,13 @@ void shell() {
 }
 
 void shexec() {
-  char outbuf[24] = "echo "; // output buffer
-  strcpy(strcmp(combuf, "hey") ? "TEST*TEST" : combuf, outbuf + 5);
+  //char outbuf[24] = "echo "; // output buffer
+  char outbuf[32];
+  if (strcmp(combuf, "info")) {
+    strcpy("You are running FarOS.", outbuf);
+  } else {
+    strcpy("TEST*TEST", outbuf);
+  }
   write_str(outbuf, COLOUR(RED, B_YELLOW));
   line_feed();
 }
@@ -46,6 +51,8 @@ void comupd() {
     break;
   case '\n':
     line_feed();
+    combuf[comlen - 1] = '\0';
+
     shexec();
     memzero(combuf, COM_LEN);
     break;
