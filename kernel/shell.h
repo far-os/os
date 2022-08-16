@@ -26,7 +26,7 @@ void shell() {
 
 void shexec() {
   char outbuf[24] = "echo "; // output buffer
-  strcpy(combuf, outbuf + 5);
+  strcpy(strcmp(combuf, "hey") ? "TEST*TEST" : combuf, outbuf + 5);
   write_str(outbuf, COLOUR(RED, B_YELLOW));
   line_feed();
 }

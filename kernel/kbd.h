@@ -8,18 +8,27 @@
 
 #define K_PORT 0x60
 
-/*
-  bit 0 set: caps lock
-  bit 1 set: num lock
-  bit 2 set: scroll lock
-  bit 3 set: shift held
-  bit 4 set: ctrl held
-  bit 5 set: meta held
-  bit 6 set: alt held
-  bit 7 set: reserved
-*/
-unsigned char modifs = 0b00000000;
+struct keystates { /* a 104-bit struct containing data */
+  /*
+    bit 0 set: caps lock
+    bit 1 set: num lock
+    bit 2 set: scroll lock
+    bit 3 set: shift held
+    bit 4 set: ctrl held
+    bit 5 set: meta held
+    bit 6 set: alt held
+    bit 7 set: reserved
+  */
+  unsigned char modifs;
 
+  /*
+    the following two comprise a 96-bit value, where each bit is whether that key is held
+  */
+  unsigned long long int states_low;
+  unsigned int states_high;
+} __attribute__((packed));
+
+struct keystates *keys = &((struct keystates) { .states_high = 0x0, .states_low = 0x0, .modifs = 0b00000000 });
 
 char scan_map_en_UK[96] = { // scancode map for UK keyboard.
   '\0',
@@ -113,12 +122,59 @@ char scan_map_en_UK[96] = { // scancode map for UK keyboard.
   '\0' // TODO: F12
 };
 
+void charinv(unsigned char sc) {
+  if (sc < 0x40) {
+    keys -> states_low ^= (1 << sc);
+  } else {
+    keys -> states_high ^= (1 << (sc % 0x40));
+  }
+}
+
 void read_kbd() {
   unsigned char scan = pbyte_in(K_PORT);
+  charinv(scan % 0x80);
   if (scan < 0x80) {
-    combuf[strlen(combuf)] = scan_map_en_UK[scan];
-    comupd();
+    char ascii;
+    switch (scan) {
+    case 0x3a:
+      keys -> modifs ^= (1 << 0); // capslock
+      return;
+    case 0x45:
+      keys -> modifs ^= (1 << 1); // numlock
+      return;
+    case 0x46:
+      keys -> modifs ^= (1 << 2); // scrollock
+      return;
+    case 0x2a:
+    case 0x36:
+      keys -> modifs |= (1 << 3); // shift
+      break;
+    case 0x1d:
+      keys -> modifs |= (1 << 4); // lctrl
+      break;
+    case 0x38:
+      keys -> modifs |= (1 << 6); // lalt
+      break;
+    default:
+      ascii = scan_map_en_UK[scan];
+
+      combuf[strlen(combuf)] = ascii;
+      comupd();
+      break;
+    }
   } else {
+    switch (scan) {
+    case 0xaa:
+    case 0xb6:
+      keys -> modifs &= ~(1 << 3);
+      break;
+    case 0x9d:
+      keys -> modifs &= ~(1 << 4);
+      break;
+    case 0xb8:
+      keys -> modifs &= ~(1 << 6);
+      break;
+    }
     // TODO: release values
   }
 
