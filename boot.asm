@@ -4,7 +4,7 @@
 [bits 16]
 [org 0x7c00]
 OFFSET equ 0x1a000 ; the offset at which our kernel is loaded
-BOOT_DRV equ 0x7bf0 ; the boot frive location
+BOOT_DRV equ 0x7bf0 ; the boot drive location
 
         mov [BOOT_DRV], dl
         movzx si, [BOOT_DRV]
