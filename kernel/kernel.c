@@ -21,7 +21,7 @@ struct idtr_contents {
 extern void *eh_list[];
 
 void main() {
-  clear_scr();
+//  clear_scr();
 
   set_cur(POS(0, 0)); // cursor at top left
   write_str("Welcome to the Kernel!\n", COLOUR(CYAN, B_YELLOW)); // welcome message

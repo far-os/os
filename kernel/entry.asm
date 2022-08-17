@@ -1,5 +1,5 @@
 [bits 32]
-[extern main]
+[section .csdfs]
 csdfs_superblock: ; the superblock for CSDFS (Compact System Disk FS)
         magic: db 0xc5, 0xdf, 0x50, 0xac ; magic number
         vol_label: db "FarOS Boot Disk " ; volume label
@@ -11,13 +11,17 @@ csdfs_superblock: ; the superblock for CSDFS (Compact System Disk FS)
         times 63-($-csdfs_superblock) db 0 ; pad to the 63rd byte - end of superblock
 
         sig: nop ; the signature at the end
+
+[section .text]
 ;
 ; Code
 ;
+[extern main]
 kernel_entry:
         mov ebx, protected ; log a message
         call print_32
         
+        call clear_scr
         call main
 
         cli
@@ -34,6 +38,20 @@ clear_scr: ; clear screen
         popad
         ret
 
+[global scroll_scr]
+scroll_scr:
+        pushad
+        mov esi, 0xb8000 + (80 * 2)
+        mov edi, 0xb8000
+        mov ecx, (80 * 24 / 2)
+        cld
+        rep movsd
+
+        mov ax, 0x0700
+        mov ecx, 80
+        rep stosw
+        popad
+        ret
 
 print_32:
         pushad ; pusha but 32bit this time

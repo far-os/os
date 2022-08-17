@@ -35,11 +35,16 @@
 char *vram = (char *) 0xb8000;
 
 extern void clear_scr();
+extern void scroll_scr();
 
 #pragma GCC push_options
 #pragma GCC optimize "O3"
 
 void set_cur(short pos) {
+  if (pos >= (VGA_WIDTH * VGA_HEIGHT)) {
+    pos -= VGA_WIDTH;
+    scroll_scr();
+  }
   pbyte_out(VRAM_CTRL_PORT, 0xe); // we are sending the high 8 bits of position
   pbyte_out(VRAM_DATA_PORT, ((pos >> 8) & 0x00ff)); // the high eight bits
   pbyte_out(VRAM_CTRL_PORT, 0xf); // we are sending the low 8 bits of position
