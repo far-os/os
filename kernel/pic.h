@@ -27,7 +27,7 @@ void pic_init() {
 //
   pbyte_out(P1_DAT, 4); // tell PIC1 there is a slave PIC on interrupt 2
   idle();
-  pbyte_out(P2_DAT, 2); // tell slave cascabe identity
+  pbyte_out(P2_DAT, 2); // tell slave cascade identity
   idle();
 
   pbyte_out(P1_DAT, 0x01); // we're an 8086 apparently

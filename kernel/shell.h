@@ -12,8 +12,7 @@ char combuf[COM_LEN];
 
 void shell() {
 //  set_cur(POS(0, 1)); // new line
-  char *headbuf = "FarSH\nVolume label \"________________\"\n"; // the underscores are placeholder for the memcpy
-  memcpy(&(csdfs -> label), headbuf + 20, 16); // memcpy the vol label to the string
+  char *headbuf = "FarSH. (c) 2022.\n"; // the underscores are placeholder for the memcpy
   write_str(headbuf, COLOUR(BLUE, B_RED));
 //  write_hex(buf, -1);
   
@@ -24,11 +23,14 @@ void shell() {
   }
 }
 
+#define OUT_LEN VGA_WIDTH
+char outbuf[OUT_LEN];
+
 void shexec() {
-  //char outbuf[24] = "echo "; // output buffer
-  char outbuf[32];
+  memzero(outbuf, OUT_LEN);
   if (strcmp(combuf, "info")) {
-    strcpy("You are running FarOS.", outbuf);
+    strcpy("FarOS v0.0.1.\n\tVol. label \"________________\"", outbuf);
+    memcpy(&(csdfs -> label), outbuf + 27, 16); // memcpy because we need to control the length
   } else {
     strcpy("TEST*TEST", outbuf);
   }

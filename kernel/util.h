@@ -61,4 +61,14 @@ int strlen(char *str) {
   return i;
 }
 
+char nybble_to_hex(int num) {
+  int value = num;
+  value &= 0x0f;
+  value += 0x30;
+  if (value >= 0x3a) {
+    value += 0x27;
+  }
+  return (char) value;
+}
+
 #endif

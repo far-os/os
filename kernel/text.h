@@ -96,37 +96,6 @@ void write_cell_cur(char ch, unsigned char style) {
   adv_cur();
 }
 
-
-char nybble_to_hex(int num) {
-  int value = num;
-  value &= 0x0f;
-  value += 0x30;
-  if (value >= 0x3a) {
-    value += 0x27;
-  }
-  return (char) value;
-}
-
-/*
-void write_hex(int input, short pos) {
-  short cur;
-  if (pos == -1) {
-    cur = get_cur();
-  } else {
-    cur = pos;
-  }
-
-  write_cell('0', cur, 0x2d);
-  write_cell('x', cur+1, 0x2d);
-  int temporary;
-  for (int i = 28; i >= 0; i -= 4) {
-    temporary = input;
-    temporary >>= i;
-    write_cell(nybble_to_hex(temporary), ((36 - i) / 4) + cur, 0x2d);
-    if (pos == -1) { set_cur(cur + i + 1); }
-  }
-} */
-
 void write_str_at(char *str, short pos, unsigned char style) {
   for (int i = 0; str[i] != 0; ++i) {
     if (str[i] == '\n') {
