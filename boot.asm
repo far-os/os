@@ -12,14 +12,15 @@ KERN_LEN equ 15 ; the kernel length (7k kernel >:))
         mov es, cx
         mov ss, cx
 
-        mov [BOOT_DRV], dl
-        movzx esi, byte [BOOT_DRV]
-        call print_hx_32_real
-
         mov bp, 0x6000 ; stack, remember it grows down
         mov sp, bp
 
         mov si, string ; log a message
+
+        mov [BOOT_DRV], dl
+        movzx esi, byte [BOOT_DRV]
+        call print_hx_32_real
+
         call print_16
 
         call load_krn
