@@ -5,9 +5,15 @@
 [org 0x7c00]
 OFFSET equ 0x1a000 ; the offset at which our kernel is loaded
 BOOT_DRV equ 0x7bf0 ; the boot drive location
+KERN_LEN equ 15 ; the kernel length (7k kernel >:))
+
+        xor cx, cx ; segment setup
+        mov ds, cx
+        mov es, cx
+        mov ss, cx
 
         mov [BOOT_DRV], dl
-        movzx si, [BOOT_DRV]
+        movzx esi, byte [BOOT_DRV]
         call print_hx_32_real
 
         mov bp, 0x6000 ; stack, remember it grows down
@@ -136,9 +142,6 @@ load_krn:
         mov cx, ((OFFSET >> 4) - 4) ; writes to the address
         mov es, cx ; puts the address in es, which is where the read interrupt looks
 
-        mov bx, 0x0 ; where to put the sectors (with es)
-        mov dh, 15 ; load 15 sectors
-        mov dl, [BOOT_DRV] ; load from the boot drive
         call read
 
         mov eax, 0xac50dfc5 ; magic number
@@ -156,21 +159,31 @@ load_krn:
         hlt
 
 read:
-        push dx
+        mov dl, [BOOT_DRV]
+        test dl, 0b10000000 ; are we on a hard disk?
+        jnz read_hdd
 
+    read_fdd:
         mov ah, 0x02 ; read sector
-        mov al, dh ; read dh number of sectors
+        mov al, KERN_LEN
         mov ch, 0x00 ; cylinder #0
         mov dh, 0x00 ; head #0
         mov cl, 0x02 ; second sector (first after boot sector: includes csdfs superblock)
+        jmp r_end
 
+    read_hdd:
+        mov si, hdd_test
+        call print_16
+        mov ah, 0x42 ; read sector (extended edition)
+        xor cx, cx
+        mov ds, cx ; blank out ds
+        mov si, dap_packet ; pin number
+
+    r_end:
         int 0x13 ; read
 
         jc disk_fail ; in the event of failure
 
-        pop dx       ; we pushed how many sectors we retrieved earlier 
-        cmp dh, al   ; check to see if we got how many we asked for?
-        jne disk_fail ; if not, fail
   write_disk_error:
         mov esi, 0xd15c0000 ; blank out bx, add a "d15c" (for disk) so that we know it's the disk code
         movzx si, ah ; move the return status into bl
@@ -188,8 +201,18 @@ string:
         db "Starting in Real Mode...",0xd,0xa,0
 kernel_in_progress:
         db "Loading external kernel...",0xd,0xa,0
+hdd_test:
+        db "yes i am doing the right thing",0xd,0xa,0
 invalid_diskette:
         db 0xd,0xa,"FATAL: The disk inserted does not contain a valid CSDFS file system.",0xd,0xa,0
+dap_packet:
+        dap_len: db 0x10 ; length of DAP
+        reserved: db 0 ; is zero
+        sect_amount: dw KERN_LEN ; amount of sectors
+        seg_offset:
+          dw 0x0 ; offset
+          dw ((OFFSET >> 4) - 4) ; segment
+        seg_start: dq 0x1 ; second sector (starts from zero - first after boot, including csdfs superblock)
 [bits 32]
 seg_init:
         ; 32-bit segments

@@ -34,11 +34,13 @@ You will need access to the following tools:
 - `cat`: To concatenate the bootloader and kernel binaries.
 - `make`: A convienent way to run all the commands.
 
-Once you have all of these, run `make`, and you will have an `os.bin` file. This is the floppy disk image of the OS.
+Once you have all of these, run `make`, and you will have an `os.bin` file. This is the disk image of the OS.
+The image can be used as either a floppy image or a hard disk image. However, both emulators provided both use it as a floppy disk.
 
 ## Running
 You can use any hardware or emulator, but the provided `Makefile` includes methods to use `bochs` or `qemu`. Both emulators *(should)* work, however `bochs` is recommended. You can use the provided `.bochsrc` file, or you can use your own.
 
 To build the image and use `bochs` or `qemu` simultaneously, run `make bochs` and `make qemu` respectively.
+It also works on real hardware.
 
 ***WARNING: Keypresses may be different. The `.bochsrc` and OS natively are both configured to use the en-UK keyboard layout. Reconfiguring the `.bochsrc` should also fix the fact that the OS is configured for en-UK keypresses.***
