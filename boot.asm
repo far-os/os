@@ -203,7 +203,7 @@ string:
 kernel_in_progress:
         db "Loading external kernel...",0xd,0xa,0
 hdd_test:
-        db "yes i am doing the right thing",0xd,0xa,0
+        db "Booting from hard disk...",0xd,0xa,0
 invalid_diskette:
         db 0xd,0xa,"FATAL: The disk inserted does not contain a valid CSDFS file system.",0xd,0xa,0
 dap_packet:
