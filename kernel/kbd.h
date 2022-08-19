@@ -7,6 +7,7 @@
 #define KBD_H
 
 #define K_PORT 0x60
+#define K_PORT_COM 0x64
 
 struct keystates { /* a 104-bit struct containing data */
   /*
@@ -155,6 +156,10 @@ void read_kbd() {
     case 0x38:
       keys -> modifs |= (1 << 6); // lalt
       break;
+    case 0x53:
+      if ((keys -> modifs & 0b01010000) == 0b01010000) {
+        cpu_reset();
+      }
     default:
       ascii = scan_map_en_UK[scan];
 
@@ -180,6 +185,10 @@ void read_kbd() {
 
   //write_cell(scan_map_en_UK[scan], get_cur(), COLOUR(BLACK, WHITE));
 //  set_cur(get_cur() + 1);
+}
+
+void cpu_reset() {
+  pbyte_out(K_PORT_COM, 0xfe);
 }
 
 #endif

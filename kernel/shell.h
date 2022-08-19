@@ -19,7 +19,7 @@ void shell() {
   comupd();
 
   while (1) {
-    asm volatile ("hlt");
+    asm volatile ("sti; hlt");
   }
 }
 
@@ -31,6 +31,8 @@ void shexec() {
   if (strcmp(combuf, "info")) {
     strcpy("FarOS v0.0.1.\n\tVol. label \"________________\"", outbuf);
     memcpy(&(csdfs -> label), outbuf + 27, 16); // memcpy because we need to control the length
+  } else if (strcmp(combuf, "reset")) {
+    cpu_reset();
   } else {
     strcpy("TEST*TEST", outbuf);
   }

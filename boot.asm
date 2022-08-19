@@ -15,12 +15,11 @@ KERN_LEN equ 15 ; the kernel length (7k kernel >:))
         mov bp, 0x6000 ; stack, remember it grows down
         mov sp, bp
 
-        mov si, string ; log a message
-
         mov [BOOT_DRV], dl
         movzx esi, byte [BOOT_DRV]
         call print_hx_32_real
 
+        mov si, string ; log a message
         call print_16
 
         call load_krn
@@ -55,10 +54,6 @@ gdt_start:
   
   gdt_end:
 
-; we can't right away use cs and ds, so we have this disgrace
-CODE equ gdt_code_seg - gdt_start
-DATA equ gdt_data_seg - gdt_start
-
 gdt_descriptor: ; gdt descriptor
         dw gdt_end - gdt_start - 1 ; GDT size
         dd gdt_start ; where the gdt starts
@@ -77,7 +72,7 @@ prot:
         mov cr0, ebx ; ebx as an intermediary register
         ;call print_hx_32_real
         
-        jmp CODE:seg_init ; init the segments
+        jmp 0x08:seg_init ; init the segments
         ret
 
 print_16:
@@ -150,6 +145,9 @@ load_krn:
         scasd
         jne krn_fail
 
+        xor cx, cx
+        mov es, cx
+
         ret
 
   krn_fail:
@@ -173,6 +171,10 @@ read:
         jmp r_end
 
     read_hdd:
+        mov ah, 0x41 ; check to see if int 13 is supported
+        int 0x13
+        jc read_fdd
+
         mov si, hdd_test
         call print_16
         mov ah, 0x42 ; read sector (extended edition)
@@ -217,7 +219,7 @@ dap_packet:
 [bits 32]
 seg_init:
         ; 32-bit segments
-        mov ax, DATA ; data segment: moved to all other segment registers 
+        mov ax, 0x10 ; data segment: moved to all other segment registers 
         mov ds, ax
         mov ss, ax
         mov es, ax
@@ -228,8 +230,6 @@ seg_init:
         mov esp, ebp
 
         jmp OFFSET
-
-        hlt
 
         times 510-($-$$) db 0 ; pad to the 510th byte
 
