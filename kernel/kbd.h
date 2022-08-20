@@ -123,6 +123,98 @@ char scan_map_en_UK[96] = { // scancode map for UK keyboard.
   '\0' // TODO: F12
 };
 
+char scan_map_en_UK_shift[96] = { // scancode map for UK keyboard.
+  '\0',
+  '\x1b',
+  '!',
+  '"',
+  '£',
+  '$',
+  '%',
+  '^',
+  '&',
+  '*',
+  '(',
+  ')',
+  '_',
+  '+',
+  '\b',
+  '\t',
+  'Q',
+  'W',
+  'E',
+  'R',
+  'T',
+  'Y',
+  'U',
+  'I',
+  'O',
+  'P',
+  '{',
+  '}',
+  '\n',
+  '\0', // TODO: LCTRL
+  'A',
+  'S',
+  'D',
+  'F',
+  'G',
+  'H',
+  'J',
+  'K',
+  'L',
+  ':',
+  '@',
+  '¬',
+  '\0', // TODO: LSHIFT
+  '~',
+  'Z',
+  'X',
+  'C',
+  'V',
+  'B',
+  'N',
+  'M',
+  '<',
+  '>',
+  '?',
+  '\0', // TODO: RSHIFT
+  '*',
+  '\0', // TODO: LALT
+  ' ',
+  '\0', // TODO: CAPS
+  '\0', // TODO: F1
+  '\0', // TODO: F2
+  '\0', // TODO: F3
+  '\0', // TODO: F4
+  '\0', // TODO: F5
+  '\0', // TODO: F6
+  '\0', // TODO: F7
+  '\0', // TODO: F8
+  '\0', // TODO: F9
+  '\0', // TODO: F10
+  '\0', // TODO: NUMLOCK
+  '\0', // TODO: SCROLLLOCK
+  '7', // KEYPAD
+  '8', // KEYPAD
+  '9', // KEYPAD
+  '-', // KEYPAD
+  '4', // KEYPAD
+  '5', // KEYPAD
+  '6', // KEYPAD
+  '+', // KEYPAD
+  '1', // KEYPAD
+  '2', // KEYPAD
+  '3', // KEYPAD
+  '0', // KEYPAD
+  '.', // KEYPAD
+  '\0', // 0x54
+  '\0', // 0x55
+  '\\',
+  '\0', // TODO: F11
+  '\0' // TODO: F12
+};
+
 void charinv(unsigned char sc) {
   if (sc < 0x40) {
     keys -> states_low ^= (1 << sc);
@@ -135,7 +227,6 @@ void read_kbd() {
   unsigned char scan = pbyte_in(K_PORT);
   charinv(scan % 0x80);
   if (scan < 0x80) {
-    char ascii;
     switch (scan) {
     case 0x3a:
       keys -> modifs ^= (1 << 0); // capslock
@@ -159,9 +250,15 @@ void read_kbd() {
     case 0x53:
       if ((keys -> modifs & 0b01010000) == 0b01010000) {
         cpu_reset();
+        break;
       }
     default:
-      ascii = scan_map_en_UK[scan];
+      char ascii;
+      if (((keys -> modifs & 0b00001000) != 0) == ((keys -> modifs & 0b00000001) != 0)) {
+        ascii = scan_map_en_UK[scan];
+      } else {
+        ascii = scan_map_en_UK_shift[scan];
+      }
 
       combuf[strlen(combuf)] = ascii;
       comupd();
