@@ -20,6 +20,8 @@ csdfs_superblock: ; the superblock for CSDFS (Compact System Disk FS)
 kernel_entry:
         mov ebx, protected ; log a message
         call print_32
+
+        call a20_test
         
         call clear_scr
         call main
@@ -52,6 +54,37 @@ scroll_scr:
         rep stosw
         popad
         ret
+
+a20_test:
+        pushad
+        mov esi, 0x012345 ; even address
+        mov edi, 0x112345 ; odd address, if no A20 should be the same as even address
+
+        mov [esi], esi ; put different values at each address
+        mov [edi], edi 
+
+        cmpsd ; are they the values the same (only the case if no A20)
+        jne a20_ret
+
+[extern idle]
+  a20_enable:
+        in al, 0x64
+        test al, 0b00000010
+        jnz a20_ret
+
+        call idle
+        mov al, 0xd1
+        out 0x64, al
+
+        call idle
+        mov al, 0xdf
+        out 0x60, al
+        
+        call idle
+  a20_ret:
+        popad
+        ret
+
 
 print_32:
         pushad ; pusha but 32bit this time
