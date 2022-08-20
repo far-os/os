@@ -33,8 +33,12 @@ void shexec() {
     memcpy(&(csdfs -> label), outbuf + 27, 16); // memcpy because we need to control the length
   } else if (strcmp(combuf, "reset")) {
     cpu_reset();
+  } else if (strcmp(combuf, "clear")) {
+    clear_scr();
+    set_cur(POS(0, 0));
+    return;
   } else {
-    strcpy("TEST*TEST", outbuf);
+    strcpy(combuf, outbuf);
   }
   write_str(outbuf, COLOUR(RED, B_YELLOW));
   line_feed();
