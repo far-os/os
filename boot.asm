@@ -4,7 +4,7 @@
 [bits 16]
 [org 0x7c00]
 OFFSET equ 0x1a000 ; the offset at which our kernel is loaded
-BOOT_DRV equ 0x7bf0 ; the boot drive location
+BOOT_DRV equ 0x0 ; the boot drive location, from fs
 KERN_LEN equ 15 ; the kernel length (7k kernel >:))
 
         xor cx, cx ; segment setup
@@ -12,11 +12,14 @@ KERN_LEN equ 15 ; the kernel length (7k kernel >:))
         mov es, cx
         mov ss, cx
 
+        mov cx, 0xcc0 ; 0xcc00 is where the data will be stored
+        mov fs, cx
+
         mov bp, 0x6000 ; stack, remember it grows down
         mov sp, bp
 
-        mov [BOOT_DRV], dl
-        movzx esi, byte [BOOT_DRV]
+        mov [fs:BOOT_DRV], dl
+        movzx esi, byte [fs:BOOT_DRV]
         call print_hx_32_real
 
         mov si, string ; log a message
@@ -158,7 +161,7 @@ load_krn:
         hlt
 
 read:
-        mov dl, [BOOT_DRV]
+        mov dl, [fs:BOOT_DRV]
         test dl, 0b10000000 ; are we on a hard disk?
         jnz read_hdd
 
@@ -205,9 +208,9 @@ string:
 kernel_in_progress:
         db "Loading external kernel...",0xd,0xa,0
 hdd_test:
-        db "Booting from hard disk...",0xd,0xa,0
+        db "Reading from hard disk...",0xd,0xa,0
 invalid_diskette:
-        db 0xd,0xa,"FATAL: The disk inserted does not contain a valid CSDFS file system.",0xd,0xa,0
+        db 0xd,0xa,"FATAL: The disk does not contain a valid CSDFS file system.",0xd,0xa,0x0 
 dap_packet:
         dap_len: db 0x10 ; length of DAP
         reserved: db 0 ; is zero

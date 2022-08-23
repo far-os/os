@@ -1,5 +1,5 @@
-[bits 32]
 [section .csdfs]
+[bits 32]
 csdfs_superblock: ; the superblock for CSDFS (Compact System Disk FS)
         magic: db 0xc5, 0xdf, 0x50, 0xac ; magic number
         vol_label: db "FarOS Boot Disk " ; volume label
@@ -13,6 +13,7 @@ csdfs_superblock: ; the superblock for CSDFS (Compact System Disk FS)
         sig: nop ; the signature at the end
 
 [section .text]
+[bits 32]
 ;
 ; Code
 ;
@@ -40,6 +41,28 @@ clear_scr: ; clear screen
         popad
         ret
 
+[global clear_ln]
+clear_ln:
+        push ebp ; c calling convention
+        mov ebp, esp
+        
+        mov edx, [ebp+8]
+        ;dec edx
+
+        ;mov eax, 160
+        ;mul dh
+        shl edx, 5
+
+        lea edi, [edx * 5 + 0xb8000]
+        mov ecx, 80
+        mov ax, 0x0700
+
+        cld
+        rep stosw
+
+        leave
+        ret
+
 [global scroll_scr]
 scroll_scr:
         pushad
@@ -49,10 +72,12 @@ scroll_scr:
         cld
         rep movsd
 
-        mov ax, 0x0700
-        mov ecx, 80
-        rep stosw
+        push 24
+        call clear_ln
+        pop edx
+
         popad
+
         ret
 
 a20_test:

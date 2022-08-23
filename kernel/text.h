@@ -35,6 +35,7 @@
 char *vram = (char *) 0xb8000;
 
 extern void clear_scr();
+extern void clear_ln(int lnr);
 extern void scroll_scr();
 
 #pragma GCC push_options

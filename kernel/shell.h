@@ -56,6 +56,7 @@ void comupd() {
   case '\b':
     combuf[comlen - 2] = '\0';
     combuf[comlen - 1] = '\0';
+    clear_ln((get_cur() / 80));
     break;
   case '\n':
     line_feed();
