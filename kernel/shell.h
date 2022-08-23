@@ -1,7 +1,10 @@
 #include "text.h"
-// #include "kbd.h"
 #include "util.h"
+#include "hwinf.h"
 #include "fs.h"
+// #include "kbd.h"
+// because of cyclic include, we declare what we want
+void cpu_reset();
 
 #ifndef SHELL_H
 #define SHELL_H
@@ -10,27 +13,16 @@
 
 char combuf[COM_LEN]; 
 
-void shell() {
-//  set_cur(POS(0, 1)); // new line
-  char *headbuf = "FarSH. (c) 2022.\n"; // the underscores are placeholder for the memcpy
-  write_str(headbuf, COLOUR(BLUE, B_RED));
-//  write_hex(buf, -1);
-  
-  comupd();
-
-  while (1) {
-    asm volatile ("sti; hlt");
-  }
-}
-
 #define OUT_LEN VGA_WIDTH
 char outbuf[OUT_LEN];
 
 void shexec() {
   memzero(outbuf, OUT_LEN);
   if (strcmp(combuf, "info")) {
-    strcpy("FarOS v0.0.1.\n\tVol. label \"________________\"", outbuf);
+    strcpy("FarOS v0.0.1.\n\tVol. label \"________________\"\n\tDisk __h", outbuf);
     memcpy(&(csdfs -> label), outbuf + 27, 16); // memcpy because we need to control the length
+    to_hex(&(hardware -> bios_disk), 2);
+    strcpy(hexbuf, outbuf + 51);
   } else if (strcmp(combuf, "reset")) {
     cpu_reset();
   } else if (strcmp(combuf, "clear")) {
@@ -70,6 +62,19 @@ void comupd() {
   char printbuf[20] = "\r!> ";
   strcpy(combuf, printbuf + 4);
   write_str(printbuf, COLOUR(BLACK, WHITE));
+}
+
+void shell() {
+//  set_cur(POS(0, 1)); // new line
+  char *headbuf = "FarSH. (c) 2022.\n"; // the underscores are placeholder for the memcpy
+  write_str(headbuf, COLOUR(BLUE, B_RED));
+//  write_hex(buf, -1);
+  
+  comupd();
+
+  while (1) {
+    asm volatile ("sti; hlt");
+  }
 }
 
 #endif

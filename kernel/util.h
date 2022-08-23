@@ -16,6 +16,12 @@
   }
 }*/
 
+int strlen(char *str) {
+  int i = 0;
+  for (; str[i] != 0; ++i);
+  return i;
+}
+
 void memcpy(void *src, void *dest, unsigned int amount) {
   asm volatile ("cld\n"
                 "rep movsb\n" :
@@ -55,12 +61,6 @@ void memzero(void *dest, unsigned int amount) {
     : "memory" );
 }
 
-int strlen(char *str) {
-  int i = 0;
-  for (; str[i] != 0; ++i);
-  return i;
-}
-
 char nybble_to_hex(int num) {
   int value = num;
   value &= 0x0f;
@@ -69,6 +69,18 @@ char nybble_to_hex(int num) {
     value += 0x27;
   }
   return (char) value;
+}
+
+char hexbuf[17];
+
+void to_hex(void *data, unsigned char i_len) {
+  memzero(hexbuf, 17);
+  char temporary;
+  for (int j = 0; j < i_len; ++j) {
+    temporary = ((char *) data)[j / 2];
+    temporary >>= (!(j % 2) * 4);
+    hexbuf[j] = nybble_to_hex(temporary);
+  }
 }
 
 #endif

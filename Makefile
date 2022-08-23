@@ -8,7 +8,7 @@ entry.o: kernel/entry.asm
 	nasm $^ -f elf -o $@
 
 kernel.o: kernel/kernel.c $(wildcard kernel/*.h)
-	gcc -fno-stack-protector -ffreestanding -m32 -march=i686 -c $< -o $@
+	gcc -fno-stack-protector -ffreestanding -m32 -march=i686 -Wall -c $< -o $@
 
 kernel.entry.o: link.ld entry.o kernel.o
 	ld -o $@ -melf_i386 -T $^

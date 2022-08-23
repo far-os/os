@@ -53,7 +53,7 @@ void set_cur(short pos) {
 }
 
 short get_cur() {
-  short pos;
+  short pos = 0;
   pbyte_out(VRAM_CTRL_PORT, 0xe); // we are getting the high 8 bits of position
   pos |= ((short) pbyte_in(VRAM_DATA_PORT)) << 8; // the high eight bits
   pbyte_out(VRAM_CTRL_PORT, 0xf); // we are getting the low 8 bits of position

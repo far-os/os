@@ -42,15 +42,13 @@ clear_scr: ; clear screen
         ret
 
 [global clear_ln]
-clear_ln:
+clear_ln: ; void clear_ln(int lnr);
         push ebp ; c calling convention
         mov ebp, esp
+        pushad
         
-        mov edx, [ebp+8]
-        ;dec edx
+        mov edx, [ebp+8] ; load argument
 
-        ;mov eax, 160
-        ;mul dh
         shl edx, 5
 
         lea edi, [edx * 5 + 0xb8000]
@@ -60,6 +58,7 @@ clear_ln:
         cld
         rep stosw
 
+        popad
         leave
         ret
 

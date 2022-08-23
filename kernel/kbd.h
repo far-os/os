@@ -128,7 +128,7 @@ char scan_map_en_UK_shift[96] = { // scancode map for UK keyboard.
   '\x1b',
   '!',
   '"',
-  '£',
+  0x9c,
   '$',
   '%',
   '^',
@@ -165,7 +165,7 @@ char scan_map_en_UK_shift[96] = { // scancode map for UK keyboard.
   'L',
   ':',
   '@',
-  '¬',
+  0xaa,
   '\0', // TODO: LSHIFT
   '~',
   'Z',
