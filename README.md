@@ -15,8 +15,8 @@ The kernel code is located in `kernel/`, and the boot sector is located in `boot
 The kernel's files are explained below: 
 - `entry.asm`: The extended bootloader which calls `main`. It also contains the IDT as well.
 - `fs.h`: Contains the CSDFS driver.
-- `ih.h`: Interrupt handling functions.
 - `hwinf.h`: Detecting and identifying detected hardware.
+- `ih.h`: Interrupt handling functions.
 - `kbd.h`: Utilities for reading input from the 8042 PS/2 device.
 - `kernel.c`: The kernel itself.
 - `pic.h`: Utilities for initialising the PIC, masking the PIC, etc.

@@ -11,9 +11,9 @@
 
 struct keystates { /* a 104-bit struct containing data */
   /*
-    bit 0 set: caps lock
+    bit 0 set: scroll lock
     bit 1 set: num lock
-    bit 2 set: scroll lock
+    bit 2 set: caps lock
     bit 3 set: shift held
     bit 4 set: ctrl held
     bit 5 set: meta held
@@ -128,7 +128,7 @@ char scan_map_en_UK_shift[96] = { // scancode map for UK keyboard.
   '\x1b',
   '!',
   '"',
-  0x9c,
+  0x9c, // £ in cp437
   '$',
   '%',
   '^',
@@ -165,7 +165,7 @@ char scan_map_en_UK_shift[96] = { // scancode map for UK keyboard.
   'L',
   ':',
   '@',
-  0xaa,
+  0xaa, // ¬ in cp437
   '\0', // TODO: LSHIFT
   '~',
   'Z',
@@ -223,19 +223,35 @@ void charinv(unsigned char sc) {
   }
 }
 
+void ps2_wait() { // wait for ps2 controller to be ready
+  while ((pbyte_in(0x64) & 0x02) != 0x0);
+}
+
+
+void indic_light_upd() { // update indicator lights
+  ps2_wait();
+  pbyte_out(K_PORT, 0xed);
+  ps2_wait();
+  pbyte_out(K_PORT, (keys -> modifs) % 8);
+  ps2_wait();
+}
+
 void read_kbd() {
   unsigned char scan = pbyte_in(K_PORT);
   charinv(scan % 0x80);
   if (scan < 0x80) {
     switch (scan) {
-    case 0x3a:
-      keys -> modifs ^= (1 << 0); // capslock
+    case 0x46:
+      keys -> modifs ^= (1 << 0); // scrollock
+      indic_light_upd();
       return;
     case 0x45:
       keys -> modifs ^= (1 << 1); // numlock
+      indic_light_upd();
       return;
-    case 0x46:
-      keys -> modifs ^= (1 << 2); // scrollock
+    case 0x3a:
+      keys -> modifs ^= (1 << 2); // capslock
+      indic_light_upd();
       return;
     case 0x2a:
     case 0x36:
@@ -248,16 +264,17 @@ void read_kbd() {
       keys -> modifs |= (1 << 6); // lalt
       break;
     case 0x53:
-      if ((keys -> modifs & 0b01010000) == 0b01010000) {
+      if ((keys -> modifs & 0b01010000) == 0b01010000) { // ctrl alt del
         cpu_reset();
         break;
       }
     default:
       char ascii;
-      if (((keys -> modifs & 0b00001000) != 0) == ((keys -> modifs & 0b00000001) != 0)) {
-        ascii = scan_map_en_UK[scan];
-      } else {
+      char is_letter = scan_map_en_UK[scan] >= 'a' && scan_map_en_UK[scan] <= 'z';
+      if (((keys -> modifs & 0b00001000) != 0) != (((keys -> modifs & 0b00000100) != 0) && is_letter)) {
         ascii = scan_map_en_UK_shift[scan];
+      } else {
+        ascii = scan_map_en_UK[scan];
       }
 
       combuf[strlen(combuf)] = ascii;
