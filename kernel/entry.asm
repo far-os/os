@@ -8,9 +8,9 @@ csdfs_superblock: ; the superblock for CSDFS (Compact System Disk FS)
         fs_size: dd (2880 - 0x10) ; length of disk in sectors
         media_type: db 0xa3 ; a3 means 3¼" HD 1.44M floppy diskette
 
-        times 63-($-csdfs_superblock) db 0 ; pad to the 63rd byte - end of superblock
+        times 0x3f-($-csdfs_superblock) db 0 ; pad to the 63rd byte - end of superblock
 
-        sig: nop ; the signature at the end
+        sig: nop ; the ignature at the end
 
 [section .text]
 [bits 32]
@@ -49,7 +49,7 @@ clear_ln: ; void clear_ln(int lnr);
         
         mov edx, [ebp+8] ; load argument
 
-        shl edx, 5
+        shl edx, 5 ; times by 32 - below it is times by 5 overall multiplying by 160
 
         lea edi, [edx * 5 + 0xb8000]
         mov ecx, 80
@@ -81,8 +81,8 @@ scroll_scr:
 
 a20_test:
         pushad
-        mov esi, 0x012345 ; even address
-        mov edi, 0x112345 ; odd address, if no A20 should be the same as even address
+        mov esi, 0x00200c ; even address
+        mov edi, 0x10200c ; odd address, if no A20 should be the same as even address
 
         mov [esi], esi ; put different values at each address
         mov [edi], edi 

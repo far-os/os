@@ -4,7 +4,7 @@
 [bits 16]
 [org 0x7c00]
 OFFSET equ 0x1a000 ; the offset at which our kernel is loaded
-BOOT_DRV equ 0x0 ; the boot drive location, from fs
+BOOT_DRV equ 0x0 ; the boot drive location, from gs
 KERN_LEN equ 15 ; the kernel length (7k kernel >:))
 
         xor cx, cx ; segment setup
@@ -13,13 +13,13 @@ KERN_LEN equ 15 ; the kernel length (7k kernel >:))
         mov ss, cx
 
         mov cx, 0xcc0 ; 0xcc00 is where the data will be stored
-        mov fs, cx
+        mov gs, cx
 
         mov bp, 0x6000 ; stack, remember it grows down
         mov sp, bp
 
-        mov [fs:BOOT_DRV], dl
-        movzx esi, byte [fs:BOOT_DRV]
+        mov [gs:BOOT_DRV], dl
+        movzx esi, byte [gs:BOOT_DRV]
         call print_hx_32_real
 
         mov si, string ; log a message
@@ -161,7 +161,7 @@ load_krn:
         hlt
 
 read:
-        mov dl, [fs:BOOT_DRV]
+        mov dl, [gs:BOOT_DRV]
         test dl, 0b10000000 ; are we on a hard disk?
         jnz read_hdd
 
