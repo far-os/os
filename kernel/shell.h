@@ -13,16 +13,18 @@ void cpu_reset();
 
 char combuf[COM_LEN]; 
 
-#define OUT_LEN VGA_WIDTH
+#define OUT_LEN 120
 char outbuf[OUT_LEN];
 
 void shexec() {
   memzero(outbuf, OUT_LEN);
   if (strcmp(combuf, "info")) {
-    strcpy("FarOS v0.0.1.\n\tVol. label \"________________\"\n\tDisk __h", outbuf);
+    strcpy("FarOS v0.0.1.\n\tVol. label \"________________\"\n\tVol. ID 0x________________\n\tDisk __h", outbuf);
     memcpy(&(csdfs -> label), outbuf + 27, 16); // memcpy because we need to control the length
+    to_hex(&(csdfs -> vol_id), 16);
+    strcpy(hexbuf, outbuf + 56);
     to_hex(&(hardware -> bios_disk), 2);
-    strcpy(hexbuf, outbuf + 51);
+    strcpy(hexbuf, outbuf + 79);
   } else if (strcmp(combuf, "reset")) {
     cpu_reset();
   } else if (strcmp(combuf, "clear")) {
