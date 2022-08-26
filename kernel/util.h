@@ -77,7 +77,7 @@ void to_hex(void *data, unsigned char i_len) {
   memzero(hexbuf, 17);
   char temporary;
   for (int j = 0; j < i_len; ++j) {
-    temporary = ((char *) data)[j / 2];
+    temporary = ((char *) data)[((i_len-1) / 2) - (j / 2)];
     temporary >>= (!(j % 2) * 4);
     hexbuf[j] = nybble_to_hex(temporary);
   }
