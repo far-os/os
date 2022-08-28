@@ -18,7 +18,7 @@ struct keystates { /* a 104-bit struct containing data */
     bit 4 set: ctrl held
     bit 5 set: meta held
     bit 6 set: alt held
-    bit 7 set: reserved
+    bit 7 set: waiting for another scancode in a multi-scancode key
   */
   unsigned char modifs;
 
@@ -33,7 +33,7 @@ struct keystates *keys = &((struct keystates) { .states_high = 0x0, .states_low 
 
 char scan_map_en_UK[96] = { // scancode map for UK keyboard.
   '\0',
-  '\x1b',
+  '\x1b', // ESC
   '1',
   '2',
   '3',
@@ -46,8 +46,8 @@ char scan_map_en_UK[96] = { // scancode map for UK keyboard.
   '0',
   '-',
   '=',
-  '\b',
-  '\t',
+  '\b', // BACK
+  '\t', // TAB
   'q',
   'w',
   'e',
@@ -60,8 +60,8 @@ char scan_map_en_UK[96] = { // scancode map for UK keyboard.
   'p',
   '[',
   ']',
-  '\n',
-  '\0', // TODO: LCTRL
+  '\n', // ENTER
+  '\0', // LCTRL
   'a',
   's',
   'd',
@@ -74,7 +74,7 @@ char scan_map_en_UK[96] = { // scancode map for UK keyboard.
   ';',
   '\'',
   '`',
-  '\0', // TODO: LSHIFT
+  '\0', // LSHIFT
   '#',
   'z',
   'x',
@@ -86,11 +86,11 @@ char scan_map_en_UK[96] = { // scancode map for UK keyboard.
   ',',
   '.',
   '/',
-  '\0', // TODO: RSHIFT
-  '*',
-  '\0', // TODO: LALT
+  '\0', // RSHIFT
+  '*', // KEYPAD
+  '\0', // LALT
   ' ',
-  '\0', // TODO: CAPS
+  '\0',
   '\0', // TODO: F1
   '\0', // TODO: F2
   '\0', // TODO: F3
@@ -101,8 +101,8 @@ char scan_map_en_UK[96] = { // scancode map for UK keyboard.
   '\0', // TODO: F8
   '\0', // TODO: F9
   '\0', // TODO: F10
-  '\0', // TODO: NUMLOCK
-  '\0', // TODO: SCROLLLOCK
+  '\0', // NUMLCK
+  '\0', // SCRLLCK
   '7', // KEYPAD
   '8', // KEYPAD
   '9', // KEYPAD
@@ -138,8 +138,8 @@ char scan_map_en_UK_shift[96] = { // scancode map for UK keyboard.
   ')',
   '_',
   '+',
-  '\b',
-  '\t',
+  '\b', // BACK
+  '\t', // TAB
   'Q',
   'W',
   'E',
@@ -152,8 +152,8 @@ char scan_map_en_UK_shift[96] = { // scancode map for UK keyboard.
   'P',
   '{',
   '}',
-  '\n',
-  '\0', // TODO: LCTRL
+  '\n', // ENTER
+  '\0', // LCTRL
   'A',
   'S',
   'D',
@@ -166,7 +166,7 @@ char scan_map_en_UK_shift[96] = { // scancode map for UK keyboard.
   ':',
   '@',
   0xaa, // ¬ in cp437
-  '\0', // TODO: LSHIFT
+  '\0', // LSHIFT
   '~',
   'Z',
   'X',
@@ -178,11 +178,11 @@ char scan_map_en_UK_shift[96] = { // scancode map for UK keyboard.
   '<',
   '>',
   '?',
-  '\0', // TODO: RSHIFT
-  '*',
-  '\0', // TODO: LALT
+  '\0', // RSHIFT
+  '*', // KEYPAD
+  '\0', // LALT
   ' ',
-  '\0', // TODO: CAPS
+  '\0',
   '\0', // TODO: F1
   '\0', // TODO: F2
   '\0', // TODO: F3
@@ -193,8 +193,8 @@ char scan_map_en_UK_shift[96] = { // scancode map for UK keyboard.
   '\0', // TODO: F8
   '\0', // TODO: F9
   '\0', // TODO: F10
-  '\0', // TODO: NUMLOCK
-  '\0', // TODO: SCROLLLOCK
+  '\0', // NUMLCK
+  '\0', // SCRLLCK
   '7', // KEYPAD
   '8', // KEYPAD
   '9', // KEYPAD
@@ -240,6 +240,12 @@ void read_kbd() {
   unsigned char scan = pbyte_in(K_PORT);
   charinv(scan % 0x80);
   if (scan < 0x80) {
+    if (keys -> modifs & 0b10000000) { // extended keys
+      switch (scan) {
+      default:
+        break; // TODO: Cursor keys
+      }
+    }
     switch (scan) {
     case 0x46:
       keys -> modifs ^= (1 << 0); // scrollock
@@ -263,15 +269,30 @@ void read_kbd() {
     case 0x38:
       keys -> modifs |= (1 << 6); // lalt
       break;
+    case 0x47:
+    case 0x48:
+    case 0x49:
+    case 0x4a:
+    case 0x4b:
+    case 0x4c:
+    case 0x4d:
+    case 0x4e:
+    case 0x4f:
+    case 0x50:
+    case 0x51:
+    case 0x52:
     case 0x53:
-      if ((keys -> modifs & 0b01010000) == 0b01010000) { // ctrl alt del
+      if ((keys -> modifs & 0b01010000) == 0b01010000 && scan == 0x53) { // ctrl alt del
         cpu_reset();
         break;
+      }
+      if (!(keys -> modifs & (1 << 1)) || keys -> modifs & (1 << 7)) {
+        break; // TODO: Cursor keys
       }
     default:
       char ascii;
       char is_letter = scan_map_en_UK[scan] >= 'a' && scan_map_en_UK[scan] <= 'z';
-      if (((keys -> modifs & 0b00001000) != 0) != (((keys -> modifs & 0b00000100) != 0) && is_letter)) {
+      if (!!(keys -> modifs & 0b00001000) != ((keys -> modifs & 0b00000100) && is_letter)) {
         ascii = scan_map_en_UK_shift[scan];
       } else {
         ascii = scan_map_en_UK[scan];
@@ -281,6 +302,7 @@ void read_kbd() {
       comupd();
       break;
     }
+    keys -> modifs &= ~(1 << 7); // TODO: fix
   } else {
     switch (scan) {
     case 0xaa:
@@ -292,6 +314,9 @@ void read_kbd() {
       break;
     case 0xb8:
       keys -> modifs &= ~(1 << 6); // alt i think
+      break;
+    case 0xe0:
+      keys -> modifs |= (1 << 7); // extend
       break;
     }
     // TODO: release values
