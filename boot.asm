@@ -5,7 +5,7 @@
 [org 0x7c00]
 OFFSET equ 0x1a000 ; the offset at which our kernel is loaded
 BOOT_DRV equ 0x0 ; the boot drive location, from gs
-KERN_LEN equ 15 ; the kernel length (7k kernel >:))
+KERN_LEN equ 0x1f ; the kernel length (15k kernel >:))
 
         xor cx, cx ; segment setup
         mov ds, cx
@@ -117,7 +117,7 @@ print_hx_32_real: ; prints hex string from ebx
         and dl, 0x0F ; last nybble (since we discarded the ones after it this is the one we want)
         add dl, 0x30 ; push into the range of ascii numbers
         cmp dl, 0x3A ; for the letters - they will be outside of numbers
-        jnge continue_32_real ; if it's a number go to continue
+        jnae continue_32_real ; if it's a number go to continue
         add dl, 0x27 ; push the letters into the ascii lowercase letter range
   continue_32_real:
         mov al, dl ; moves our temporary dx into al, ready to print

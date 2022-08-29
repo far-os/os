@@ -269,6 +269,7 @@ void read_kbd() {
     case 0x38:
       keys -> modifs |= (1 << 6); // lalt
       break;
+    case 0x37:
     case 0x47:
     case 0x48:
     case 0x49:

@@ -1,6 +1,7 @@
 #ifndef FS_H
 #define FS_H
 
+#define SECTOR_LEN 512
 struct csdfs_superblock {
   unsigned int magic; // 0xac50f0c5
   char label[16]; // volume 

@@ -61,6 +61,12 @@ void memzero(void *dest, unsigned int amount) {
     : "memory" );
 }
 
+void memrev(char *src, int len, char *dest) {
+  for (int i = 0; i < len; ++i) {
+    dest[i] = src[len - i - 1];
+  }
+}
+
 char nybble_to_hex(int num) {
   int value = num;
   value &= 0x0f;
@@ -81,6 +87,16 @@ void to_hex(void *data, unsigned char i_len) {
     temporary >>= (!(j % 2) * 4);
     hexbuf[j] = nybble_to_hex(temporary);
   }
+}
+
+char decbuf[12];
+char dectempbuf[12];
+
+void to_dec(int input) {
+  for (int i = input, j = 0; i > 0; i /= 10, ++j) {
+    dectempbuf[j] = (char) (i % 10) + '0';
+  }
+  memrev(dectempbuf, strlen(dectempbuf), decbuf);
 }
 
 #endif

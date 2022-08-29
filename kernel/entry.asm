@@ -4,15 +4,15 @@ csdfs_superblock: ; the superblock for CSDFS (Compact System Disk FS)
         magic: db 0xc5, 0xdf, 0x50, 0xac ; magic number
         vol_label: db "FarOS Boot Disk " ; volume label
         vol_id: dq 0x1dc5926a300e4af3 ; volume id
-        fs_start: dw 0x10 ; LBA where the fs actually starts
-        fs_size: dd (2880 - 0x10) ; length of disk in sectors
+        fs_start: dw 0x20 ; LBA where the fs actually starts
+        fs_size: dd (2880 - 0x20) ; length of disk in sectors
         media_type: db 0xa3 ; a3 means 3¼" HD 1.44M floppy diskette
 
         times 0x3f-($-csdfs_superblock) db 0 ; pad to the 63rd byte - end of superblock
 
         sig: nop ; the ignature at the end
 
-[section .text]
+[section .second_boot]
 [bits 32]
 ;
 ; Code
@@ -33,11 +33,13 @@ kernel_entry:
 [global clear_scr]
 clear_scr: ; clear screen
         pushad
+        pushf
         mov ax, 0x0700
         mov ecx, (80 * 25)
         mov edi, 0xb8000
         cld
         rep stosw
+        popf
         popad
         ret
 
@@ -46,6 +48,7 @@ clear_ln: ; void clear_ln(int lnr);
         push ebp ; c calling convention
         mov ebp, esp
         pushad
+        pushf
         
         mov edx, [ebp+8] ; load argument
 
@@ -57,7 +60,8 @@ clear_ln: ; void clear_ln(int lnr);
 
         cld
         rep stosw
-
+        
+        popf
         popad
         leave
         ret
@@ -65,6 +69,7 @@ clear_ln: ; void clear_ln(int lnr);
 [global scroll_scr]
 scroll_scr:
         pushad
+        pushf
         mov esi, 0xb8000 + (80 * 2)
         mov edi, 0xb8000
         mov ecx, (80 * 24 / 2)
@@ -75,6 +80,7 @@ scroll_scr:
         call clear_ln
         pop edx
 
+        popf
         popad
 
         ret
@@ -131,7 +137,8 @@ print_32:
 protected:
         db "Successfully moved into Protected Mode!",0
 
-        times (512 - 64)-($-$$) db 0 ; pad to the 512th byte - end of csdfs extended boot
+[section .text]
+[bits 32]
 
 %macro eh_macro 1 ; exception handler
 global eh_%1
