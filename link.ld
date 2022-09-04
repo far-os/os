@@ -2,6 +2,8 @@ SECTIONS
 {
   . = 0x19fc0;
   .csdfs : { *(.csdfs) }
+
+  . = 0x1a000;
   .second_boot : { *(.second_boot) }
 
   . = 0x1a1c0;

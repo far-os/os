@@ -1,5 +1,9 @@
-.DEFAULT_GOAL := os.bin
+.DEFAULT_GOAL := os.img
 .PHONY: qemu bochs clean
+
+# Disk size in units of 512KiB (Half MiB)
+export DISK_SIZE_HM := 1
+export KERN_SIZE := 0x20
 
 boot.bin: boot.asm
 	nasm $^ -f bin -o $@
@@ -16,14 +20,18 @@ kernel.entry.o: link.ld entry.o kernel.o
 kernel.bin: kernel.entry.o
 	objcopy -O binary $^ $@
 
-os.bin: boot.bin kernel.bin
+boot.kern.bin: boot.bin kernel.bin
 	cat $^ > $@
 
-qemu: os.bin
-	$@-system-i386 -fda $< -boot a
+os.img: boot.kern.bin
+	dd if=/dev/zero of=$@ bs=512K count=$(DISK_SIZE_HM)
+	dd if=$^ of=$@ conv=notrunc
 
-bochs: os.bin .bochsrc
+qemu: os.img
+	$@-system-i386 -hda $< -boot c
+
+bochs: os.img .bochsrc
 	$@ -q
 
 clean:
-	rm -f *.bin *.o
+	rm -f *.bin *.o *.img

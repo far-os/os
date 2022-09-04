@@ -1,16 +1,14 @@
 [section .csdfs]
 [bits 32]
+%define KERN_SIZE %!KERN_SIZE
+%define DISK_SIZE_SEC %!DISK_SIZE_HM * (1 << 10) ; half mib * 1024
 csdfs_superblock: ; the superblock for CSDFS (Compact System Disk FS)
         magic: db 0xc5, 0xdf, 0x50, 0xac ; magic number
         vol_label: db "FarOS Boot Disk " ; volume label
         vol_id: dq 0x1dc5926a300e4af3 ; volume id
-        fs_start: dw 0x20 ; LBA where the fs actually starts
-        fs_size: dd (2880 - 0x20) ; length of disk in sectors
-        media_type: db 0xa3 ; a3 means 3¼" HD 1.44M floppy diskette
-
-        times 0x3f-($-csdfs_superblock) db 0 ; pad to the 63rd byte - end of superblock
-
-        sig: nop ; the ignature at the end
+        fs_start: dw KERN_SIZE ; LBA where the fs actually starts
+        fs_size: dd (DISK_SIZE_SEC - KERN_SIZE) ; length of disk in sectors
+        media_type: db 0x1d ; 1d means standard IDE drive
 
 [section .second_boot]
 [bits 32]

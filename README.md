@@ -33,15 +33,16 @@ You will need access to the following tools:
 - `ld`: To link the kernel code together with the extended bootloader sector.
 - `objcopy`: To convert the kernel's ELF object into raw binary.
 - `cat`: To concatenate the bootloader and kernel binaries.
+- `dd`: To create the disk image. **Note**: you will also need access to `/dev/zero` for this step.
 - `make`: A convienent way to run all the commands.
 
-Once you have all of these, run `make`, and you will have an `os.bin` file. This is the disk image of the OS.
-The image can be used as either a floppy image or a hard disk image. However, both emulators provided both use it as a floppy disk.
+Once you have all of these, run `make`, and you will have an `os.img` file. This is the raw HDD disk image of the OS.
 
 ## Running
 You can use any hardware or emulator, but the provided `Makefile` includes methods to use `bochs` or `qemu`. Both emulators *(should)* work, however `bochs` is recommended. You can use the provided `.bochsrc` file, or you can use your own.
 
 To build the image and use `bochs` or `qemu` simultaneously, run `make bochs` and `make qemu` respectively.
 It also works on real hardware.
+**Note**: the `.bochsrc` relies on an environment variable passed by the `Makefile`, so if using `bochs`, ***ONLY*** use it through the `Makefile`.
 
 ***WARNING: Keypresses may be different. The `.bochsrc` and OS natively are both configured to use the en-UK keyboard layout. Reconfiguring the `.bochsrc` should also fix the fact that the OS is configured for en-UK keypresses.***

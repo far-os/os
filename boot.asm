@@ -3,9 +3,9 @@
 ;
 [bits 16]
 [org 0x7c00]
-OFFSET equ 0x1a000 ; the offset at which our kernel is loaded
-BOOT_DRV equ 0x0 ; the boot drive location, from gs
-KERN_LEN equ 0x1f ; the kernel length (15k kernel >:))
+%define OFFSET 0x1a000 ; the offset at which our kernel is loaded
+%define BOOT_DRV 0x0 ; the boot drive location, from gs
+%define KERN_LEN %!KERN_SIZE - 1 ; the kernel length (15k kernel >:))
 
         xor cx, cx ; segment setup
         mov ds, cx
