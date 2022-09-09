@@ -33,6 +33,11 @@ void shexec() {
     clear_scr();
     set_cur(POS(0, 0));
     return;
+  } else if (strcmp(combuf, "exec")) {
+    signed short (*prog)(void) = (signed short (*)()) 0x1dd80;
+    signed short k = prog();
+    to_dec(k);
+    strcpy(decbuf, outbuf);
   } else {
     strcpy(combuf, outbuf);
   }
