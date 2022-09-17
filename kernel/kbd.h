@@ -216,11 +216,13 @@ char scan_map_en_UK_shift[96] = { // scancode map for UK keyboard.
 };
 
 void charinv(unsigned char sc) {
-  if (sc < 0x40) {
+  /*if (sc < 0x40) {
     keys -> states_low ^= (1 << sc);
   } else {
     keys -> states_high ^= (1 << (sc % 0x40));
-  }
+  }*/
+
+  bitinv(&(keys -> states_low), sc);
 }
 
 void ps2_wait() { // wait for ps2 controller to be ready

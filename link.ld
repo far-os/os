@@ -12,6 +12,10 @@ SECTIONS
   .eh_frame : { *(.eh_frame) }
   .rodata : { *(.rodata) }
   .bss : { *(.bss) }
+
+  . = 0x1dd80;
+  .prog : { *(.prog) }
+
   /DISCARD/ : {
     *(.comment)
   }

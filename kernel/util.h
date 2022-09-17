@@ -48,6 +48,26 @@ unsigned char memcmp(void *src, void *dest, unsigned int amount) {
   return o;
 }
 
+unsigned char bittest(void *src, unsigned int bit) {
+  unsigned char o;
+  asm volatile ("bt %2, (%1)" : 
+      "=@ccc" (o)
+      : "r" (src),
+        "ir" (bit)
+      : "cc" );
+  return o;
+}
+
+unsigned char bitinv(void *src, unsigned int bit) {
+  unsigned char o;
+  asm volatile ("btc %2, (%1)" : 
+      "=@ccc" (o)
+      : "r" (src),
+        "ir" (bit)
+      : "cc" );
+  return o;
+}
+
 unsigned char strcmp(char *src, char *dest) {
   return memcmp(src, dest, strlen(src)) && strlen(src) == strlen(dest);
 }
@@ -93,6 +113,8 @@ char decbuf[12];
 char dectempbuf[12];
 
 void to_dec(int input) {
+  memzero(dectempbuf, 12);
+  memzero(decbuf, 12);
   for (int i = input, j = 0; i > 0; i /= 10, ++j) {
     dectempbuf[j] = (char) (i % 10) + '0';
   }
