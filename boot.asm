@@ -4,8 +4,12 @@
 [bits 16]
 [org 0x7c00]
 %define OFFSET 0x1a000 ; the offset at which our kernel is loaded
+
 %define BOOT_DRV 0x0 ; the boot drive location, from gs
 %define KERN_LEN %!KERN_SIZE - 1 ; the kernel length (15k kernel >:))
+
+%define GDT_LEN 4
+%define GDT_OFFS OFFSET + 0x190
 
         xor cx, cx ; segment setup
         mov ds, cx
@@ -30,49 +34,22 @@
         ; start protected!
         call prot
 
-gdt_start:
-  gdt_null_desc: ; the mandatory null descriptor: eight null bytes
-        dq 0x0
-
-  gdt_code_seg: ; the segment in where code will be stored:
-        ; base address = 0x0, size/limit = 0xffffff
-        ; 1st flags: present in memory:1 privilege:00 descriptor type:1 => 1001b
-        ; type flags: segment is code:1 conforming:0 readable:1 accessed:0 => 1010b
-        ; 2nd flags granularity:1 32bit:1 64bit:0 AVL:0 = 1100b
-        dw 0xffff ; limit (lower 16 bits)
-        dw 0x0 ; base (lower 16 bits)
-        db 0x0 ; base (bits 16-23)
-        db 10011010b ; 1st flags and type flags
-        db 11001111b ; 2nd flags and limit (upper 4 bits)
-        db 0x0 ; base (upper 8 bits)
-
-  gdt_data_seg:
-        ; flags identical except for type flag segment is code:0
-        dw 0xffff ; limit (lower 16 bits)
-        dw 0x0 ; base (lower 16 bits)
-        db 0x0 ; base (bits 16-23)
-        db 10010010b ; 1st flags and type flags
-        db 11001111b ; 2nd flags and limit (upper 4 bits)
-        db 0x0 ; base (upper 8 bits)
-  
-  gdt_end:
 
 gdt_descriptor: ; gdt descriptor
-        dw gdt_end - gdt_start - 1 ; GDT size
-        dd gdt_start ; where the gdt starts
-
+        dw (0x8*(GDT_LEN+1)) - 1 ; GDT size
+        dd GDT_OFFS ; where the gdt starts
 prot:
         cli ; no more interrupts
         lgdt [gdt_descriptor] ; gdt time
 
-        xor ebx, ebx
+        xor esi, esi
         call print_hx_32_real
 
-        mov ebx, cr0 ; set the protected mode flag
+        mov esi, cr0 ; set the protected mode flag
         call print_hx_32_real
-        or ebx, 0x1  ; it can't be set directly, so we use
+        or esi, 0x1  ; it can't be set directly, so we use
         call print_hx_32_real
-        mov cr0, ebx ; ebx as an intermediary register
+        mov cr0, esi ; esi a an intermediary register
         ;call print_hx_32_real
         
         jmp 0x08:seg_init ; init the segments
@@ -226,6 +203,9 @@ seg_init:
         mov ds, ax
         mov ss, ax
         mov es, ax
+
+        shl al, 1
+
         mov fs, ax
         mov gs, ax
 

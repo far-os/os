@@ -5,6 +5,9 @@ SECTIONS
 
   . = 0x1a000;
   .second_boot : { *(.second_boot) }
+  
+  . = 0x1a190;
+  .gdt : { *(.gdt) }
 
   . = 0x1a1c0;
   .text : { *(.text) }
@@ -12,9 +15,6 @@ SECTIONS
   .eh_frame : { *(.eh_frame) }
   .rodata : { *(.rodata) }
   .bss : { *(.bss) }
-
-  . = 0x1dd80;
-  .prog : { *(.prog) }
 
   /DISCARD/ : {
     *(.comment)

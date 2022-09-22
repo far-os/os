@@ -1,11 +1,12 @@
+[org 0]
 [bits 32]
 
 [section .prog]
 start:
         push ebx
         push edi
-        mov bl, 0x9c ; 9c
-        mov al, 0xc3 ; second half of inc bl, also ret
+        mov bl, 0x9e ; 9e
+        mov al, 0xcb ; second half of dec bl, also retf
 
         xor ecx, ecx
         mov cl, 2
@@ -32,3 +33,5 @@ start:
         pop ebx
         or cl, 0x50
         jmp scc
+
+        times 0x40-($-$$) db 0

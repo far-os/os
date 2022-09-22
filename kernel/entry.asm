@@ -135,6 +135,49 @@ print_32:
 protected:
         db "Successfully moved into Protected Mode!",0
 
+[section .gdt]
+  gdt_null_desc: ; the mandatory null descriptor: eight null bytes
+        dq 0x0
+
+  gdt_code_seg: ; the segment in where code will be stored:
+        ; base address = 0x0, size/limit = 0xffffff
+        ; 1st flags: present in memory:1 privilege:00 descriptor type:1 => 1001b
+        ; type flags: segment is code:1 conforming:0 readable:1 accessed:0 => 1010b
+        ; 2nd flags granularity:1 32bit:1 64bit:0 AVL:0 = 1100b
+        dw 0xffff ; limit (lower 16 bits)
+        dw 0x0 ; base (lower 16 bits)
+        db 0x0 ; base (bits 16-23)
+        db 10011010b ; 1st flags and type flags
+        db 11001111b ; 2nd flags and limit (upper 4 bits)
+        db 0x0 ; base (upper 8 bits)
+
+  gdt_data_seg:
+        ; flags identical except for type flag segment is code:0
+        dw 0xffff ; limit (lower 16 bits)
+        dw 0x0 ; base (lower 16 bits)
+        db 0x0 ; base (bits 16-23)
+        db 10010010b ; 1st flags and type flags
+        db 11001111b ; 2nd flags and limit (upper 4 bits)
+        db 0x0 ; base (upper 8 bits)
+
+  gdt_progc_seg:
+        ; flags identical to code, except base is on the 1 MiB mark
+        dw 0xffff ; limit (lower 16 bits)
+        dw 0x0 ; base (low 16 bits)
+        db 0x10 ; base (bits 16-23)
+        db 10011010b ; 1st flags and type flags (access byte)
+        db 11001111b ; 2nd flags and limit (upper 4 bits)
+        db 0x0 ; db 0x0
+
+  gdt_progd_seg:
+        ; flags identical to data, except base is on the 1 MiB mark
+        dw 0xffff ; limit (lower 16 bits)
+        dw 0x0 ; base (low 16 bits)
+        db 0x10 ; base (bits 16-23)
+        db 10010010b ; 1st flags and type flags (access byte)
+        db 11001111b ; 2nd flags and limit (upper 4 bits)
+        db 0x0 ; db 0x0
+  
 [section .text]
 [bits 32]
 
@@ -152,6 +195,20 @@ eh_%1:
   push dword %1    ; push interrupt number
   jmp  generic_eh  ; generic eh
 %endmacro
+
+[global prog]
+prog:
+        mov dx, 0x20
+        mov ds, dx
+        mov es, dx
+        mov ss, dx
+        call 0x18:0x0
+        shr dx, 1
+        mov ds, dx
+        mov es, dx
+        mov ss, dx
+        ret
+        
 
 [extern eh_c]
 generic_eh:

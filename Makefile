@@ -14,16 +14,18 @@ entry.o: kernel/entry.asm
 kernel.o: kernel/kernel.c $(wildcard kernel/*.h)
 	gcc -falign-functions=1 -fno-stack-protector -ffreestanding -m32 -march=i686 -Wall -c $< -o $@
 
-prog.o: program/main.asm
-	nasm $^ -f elf -o $@
 
-kernel.entry.o: link.ld entry.o kernel.o prog.o
+kernel.entry.o: link.ld entry.o kernel.o
 	ld -o $@ -melf_i386 -T $+
 
 kernel.bin: kernel.entry.o
 	objcopy -O binary $^ $@
+	dd if=/dev/null of=$@ bs=64 count=1 seek=247
 
-boot.kern.bin: boot.bin kernel.bin
+prog.bin: program/main.asm
+	nasm $^ -f bin -o $@
+
+boot.kern.bin: boot.bin kernel.bin prog.bin
 	cat $^ > $@
 
 os.img: boot.kern.bin

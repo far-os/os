@@ -6,6 +6,8 @@
 // because of cyclic include, we declare what we want
 void cpu_reset();
 
+extern signed short prog();
+
 #ifndef SHELL_H
 #define SHELL_H
 
@@ -34,7 +36,15 @@ void shexec() {
     set_cur(POS(0, 0));
     return;
   } else if (strcmp(combuf, "exec")) {
-    signed short (*prog)(void) = (signed short (*)()) 0x1dd80;
+//    signed short (*prog)(void) = (signed short (*)()) 0x1dd80;
+    asm volatile ("mov %%cx, %%es\n"
+                  "shr $1, %%cx\n"
+                  "rep movsd\n"
+                  "mov %%cx, %%es" :
+      : "c" (0x20),
+        "S" (0x1dd80),
+        "D" (0x0)
+      : "memory" );
     signed short k = prog();
     to_dec(k);
     strcpy(decbuf, outbuf);
