@@ -29,9 +29,17 @@ start:
         lahf
         xchg al, ah
 
+        mov ch, ah
+        mov cl, 0x5b
+
+        push eax
+        xor ax, ax
+        int 0x33
+        pop eax
+
         pop edi
         pop ebx
-        or cl, 0x50
+        mov cx, 0x50
         jmp scc
 
         times 0x40-($-$$) db 0

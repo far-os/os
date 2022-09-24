@@ -34,7 +34,7 @@ void main() {
   idtr.offset = (unsigned int) &idt;
   idtr.size   = (unsigned short) sizeof(struct idt_entry) * 256 - 1;
 
-  for (unsigned char d = 0; d < 48; ++d) {
+  for (unsigned char d = 0; d < 64; ++d) {
     struct idt_entry *desc = &idt[d];
     desc->offset_low = (unsigned int) eh_list[d] & 0xffff;
     desc->segment    = 0x08; // first in gdt

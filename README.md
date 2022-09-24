@@ -46,3 +46,8 @@ It also works on real hardware.
 **Note**: the `.bochsrc` relies on an environment variable passed by the `Makefile`, so if using `bochs`, ***ONLY*** use it through the `Makefile`.
 
 ***WARNING: Keypresses may be different. The `.bochsrc` and OS natively are both configured to use the en-UK keyboard layout. Reconfiguring the `.bochsrc` should also fix the fact that the OS is configured for en-UK keypresses.***
+
+## OS ABI
+Programs at offset `0x3fc0` on disk will be copied to `0x100000` in memory: and will be executed in a segment where code will appear with origin `0`.
+
+To syscall to the kernel, use `int 0x33`. The service code goes in `ah`, and the subroutine code goes in `al`. To see all services, see ABI.md.

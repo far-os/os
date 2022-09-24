@@ -198,27 +198,36 @@ eh_%1:
 
 [global prog]
 prog:
-        mov dx, 0x20
-        mov ds, dx
-        mov es, dx
-        mov ss, dx
+        mov si, 0x20
+        mov ds, si
+        mov es, si
+        mov ss, si
+        push si
         call 0x18:0x0
-        shr dx, 1
-        mov ds, dx
-        mov es, dx
-        mov ss, dx
+        pop si
+        shr si, 1
+        mov ds, si
+        mov es, si
+        mov ss, si
         ret
         
 
 [extern eh_c]
 generic_eh:
+        push ds
+        push es
+
         pushad ; save registers
-        push dword[esp + 0x20]
-;        cli
-;        hlt
+
+        mov ax, 0x10
+        mov ds, ax
+        mov es, ax
+
         call eh_c ; our handler
-        pop edx   ; help 
         popad ; restore register
+
+        pop es
+        pop ds
 
         add esp, 8 ; restore our stack: we pushed the error code and interrupt number
         iret       ; adios
@@ -271,11 +280,27 @@ eh_macro   44
 eh_macro   45
 eh_macro   46
 eh_macro   47
+eh_macro   48
+eh_macro   49
+eh_macro   50
+eh_macro   51
+eh_macro   52
+eh_macro   53
+eh_macro   54
+eh_macro   55
+eh_macro   56
+eh_macro   57
+eh_macro   58
+eh_macro   59
+eh_macro   60
+eh_macro   61
+eh_macro   62
+eh_macro   63
 
 global eh_list ; each one of the macros above
 eh_list:
 %assign i 0
-%rep    48
+%rep    64
     dd eh_%+i ; me when the the
 %assign i i+1
 %endrep
