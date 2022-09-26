@@ -18,7 +18,7 @@ Parameters:
 
   | Register | Input |
   | :- | :- |
-  | `ax` | `0x0003` - Service and Routine Number |
+  | `ax` | `0x0001` - Service and Routine Number |
 
 Return values:
   
@@ -31,7 +31,7 @@ Parameters:
 
   | Register | Input |
   | :- | :- |
-  | `ax` | `0x0003` - Service and Routine Number |
+  | `ax` | `0x0002` - Service and Routine Number |
   | `cx` | Cursor position - total character number, not split into rows | 
 
 Return values:

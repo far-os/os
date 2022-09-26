@@ -54,4 +54,4 @@ It also works on real hardware.
 ## OS ABI
 Programs at offset `0x3fc0` on disk will be copied to `0x100000` in memory: and will be executed in a segment where code will appear with origin `0`.
 
-To syscall to the kernel, use `int 0x33`. The service code goes in `ah`, and the subroutine code goes in `al`. To see all services, see [the ABI docs](kernel/syscall/README.md)`.
+To syscall to the kernel, use `int 0x33`. The service code goes in `ah`, and the subroutine code goes in `al`. To see all services, see [the ABI docs](kernel/syscall/README.md).
