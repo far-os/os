@@ -13,6 +13,7 @@ CSDFS (**C**ompact **S**ystem **D**isk **F**ile **S**ystem) is the file system u
 The kernel code is located in `kernel/`, and the boot sector is located in `boot.asm`.
 
 The kernel's files are explained below: 
+- `defs.h`: Definitions - structs, `#define`s, etc
 - `entry.asm`: The extended bootloader which calls `main`. It also contains the IDT as well.
 - `fs.h`: Contains the CSDFS driver.
 - `hwinf.h`: Detecting and identifying detected hardware.
@@ -22,8 +23,11 @@ The kernel's files are explained below:
 - `pic.h`: Utilities for initialising the PIC, masking the PIC, etc.
 - `port.h`: Code to communicate to the I/O ports.
 - `shell.h`: Contains FarSH, the shell.
+- `syscall.h`: Contains code for `syscall`ing.
 - `text.h`: Code for writing to the screen.
 - `util.h`: Miscellaneous utilities, such as `memcpy`, `strcpy`, `memcmp`, etc.
+
+There is also the `syscall/` directory: each header file inside contains a different ABI service.
 
 ## Build instructions
 You will need access to the following tools:
@@ -50,4 +54,4 @@ It also works on real hardware.
 ## OS ABI
 Programs at offset `0x3fc0` on disk will be copied to `0x100000` in memory: and will be executed in a segment where code will appear with origin `0`.
 
-To syscall to the kernel, use `int 0x33`. The service code goes in `ah`, and the subroutine code goes in `al`. To see all services, see ABI.md.
+To syscall to the kernel, use `int 0x33`. The service code goes in `ah`, and the subroutine code goes in `al`. To see all services, see [the ABI docs](kernel/syscall/README.md)`.

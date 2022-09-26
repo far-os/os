@@ -201,14 +201,14 @@ prog:
         mov si, 0x20
         mov ds, si
         mov es, si
-        mov ss, si
+;        mov ss, si
         push si
         call 0x18:0x0
         pop si
         shr si, 1
         mov ds, si
         mov es, si
-        mov ss, si
+;        mov ss, si
         ret
         
 

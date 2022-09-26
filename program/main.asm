@@ -4,22 +4,16 @@
 [section .prog]
 start:
         push ebx
-        push edi
         mov bl, 0x9e ; 9e
-        mov al, 0xcb ; second half of dec bl, also retf
 
         xor ecx, ecx
-        mov cl, 2
-
-        lea edi, [ecx+scc]
-
-        stosb
+        mov cl, 0x5b
 
         jmp short (scc + 1)
 
   scc:
         loop $ ; e2 fe
-        resb 1 ; ret?
+        retf
         ror bl, 2 ; works as the last two bits are 11
         mov al, bl ; 
 
@@ -29,17 +23,17 @@ start:
         lahf
         xchg al, ah
 
-        mov ch, ah
-        mov cl, 0x5b
-
-        push eax
-        xor ax, ax
+        pushad
+        mov esi, hw
+        xor ah, ah
+        mov al, 4
         int 0x33
-        pop eax
+        popad
 
-        pop edi
+;        pop edi
         pop ebx
-        mov cx, 0x50
         jmp scc
 
+  hw:
+        dd "Hello World!", 10
         times 0x40-($-$$) db 0
