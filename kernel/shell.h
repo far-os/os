@@ -2,6 +2,7 @@
 #include "util.h"
 #include "hwinf.h"
 #include "fs.h"
+#include "ata.h"
 // #include "kbd.h"
 // because of cyclic include, we declare what we want
 void cpu_reset();
@@ -37,17 +38,8 @@ void shexec() {
     return;
   } else if (strcmp(combuf, "exec")) {
 //    signed short (*prog)(void) = (signed short (*)()) 0x1dd80;
-    asm volatile ("mov %%cx, %%es\n"
-                  "shr $1, %%cx\n"
-                  "rep movsd\n"
-                  "mov %%cx, %%es" :
-      : "c" (0x20),
-        "S" (0x1dd80),
-        "D" (0x0)
-      : "memory" );
-    signed short k = prog();
-    to_dec(k);
-    strcpy(decbuf, outbuf);
+    read_pio28(0x100000, 0x20, 1, 0);
+    prog();
   } else {
     strcpy(combuf, outbuf);
   }
@@ -78,7 +70,7 @@ void comupd() {
     break;
   }
 
-  char printbuf[20] = "\r!> ";
+  char printbuf[20] = "\r\x13> "; // 0x13 is the !! symbol
   strcpy(combuf, printbuf + 4);
   write_str(printbuf, COLOUR(BLACK, WHITE));
 }

@@ -17,7 +17,7 @@ void sys_0(struct cpu_state *c, unsigned char rout) {
   // Get cursor position
   case 0x01:
     unsigned short x = get_cur();
-    c -> ecx &= (unsigned int) x;
+    c -> ecx = (unsigned int) x;
     break;
 
   // Set cursor position

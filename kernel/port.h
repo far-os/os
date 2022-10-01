@@ -18,7 +18,7 @@ void pbyte_out(unsigned short port, unsigned char data) {
 void idle() {
   pbyte_out(0x80, 0x0); // just passing the time (1-4 microseconds)
 }
-/*
+
 unsigned short pword_in(unsigned short port) {
   unsigned char result;
   asm("in %%dx, %%ax"
@@ -29,9 +29,17 @@ unsigned short pword_in(unsigned short port) {
 
 void pword_out(unsigned short port, unsigned short data) {
   asm("out %%ax, %%dx"
-    : : "a" (result),
+    : : "a" (data),
         "d" (port));
 }
-*/
+
+void rep_insw(unsigned short port, unsigned int length, void *dest) {
+  asm("cld\n"
+      "rep insw\n" :
+   : "c" (length << 1),
+     "d" (port),
+     "D" (dest)
+   : "memory", "cc");
+}
 
 #endif

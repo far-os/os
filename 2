@@ -36,15 +36,14 @@ start:
 
         loop f_row
 
+        call nl_w4 ; new line
+
   reset_cl:
         mov cl, 0x10 ; set loop iterations
 
-        dec eax  ; al = 3, insert special character routine
-        int 0x33 ; inserts a new line
-        inc eax  ; al = 4 again, write character routine
 
         mov bl, dh ; get high nybble of dh - the row counter
-        shr bl, 4
+        shl bl, 4
 
         call print_hex ; prints hex
 
@@ -61,6 +60,7 @@ start:
 
         loop p_row ; loops this for each column
         
+        call nl_w4 ; new line
         add dh, 0x10 ; increment the row counter (dh's high nybble)
         jnc reset_cl ; if the row counter hasn't surpassed 0xf, go on to next row
 
@@ -80,4 +80,12 @@ print_hex:
         
         ret
 
-cp: db "  Code-page 437  ",0xa,0x0 ; heading
+nl_w4: ; new line where al is 4
+
+        dec eax  ; al = 3, insert special character routine
+        int 0x33 ; inserts a new line
+        inc eax  ; al = 4 again, write character routine
+
+        ret
+
+cp: db "  Codepage 437  ",0xa,0x0 ; heading

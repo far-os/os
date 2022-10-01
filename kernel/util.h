@@ -28,7 +28,7 @@ void memcpy(void *src, void *dest, unsigned int amount) {
     : "c" (amount),
       "S" (src),
       "D" (dest)
-    : "memory" );
+    : "memory", "cc" );
     src -= amount;
 }
 
@@ -78,7 +78,7 @@ void memzero(void *dest, unsigned int amount) {
     : "a" ((unsigned char) 0),
       "c" (amount),
       "D" (dest)
-    : "memory" );
+    : "memory", "cc" );
 }
 
 void memrev(char *src, int len, char *dest) {
