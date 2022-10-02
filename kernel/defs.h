@@ -1,6 +1,9 @@
 #ifndef DEFS_H
 #define DEFS_H
 
+#define adj(x) x + 0x100000
+// adjusting pointers
+
 struct cpu_state {
     unsigned int edi;
     unsigned int esi;
