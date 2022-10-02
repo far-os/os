@@ -34,20 +34,46 @@ void sys_0(struct cpu_state *c, unsigned char rout) {
     break;
 
 
-  // Write Character at Cursor
+  // Write character at cursor
   case 0x04:
     char ch, fmt;
     asm volatile ("movb %%ch, %%dl" : "=d" (ch), "=c" (fmt) : "c" (c -> ebx));
     write_cell_cur(ch, fmt); // ch, cl
     break;
 
-  // Write String at Cursor
+  // Write string at cursor
   case 0x05:
     fmt = c -> ebx & 0xff;
     void *address = c -> esi;
-    address += 0x100000; // adjustment
-    write_str(address, fmt);
+    write_str(adj(address), fmt);
     break;
+
+  // Clear Screen
+  case 0x06:
+    clear_scr();
+    break;
+
+  // Clear specific line of screen
+  case 0x07:
+    clear_ln(c -> edx & 0xff);
+    break;
+
+  // Scroll entire screen
+  case 0x08:
+    scroll_scr();
+    break;
+  
+  // Write character at specific location
+  case 0x09:
+    asm volatile ("movb %%ch, %%dl" : "=d" (ch), "=c" (fmt) : "c" (c -> ebx));
+    write_cell(ch, c -> ecx & 0xffff, fmt); // ch, cl
+    break;
+
+  // Write string at specific location
+  case 0x0a:
+    fmt = c -> ebx & 0xff;
+    address = c -> esi;
+    write_str_at(adj(address), c -> ecx & 0xffff, fmt);
 
   default:
     break;

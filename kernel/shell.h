@@ -38,7 +38,7 @@ void shexec() {
     return;
   } else if (strcmp(combuf, "exec")) {
 //    signed short (*prog)(void) = (signed short (*)()) 0x1dd80;
-    read_pio28(0x100000, 0x20, 1, 0);
+    read_pio28(0x100000, KERN_LEN, 1, 0);
     prog();
   } else {
     strcpy(combuf, outbuf);

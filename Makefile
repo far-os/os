@@ -12,7 +12,7 @@ entry.o: kernel/entry.asm
 	nasm $^ -f elf -o $@
 
 kernel.o: kernel/kernel.c $(wildcard kernel/*.h) $(wildcard kernel/syscall/*.h)
-	gcc -falign-functions=1 -fno-stack-protector -ffreestanding -m32 -march=i686 -Wall -c $< -o $@
+	gcc -falign-functions=1 -fno-stack-protector -ffreestanding -m32 -march=i686 -Wall -D"KERN_LEN=$(KERN_SIZE)" -c $< -o $@
 
 
 kernel.entry.o: link.ld entry.o kernel.o

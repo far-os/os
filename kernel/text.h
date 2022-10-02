@@ -92,21 +92,8 @@ void adv_cur() {
 
 void write_cell_cur(char ch, unsigned char style) {
   short cur = get_cur();
-  vram[cur * 2] = ch;
-  vram[cur * 2 + 1] = style;
+  write_cell(ch, cur, style);
   adv_cur();
-}
-
-void write_str_at(char *str, short pos, unsigned char style) {
-  for (int i = 0; str[i] != 0; ++i) {
-    if (str[i] == '\n') {
-      pos += 80;
-      pos -= i;
-      continue;
-    }
-    write_cell(str[i], pos + i, style);
-    if (pos == -1) { set_cur(pos + i + 1); }
-  }
 }
 
 void write_str(char *str, unsigned char style) {
@@ -126,6 +113,13 @@ void write_str(char *str, unsigned char style) {
       break;
     }
   }
+}
+
+void write_str_at(char *str, short pos, unsigned char style) {
+  short x = get_cur();
+  set_cur(pos);
+  write_str(str, style);
+  set_cur(x);
 }
 
 /*void clear_scr() {
