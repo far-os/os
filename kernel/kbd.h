@@ -238,6 +238,14 @@ void indic_light_upd() { // update indicator lights
   ps2_wait();
 }
 
+char alt_code_buf[4];
+int xgg = 0;
+
+void putch(char vf) {
+  combuf[strlen(combuf)] = vf;
+  comupd();
+}
+
 void read_kbd() {
   unsigned char scan = pbyte_in(K_PORT);
   charinv(scan % 0x80);
@@ -270,20 +278,32 @@ void read_kbd() {
       break;
     case 0x38:
       keys -> modifs |= (1 << 6); // lalt
+      xgg = 0;
+      memzero(alt_code_buf, 4);
       break;
-    case 0x37:
+
     case 0x47:
     case 0x48:
     case 0x49:
-    case 0x4a:
     case 0x4b:
     case 0x4c:
     case 0x4d:
-    case 0x4e:
     case 0x4f:
     case 0x50:
     case 0x51:
     case 0x52:
+      if (keys -> modifs & (1 << 6)) {
+        if (xgg < 3) {
+          alt_code_buf[xgg++] = scan_map_en_UK[scan];
+        } else if (xgg > 0) goto altput; // goto? what's the worst that could happen!
+                                         // what do you mean i've angered the programming gods?
+
+        break;
+      }
+
+    case 0x37:
+    case 0x4a:
+    case 0x4e:
     case 0x53:
       if ((keys -> modifs & 0b01010000) == 0b01010000 && scan == 0x53) { // ctrl alt del
         cpu_reset();
@@ -301,8 +321,7 @@ void read_kbd() {
         ascii = scan_map_en_UK[scan];
       }
 
-      combuf[strlen(combuf)] = ascii;
-      comupd();
+      putch(ascii);
       break;
     }
     keys -> modifs &= ~(1 << 7); // TODO: fix
@@ -317,6 +336,15 @@ void read_kbd() {
       break;
     case 0xb8:
       keys -> modifs &= ~(1 << 6); // alt i think
+      
+      altput:
+        if (xgg) {
+          unsigned int fl = to_uint(alt_code_buf);
+          if (fl >= 256) break;
+          putch(fl);
+        }
+
+
       break;
     case 0xe0:
       keys -> modifs |= (1 << 7); // extend

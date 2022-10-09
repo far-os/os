@@ -121,4 +121,17 @@ void to_dec(int input) {
   memrev(dectempbuf, strlen(dectempbuf), decbuf);
 }
 
+unsigned int to_uint(char *input) {
+  unsigned int f = 0;
+  for (int i = 0; i < strlen(input); ++i) {
+    char x = input[i];
+    x -= '0';
+    if (x > 9) break;
+
+    f *= 10;
+    f += (unsigned int) x;
+  }
+  return f;
+}
+
 #endif
