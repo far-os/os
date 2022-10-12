@@ -22,14 +22,15 @@ char outbuf[OUT_LEN];
 void shexec() {
   memzero(outbuf, OUT_LEN);
   if (strcmp(combuf, "info")) {
-    strcpy("FarOS v0.0.1.\n\tVol. label \"________________\"\n\tVol. ID 0x________________\n\tDisk __h\n\tVolume size ", outbuf);
-    memcpy(&(csdfs -> label), outbuf + 27, 16); // memcpy because we need to control the length
+    strcpy("FarOS v0.0.1.\n\t\x10 ____________\n\tVol. label \"________________\"\n\tVol. ID 0x________________\n\tDisk __h\n\tVolume size ", outbuf);
+    memcpy(&(hardware -> vendor), outbuf + 17, 12); // cpu vendor
+    memcpy(&(csdfs -> label), outbuf + 43, 16); // memcpy because we need to control the length
     to_hex(&(csdfs -> vol_id), 16);
-    strcpy(hexbuf, outbuf + 56);
+    strcpy(hexbuf, outbuf + 72);
     to_hex(&(hardware -> bios_disk), 2);
-    strcpy(hexbuf, outbuf + 79);
+    strcpy(hexbuf, outbuf + 95);
     to_dec(csdfs -> fs_size * SECTOR_LEN);
-    strcpy(decbuf, outbuf + 96); 
+    strcpy(decbuf, outbuf + 112); 
   } else if (strcmp(combuf, "reset")) {
     cpu_reset();
   } else if (strcmp(combuf, "clear")) {

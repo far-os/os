@@ -83,6 +83,22 @@ scroll_scr:
 
         ret
 
+[global check_cpuid_avail]
+check_cpuid_avail:
+        pushfd         ; save eflags
+        mov edx, [esp] ; backup eflags
+        btc dword [esp], 21  ; change ID bit - it's only modifiable if cpuid is supported
+        popfd          ; store eflags with changed bit
+
+        pushfd         ; move eflags into eax
+        pop eax        
+
+        cmp eax, edx   ; has the eflags changed since the backup?
+        setne al      ; if so, return 1
+        
+        ret
+
+
 a20_test:
         pushad
         mov esi, 0x00200c ; even address

@@ -21,20 +21,20 @@ void idle() {
 
 unsigned short pword_in(unsigned short port) {
   unsigned char result;
-  asm("in %%dx, %%ax"
+  asm volatile ("in %%dx, %%ax"
     : "=a" (result)
     : "d" (port));
   return result;
 }
 
 void pword_out(unsigned short port, unsigned short data) {
-  asm("out %%ax, %%dx"
+  asm volatile ("out %%ax, %%dx"
     : : "a" (data),
         "d" (port));
 }
 
 void rep_insw(unsigned short port, unsigned int length, void *dest) {
-  asm("cld\n"
+  asm volatile ("cld\n"
       "rep insw\n" :
    : "c" (length << 1),
      "d" (port),

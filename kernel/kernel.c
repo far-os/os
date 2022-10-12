@@ -4,6 +4,7 @@
 #include "ih.h"
 #include "shell.h"
 #include "fs.h"
+#include "hwinf.h"
 
 struct idt_entry {
   unsigned short offset_low; // low 16 bits of offset
@@ -48,6 +49,8 @@ void main() {
 
   pic_init(); // pic
   irq_m_free(0x1); // keyboard
+
+  query_cpuid();
 
   shell();
 
