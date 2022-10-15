@@ -33,8 +33,8 @@ void shexec() {
     to_dec(csdfs -> fs_size * SECTOR_LEN);
     strcpy(decbuf, outbuf + 96); 
   } else if (strcmp(combuf, "cpu")) {
-    fmt = COLOUR(BLUE, B_YELLOW); // fmt
-    strcpy("CPUID.\n\t\x10 ____________\n\tFamily __h, Model __h, Stepping _h", outbuf);
+    fmt = COLOUR(YELLOW, B_GREEN); // fmt
+    strcpy("CPUID.\n\t\x10 ____________\n\tFamily __h, Model __h, Stepping _h\n\tBrand \"________________________________________________\"", outbuf);
     memcpy(&(hardware -> vendor), outbuf + 10, 12); // cpu vendor
 
     to_hex(&(hardware -> c_family), 2); // family
@@ -43,6 +43,10 @@ void shexec() {
     strcpy(hexbuf, outbuf + 42);
     to_hex(&(hardware -> c_stepping), 2); // stepping
     outbuf[56] = hexbuf[1]; // hack
+    
+    if (hardware -> cpuid_ext_leaves >= 0x80000004) {
+      strcpy(&(hardware -> brand), outbuf + 67); // brand string
+    }
   } else if (strcmp(combuf, "reset")) {
     cpu_reset();
   } else if (strcmp(combuf, "clear")) {
