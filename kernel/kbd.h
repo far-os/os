@@ -215,7 +215,7 @@ char scan_map_en_UK_shift[96] = { // scancode map for UK keyboard.
   '\0' // TODO: F12
 };
 
-void charinv(unsigned char sc) {
+static inline void charinv(unsigned char sc) {
   /*if (sc < 0x40) {
     keys -> states_low ^= (1 << sc);
   } else {
@@ -225,7 +225,7 @@ void charinv(unsigned char sc) {
   bitinv(&(keys -> states_low), sc);
 }
 
-void ps2_wait() { // wait for ps2 controller to be ready
+static inline void ps2_wait() { // wait for ps2 controller to be ready
   while ((pbyte_in(0x64) & 0x02) != 0x0);
 }
 
@@ -241,7 +241,7 @@ void indic_light_upd() { // update indicator lights
 char alt_code_buf[4];
 int xgg = 0;
 
-void putch(char vf) {
+static inline void putch(char vf) {
   combuf[strlen(combuf)] = vf;
   comupd();
 }

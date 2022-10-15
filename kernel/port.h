@@ -1,7 +1,7 @@
 #ifndef PORT_H
 #define PORT_H
 
-unsigned char pbyte_in(unsigned short port) {
+static inline unsigned char pbyte_in(unsigned short port) {
   unsigned char result;
   asm volatile ("in %%dx, %%al"
     : "=a" (result)
@@ -9,7 +9,7 @@ unsigned char pbyte_in(unsigned short port) {
   return result;
 }
 
-void pbyte_out(unsigned short port, unsigned char data) {
+static inline void pbyte_out(unsigned short port, unsigned char data) {
   asm volatile ("out %%al, %%dx"
     : : "a" (data),
         "d" (port));
@@ -19,7 +19,7 @@ void idle() {
   pbyte_out(0x80, 0x0); // just passing the time (1-4 microseconds)
 }
 
-unsigned short pword_in(unsigned short port) {
+static inline unsigned short pword_in(unsigned short port) {
   unsigned char result;
   asm volatile ("in %%dx, %%ax"
     : "=a" (result)
@@ -27,13 +27,13 @@ unsigned short pword_in(unsigned short port) {
   return result;
 }
 
-void pword_out(unsigned short port, unsigned short data) {
+static inline void pword_out(unsigned short port, unsigned short data) {
   asm volatile ("out %%ax, %%dx"
     : : "a" (data),
         "d" (port));
 }
 
-void rep_insw(unsigned short port, unsigned int length, void *dest) {
+static inline void rep_insw(unsigned short port, unsigned int length, void *dest) {
   asm volatile ("cld\n"
       "rep insw\n" :
    : "c" (length << 1),

@@ -48,7 +48,7 @@ unsigned char memcmp(void *src, void *dest, unsigned int amount) {
   return o;
 }
 
-unsigned char bittest(void *src, unsigned int bit) {
+static inline unsigned char bittest(void *src, unsigned int bit) {
   unsigned char o;
   asm volatile ("bt %2, (%1)" : 
       "=@ccc" (o)
@@ -58,7 +58,7 @@ unsigned char bittest(void *src, unsigned int bit) {
   return o;
 }
 
-unsigned char bitinv(void *src, unsigned int bit) {
+static inline unsigned char bitinv(void *src, unsigned int bit) {
   unsigned char o;
   asm volatile ("btc %2, (%1)" : 
       "=@ccc" (o)

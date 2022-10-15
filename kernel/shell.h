@@ -20,17 +20,29 @@ char combuf[COM_LEN];
 char outbuf[OUT_LEN];
 
 void shexec() {
+  unsigned char fmt = COLOUR(BLACK, WHITE);
   memzero(outbuf, OUT_LEN);
   if (strcmp(combuf, "info")) {
-    strcpy("FarOS v0.0.1.\n\t\x10 ____________\n\tVol. label \"________________\"\n\tVol. ID 0x________________\n\tDisk __h\n\tVolume size ", outbuf);
-    memcpy(&(hardware -> vendor), outbuf + 17, 12); // cpu vendor
-    memcpy(&(csdfs -> label), outbuf + 43, 16); // memcpy because we need to control the length
+    fmt = COLOUR(RED, B_YELLOW); // fmt
+    strcpy("FarOS v0.0.1.\n\tVol. label \"________________\"\n\tVol. ID 0x________________\n\tDisk __h\n\tVolume size ", outbuf);
+    memcpy(&(csdfs -> label), outbuf + 27, 16); // memcpy because we need to control the length
     to_hex(&(csdfs -> vol_id), 16);
-    strcpy(hexbuf, outbuf + 72);
+    strcpy(hexbuf, outbuf + 56);
     to_hex(&(hardware -> bios_disk), 2);
-    strcpy(hexbuf, outbuf + 95);
+    strcpy(hexbuf, outbuf + 79);
     to_dec(csdfs -> fs_size * SECTOR_LEN);
-    strcpy(decbuf, outbuf + 112); 
+    strcpy(decbuf, outbuf + 96); 
+  } else if (strcmp(combuf, "cpu")) {
+    fmt = COLOUR(BLUE, B_YELLOW); // fmt
+    strcpy("CPUID.\n\t\x10 ____________\n\tFamily __h, Model __h, Stepping _h", outbuf);
+    memcpy(&(hardware -> vendor), outbuf + 10, 12); // cpu vendor
+
+    to_hex(&(hardware -> c_family), 2); // family
+    strcpy(hexbuf, outbuf + 31);
+    to_hex(&(hardware -> c_model), 2); // model
+    strcpy(hexbuf, outbuf + 42);
+    to_hex(&(hardware -> c_stepping), 2); // stepping
+    outbuf[56] = hexbuf[1]; // hack
   } else if (strcmp(combuf, "reset")) {
     cpu_reset();
   } else if (strcmp(combuf, "clear")) {
@@ -38,13 +50,13 @@ void shexec() {
     set_cur(POS(0, 0));
     return;
   } else if (strcmp(combuf, "exec")) {
-//    signed short (*prog)(void) = (signed short (*)()) 0x1dd80;
     read_pio28(0x100000, KERN_LEN, 1, 0);
     prog();
   } else {
+    fmt = COLOUR(MAGENTA, B_CYAN); // fmt
     strcpy(combuf, outbuf);
   }
-  write_str(outbuf, COLOUR(RED, B_YELLOW));
+  write_str(outbuf, fmt);
   line_feed();
 }
 
