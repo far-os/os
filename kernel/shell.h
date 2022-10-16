@@ -3,6 +3,7 @@
 #include "hwinf.h"
 #include "fs.h"
 #include "ata.h"
+#include "defs.h"
 // #include "kbd.h"
 // because of cyclic include, we declare what we want
 void cpu_reset();
@@ -47,6 +48,11 @@ void shexec() {
     if (hardware -> cpuid_ext_leaves >= 0x80000004) {
       strcpy(&(hardware -> brand), outbuf + 67); // brand string
     }
+  } else if (strcmp(combuf, "time")) {
+    fmt = COLOUR(RED, B_CYAN);
+    strcpy("Time since kernel load: _________ms", outbuf);
+    to_dec(countx);
+    strcpy(decbuf, outbuf + 24);
   } else if (strcmp(combuf, "reset")) {
     cpu_reset();
   } else if (strcmp(combuf, "clear")) {

@@ -17,16 +17,17 @@ struct hwinf {
 
   unsigned int apic_pc_brand; // 0xcc48
 
-  unsigned long long int f_flags; // 0xcc4c
-                                  // 0xcc54
+  unsigned int f_flags_edx; // 0xcc4c
+  unsigned int f_flags_ecx; // 0xcc50
+                            // 0xcc54
 } __attribute__((packed));
 
 struct hwinf *hardware = (struct hwinf *) 0xcc00;
 
 extern char check_cpuid_avail();
 
-static inline int chk_cflag (unsigned char f_flag) {
-  return bittest(&(hardware -> f_flags), f_flag);
+static inline int chk_cflag (unsigned char feat) {
+  return bittest(&(hardware -> f_flags_edx), feat);
 }
 
 void query_cpuid() {
@@ -58,16 +59,14 @@ void query_cpuid() {
   asm volatile ("cpuid"
     : "=a" (fms),
       "=b" (hardware -> apic_pc_brand),
-      "=d" (vendbuf[0]),
-      "=c" (vendbuf[1])
+      "=d" (hardware -> f_flags_edx),
+      "=c" (hardware -> f_flags_ecx)
     : "a" (0x00000001));
 
   hardware -> c_stepping = fms & 0xf; // fms[3:0]
   hardware -> c_model = ((fms >> 12) & 0xf0) | ((fms >> 4) & 0x0f); // fms[19:16] : fms[7:4]
   hardware -> c_family = ((fms >> 20) & 0xff) + ((fms >> 8) & 0x0f); // fms[27:20] + fms[11:8]
   
-  memcpy(vendbuf, &(hardware -> f_flags), 8);
-
   if ((hardware -> cpuid_ext_leaves & 0xff) >= 0x04) {
     int brandbuf[12];
     for (int i = 0; i < 12; i += 4) {

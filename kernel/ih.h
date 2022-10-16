@@ -12,6 +12,9 @@ void eh_c(struct cpu_state c, unsigned int i) {
   }
 
   switch (i) {
+  case 0x20:
+    countx++;
+    break;
   case 0x21:
     read_kbd();
     break;

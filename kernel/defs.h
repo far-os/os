@@ -4,6 +4,8 @@
 #define adj(x) x + 0x100000
 // adjusting pointers
 
+unsigned int countx = 0;
+
 struct cpu_state {
     unsigned int edi;
     unsigned int esi;

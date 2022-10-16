@@ -3,3 +3,4 @@ ata0-master: type=disk, path=os.img, mode=flat, cylinders=($DISK_SIZE_HM), heads
 boot: disk
 display_library: x, options=nokeyrepeat
 keyboard: keymap=/usr/share/bochs/keymaps/x11-pc-uk.map
+clock: sync=realtime
