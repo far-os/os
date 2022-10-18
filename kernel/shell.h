@@ -8,7 +8,7 @@
 // because of cyclic include, we declare what we want
 void cpu_reset();
 
-extern signed short prog();
+extern int prog(int arg);
 
 #ifndef SHELL_H
 #define SHELL_H
@@ -59,9 +59,15 @@ void shexec() {
     clear_scr();
     set_cur(POS(0, 0));
     return;
-  } else if (strcmp(combuf, "exec")) {
+  } else if (memcmp(combuf, "exec", 4)) {
     read_pio28(0x100000, KERN_LEN, 1, 0);
-    prog();
+
+    int ar = -1;
+    if (strlen(combuf) >= 5) {
+      ar = to_uint(combuf + 5);
+    }
+
+    prog(ar);
   } else {
     fmt = COLOUR(MAGENTA, B_CYAN); // fmt
     strcpy(combuf, outbuf);

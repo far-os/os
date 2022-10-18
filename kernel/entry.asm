@@ -214,17 +214,23 @@ eh_%1:
 
 [global prog]
 prog:
-        mov si, 0x20
-        mov ds, si
-        mov es, si
-;        mov ss, si
-        push si
+        push ebp
+        mov ebp, esp
+        
+        mov dx, 0x20
+        mov ds, dx
+        mov es, dx
+
+        mov edx, [ebp+8] ; bring forward the parameter
+        push edx
         call 0x18:0x0
-        pop si
-        shr si, 1
-        mov ds, si
-        mov es, si
-;        mov ss, si
+        pop edx
+
+        mov dx, 0x10
+        mov ds, dx
+        mov es, dx
+
+        leave
         ret
         
 
