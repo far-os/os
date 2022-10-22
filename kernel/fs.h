@@ -9,6 +9,7 @@ struct csdfs_superblock {
   unsigned short fs_start; // fs start LBA
   unsigned int fs_size; // fs size, in sectors
   unsigned char media_type; // media type, e.g. 0xa3 is 3½" HD 1.44M floppy
+  unsigned char block_size; // block size in sectors
 } __attribute__((packed));
 
 struct csdfs_superblock *csdfs = (struct csdfs_superblock *) 0x19fc0;

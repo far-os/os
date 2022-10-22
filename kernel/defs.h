@@ -21,11 +21,11 @@ struct cpu_state {
     unsigned int ds;
 } __attribute__((packed)); // registers as returned from pushad
 
-/*struct stack_state {
+struct stack_state {
     unsigned int error_code;
     unsigned int eip;
     unsigned int cs;
     unsigned int eflags;
-} __attribute__((packed)); // stack */
+} __attribute__((packed)); // stack
 
 #endif

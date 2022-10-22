@@ -20,7 +20,6 @@
 
         add bl, 0x10 ; increment backgruond colour
         adc bl, 0x0  ; increment foreground colour, if background overflowed
-
         
         loop f_loop
 

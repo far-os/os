@@ -67,7 +67,13 @@ void shexec() {
       ar = to_uint(combuf + 5);
     }
 
-    prog(ar);
+    int ret = prog(ar);
+    if (ret) {
+      fmt = COLOUR(BLACK, B_RED);
+      strcpy("return code ", outbuf);
+      to_dec(ret);
+      strcpy(decbuf, outbuf + 12);
+    }
   } else {
     fmt = COLOUR(MAGENTA, B_CYAN); // fmt
     strcpy(combuf, outbuf);

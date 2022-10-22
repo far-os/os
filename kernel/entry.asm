@@ -9,6 +9,7 @@ csdfs_superblock: ; the superblock for CSDFS (Compact System Disk FS)
         fs_start: dw KERN_SIZE ; LBA where the fs actually starts
         fs_size: dd (DISK_SIZE_SEC - KERN_SIZE) ; length of disk in sectors
         media_type: db 0x1d ; 1d means standard IDE drive
+        block_size: db 8 * 2 ; doubled because 512 bytes
 
 [section .second_boot]
 [bits 32]
@@ -246,13 +247,13 @@ generic_eh:
         mov es, ax
 
         call eh_c ; our handler
-        popad ; restore register
+        popad
 
         pop es
         pop ds
 
         add esp, 8 ; restore our stack: we pushed the error code and interrupt number
-        iret       ; adios
+        iretd       ; adios
 
 eh_macro    0
 eh_macro    1

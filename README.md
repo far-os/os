@@ -2,7 +2,7 @@
 A simple OS built in nasm and C.
 
 ## CSDFS
-CSDFS (**C**ompact **S**ystem **D**isk **F**ile **S**ystem) is the file system used by FarOS diskettes. The bootable diskettes are organised like this, where each character is one sector:
+CSDFS (**C**ompact **S**ystem **D**isk **F**ile **S**ystem) is the file system used by FarOS disks. The bootable disks are organised like this, where each character is one sector:
 `bBkkkkk...kkffffff....ff`
 - `b` is the boot sector.
 - `B` is the extended boot sector - this contains the CSDFS superblock (64 bytes) and more boot code.
@@ -26,6 +26,7 @@ The kernel's files are explained below:
 - `shell.h`: Contains FarSH, the shell.
 - `syscall.h`: Contains code for `syscall`ing.
 - `text.h`: Code for writing to the screen.
+- `timer.h`: Code to control the PIT.
 - `util.h`: Miscellaneous utilities, such as `memcpy`, `strcpy`, `memcmp`, etc.
 
 There is also the `syscall/` directory: each header file inside contains a different ABI service.
@@ -56,3 +57,11 @@ It also works on real hardware.
 Programs in the sector directly after the kernel on disk will be copied to `0x100000` in memory: and will be executed in a segment where code will appear with origin `0`.
 
 To syscall to the kernel, use `int 0x33`. The service code goes in `ah`, and the subroutine code goes in `al`. To see all services, see [the ABI docs](kernel/syscall/README.md).
+
+### Program errors
+
+| Error Code | Meaning |
+|-|-|
+| `0` | No error |
+| `1` | Program error |
+| `2` | Error caused externally, e.g. a `bound` instruction failing |
