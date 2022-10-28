@@ -234,7 +234,7 @@ void indic_light_upd() { // update indicator lights
   ps2_wait();
   pbyte_out(K_PORT, 0xed);
   ps2_wait();
-  pbyte_out(K_PORT, (keys -> modifs) % 8);
+  pbyte_out(K_PORT, (keys -> modifs) & 0b00000111);
   ps2_wait();
 }
 

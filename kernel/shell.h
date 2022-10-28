@@ -60,7 +60,7 @@ void shexec() {
     set_cur(POS(0, 0));
     return;
   } else if (memcmp(combuf, "exec", 4)) {
-    read_pio28(0x100000, KERN_LEN, 1, 0);
+    read_pio28(0x100000, KERN_LEN, 1, hardware -> boot_disk_p.dev_path[0] & 0x01); // reads disk, has to get master or slave
 
     int ar = -1;
     if (strlen(combuf) >= 5) {

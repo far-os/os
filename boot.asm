@@ -6,6 +6,7 @@
 %define OFFSET 0x1a000 ; the offset at which our kernel is loaded
 
 %define BOOT_DRV 0x0 ; the boot drive location, from gs
+%define DRV_PARAM 0x1 ; the boot drive parameter bock location, from gs
 %define KERN_LEN %!KERN_SIZE - 1 ; the kernel length (15k kernel >:))
 
 %define GDT_LEN 4
@@ -152,6 +153,7 @@ read:
 
     read_hdd:
         mov ah, 0x41 ; check to see if int 13 is supported
+        mov bx, 0x55aa
         int 0x13
         jc read_fdd
 
@@ -167,12 +169,29 @@ read:
 
         jc disk_fail ; in the event of failure
 
+        call write_disk_error
+
+        mov cx, gs ; put gs in ds
+        mov ds, cx
+        mov si, DRV_PARAM ; ds:si = 0cc0h:0001h
+
+        mov byte [ds:si], 0x42 ; say how many bytes we want
+        mov dl, [gs:BOOT_DRV] ; dl needs to contain drive index
+        mov ah, 0x48 ; ah = 0x48, get ext. drive parameters
+        int 0x13
+
+        jc disk_fail
+
+        xor cx, cx ; clean ds
+        mov ds, cx
+
   write_disk_error:
         mov esi, 0xd15c0000 ; blank out bx, add a "d15c" (for disk) so that we know it's the disk code
         movzx si, ah ; move the return status into bl
         call print_hx_32_real ; print return status
 
         ret
+
   disk_fail:
         mov si, disk_error
         call print_16
@@ -187,7 +206,7 @@ kernel_in_progress:
 hdd_test:
         db "Reading from hard disk...",0xd,0xa,0
 invalid_diskette:
-        db 0xd,0xa,"FATAL: The disk does not contain a valid CSDFS file system.",0xd,0xa,0x0 
+        db 0xd,0xa,"FATAL: The disk does not contain a known file system.",0xd,0xa,0x0 
 dap_packet:
         dap_len: db 0x10 ; length of DAP
         reserved: db 0 ; is zero
@@ -217,5 +236,3 @@ seg_init:
         times 510-($-$$) db 0 ; pad to the 510th byte
 
         dw 0xaa55 ; magic number
-
-

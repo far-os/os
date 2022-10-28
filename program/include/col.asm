@@ -24,6 +24,7 @@
         loop f_loop
 
   f_end:
+        popad
         jmp x_end
         
 
