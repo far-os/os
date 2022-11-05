@@ -63,13 +63,16 @@
         jmp x_end ; return
 
 print_hex:
-        push eax ; save eax
-        xor eax, eax ; ax = 0x0100 - Convert nybble to ASCII
-        inc ah
+        mov bh, bl
+        and bh, 0x0f ; gets last nybble
+        or bh, 0x30 ; move into numbers range
+        cmp bh, 0x3a ; does it require a letter?
 
-        int 0x33 ; puts in bh the ascii character - just as needed for the write char
+        jnae print_hex_cont ; if it's a number just move on
 
-        pop eax ; restore ax to 0x0004 - write char
+        add bh, 0x27 ; otherwise, shift it into the letters
+
+  print_hex_cont:
         mov bl, 0x47 ; red back, white fore
         int 0x33 ; prints character
         

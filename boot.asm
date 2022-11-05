@@ -223,7 +223,7 @@ seg_init:
         mov ss, ax
         mov es, ax
 
-        shl al, 1
+        mov ax, 0x20 ; external data segment
 
         mov fs, ax
         mov gs, ax

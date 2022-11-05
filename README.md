@@ -65,3 +65,4 @@ To syscall to the kernel, use `int 0x33`. The service code goes in `ah`, and the
 | `0` | No error |
 | `1` | Program error |
 | `2` | Error caused externally, e.g. a `bound` instruction failing |
+| `15` | Program loading error, e.g. not a binary file |

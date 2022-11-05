@@ -149,21 +149,3 @@ Parameters:
 Return values:
   
   None
-
-## Service `0x01` - Utilities
-
-### Routine `0x00` - Convert nybble to ASCII
-Parameters:
-
-  | Register | Input |
-  | :- | :- |
-  | `ax` | `0x0100` - Service and Routine Number |
-  | `bl` | Number to convert - only the low nybble is used, the high nybble is ignored |
-
-Return values:
-
-  | Register | Input |
-  | :- | :- |
-  | `bh` | Output ascii character |
-
-

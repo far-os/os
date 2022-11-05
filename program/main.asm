@@ -1,6 +1,17 @@
 [org 0]
 [bits 32]
 
+[section .prog_h] ; file header
+        magic: db "FARb" ; magic number
+        length: jmp short end ; length mov
+        arch: dw 0xa86  ; program architecture: ends in 86 for x86
+                        ; starts with 3 for 386, 4 for 486, etc until 6 for 686
+                        ; a for pentium with ia32
+                        ; 10 for pentium with x86_64
+        error_handler: dd x_eh ; error handler, return here with error code in ea
+        end:
+
+
 [section .prog]
 start:
         push ebp
@@ -22,11 +33,10 @@ start:
 
   x_end:
         xor eax, eax ; no error
-
+   
+   x_eh:
         leave
         retf
-
-    x_panic: db "panic!",0
 
   j_table_data:
         dd j_table         ; lower bound

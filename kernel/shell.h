@@ -44,10 +44,15 @@ void shexec() {
     strcpy(hexbuf, outbuf + 42);
     to_hex(&(hardware -> c_stepping), 2); // stepping
     outbuf[56] = hexbuf[1]; // hack
-    
     if (hardware -> cpuid_ext_leaves >= 0x80000004) {
       strcpy(&(hardware -> brand), outbuf + 67); // brand string
     }
+//  } else if (strcmp(combuf, "disk")) {
+//    fmt = COLOUR(GREEN, B_WHITE);
+//    strcpy(outbuf,
+  } else if (strcmp(combuf, "help")) {
+    fmt = COLOUR(BLUE, B_MAGENTA);
+    strcpy("\tinfo\n\tcpu\n\thelp\n\ttime\n\treset\n\tclear\n\texec <u32>", outbuf);
   } else if (strcmp(combuf, "time")) {
     fmt = COLOUR(RED, B_CYAN);
     strcpy("Time since kernel load: _________ms", outbuf);
@@ -60,6 +65,12 @@ void shexec() {
     set_cur(POS(0, 0));
     return;
   } else if (memcmp(combuf, "exec", 4)) {
+    /*if (!memcmp(hardware -> boot_disk_p.itrf_type, "ATA", 3)) { // check if ata device
+      fmt = COLOUR(BLACK, B_RED);
+      strcpy("FATAL: not an ATA device, is instead ________", outbuf);
+      strcpy(hardware -> boot_disk_p.itrf_type, outbuf + 37);
+    }*/
+
     read_pio28(0x100000, KERN_LEN, 1, hardware -> boot_disk_p.dev_path[0] & 0x01); // reads disk, has to get master or slave
 
     int ar = -1;

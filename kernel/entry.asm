@@ -184,7 +184,7 @@ protected:
         db 0x10 ; base (bits 16-23)
         db 10011010b ; 1st flags and type flags (access byte)
         db 11001111b ; 2nd flags and limit (upper 4 bits)
-        db 0x0 ; db 0x0
+        db 0x0 ; base (upper 8 bits)
 
   gdt_progd_seg:
         ; flags identical to data, except base is on the 1 MiB mark
@@ -193,7 +193,7 @@ protected:
         db 0x10 ; base (bits 16-23)
         db 10010010b ; 1st flags and type flags (access byte)
         db 11001111b ; 2nd flags and limit (upper 4 bits)
-        db 0x0 ; db 0x0
+        db 0x0 ; base (upper 8 bits)
   
 [section .text]
 [bits 32]
@@ -218,19 +218,34 @@ prog:
         push ebp
         mov ebp, esp
         
-        mov dx, 0x20
+        mov dx, fs
         mov ds, dx
         mov es, dx
 
+        ; test for magic
+        push edi
+        mov eax, "FARb"
+        xor edi, edi
+        scasd
+        jne program_fail
+        pop edi
+
         mov edx, [ebp+8] ; bring forward the parameter
         push edx
-        call 0x18:0x0
+        call 0x18:4 ; will be jumped away
         pop edx
 
         mov dx, 0x10
         mov ds, dx
         mov es, dx
 
+        jmp program_succ
+
+ program_fail:
+        pop edi
+        mov al, 15 ; error code 0xf
+        movzx eax, al
+ program_succ:
         leave
         ret
         
