@@ -1,0 +1,16 @@
+#include "defs.h"
+
+#ifndef CONFIG_H
+#define CONFIG_H
+
+#define CONFIG_MAGIC 0xc091fa2b
+// read config file
+
+struct config_qi {
+  unsigned int qi_magic; // should be 0xc091fa2b
+  struct sector_box exec;
+} __attribute__((packed));
+
+struct config_qi *disk_config = (struct config_qi *) 0xc800;
+
+#endif

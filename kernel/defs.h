@@ -6,6 +6,26 @@
 
 unsigned int countx = 0;
 
+struct keystates { /* a 104-bit struct containing data */
+  /*
+    bit 0 set: scroll lock
+    bit 1 set: num lock
+    bit 2 set: caps lock
+    bit 3 set: shift held
+    bit 4 set: ctrl held
+    bit 5 set: meta held
+    bit 6 set: alt held
+    bit 7 set: waiting for another scancode in a multi-scancode key
+  */
+  unsigned char modifs;
+
+  /*
+    the following two comprise a 96-bit value, where each bit is whether that key is held
+  */
+  unsigned long long int states_low;
+  unsigned int states_high;
+} __attribute__((packed));
+
 struct cpu_state {
   unsigned int edi;
   unsigned int esi;
@@ -36,6 +56,11 @@ struct farb_header {
 } __attribute__((packed));
 
 struct farb_header __seg_fs *prog_head = 0;
+
+struct sector_box { // a pointer to a place of disk
+  unsigned int lba; // lba of start
+  unsigned char len; // length
+} __attribute__((packed));
 
 #endif
 

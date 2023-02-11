@@ -1,4 +1,6 @@
 #include "text.h"
+#include "ata.h"
+#include "config.h"
 #include "defs.h"
 #include "util.h"
 #include "pic.h"
@@ -57,6 +59,13 @@ void main() {
   irq_m_free(0x1); // keyboard
 
   query_cpuid();
+
+  read_pio28(disk_config, KERN_LEN, 1, hardware -> boot_disk_p.dev_path[0] & 0x01); // reads disk for config, has to get master or slave
+ 
+  // magic check
+  if (disk_config -> qi_magic != CONFIG_MAGIC) {
+    write_str("\tWarn: bad config, invalid magic\n", COLOUR(BLACK, B_RED)); 
+  }
 
   shell();
 

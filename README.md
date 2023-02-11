@@ -14,6 +14,7 @@ The kernel code is located in `kernel/`, and the boot sector is located in `boot
 
 The kernel's files are explained below: 
 - `ata.h`: Contains the ATA disk driver
+- `config.h`: Contains code to handle the configuration file.
 - `defs.h`: Definitions - structs, `#define`s, etc
 - `entry.asm`: The extended bootloader which calls `main`. It also contains the IDT as well.
 - `fs.h`: Contains the CSDFS driver.

@@ -3,9 +3,12 @@
 #include "hwinf.h"
 #include "fs.h"
 #include "ata.h"
+#include "config.h"
 #include "defs.h"
 // #include "kbd.h"
 // because of cyclic include, we declare what we want
+
+struct keystates *keys;
 void cpu_reset();
 
 extern int prog(int arg);
@@ -52,12 +55,19 @@ void shexec() {
 //    strcpy(outbuf,
   } else if (strcmp(combuf, "help")) {
     fmt = COLOUR(BLUE, B_MAGENTA);
-    strcpy("\tinfo\n\tcpu\n\thelp\n\ttime\n\treset\n\tclear\n\texec <u32>", outbuf);
+    strcpy("\tinfo\n\tcpu\n\thelp\n\ttime\n\tindic\n\treset\n\tclear\n\texec <u32>\n\trconfig", outbuf);
   } else if (strcmp(combuf, "time")) {
     fmt = COLOUR(RED, B_CYAN);
     strcpy("Time since kernel load: _________ms", outbuf);
     to_dec(countx);
     strcpy(decbuf, outbuf + 24);
+  } else if (strcmp(combuf, "indic")) {
+    fmt = COLOUR(GREEN, RED);
+    // indicators
+    strcpy("scroll: 0\nnum: 0\ncaps: 0", outbuf);
+    if (bittest(&(keys -> modifs), 0)) { outbuf[8]++; } // scroll
+    if (bittest(&(keys -> modifs), 1)) { outbuf[15]++; } // num
+    if (bittest(&(keys -> modifs), 2)) { outbuf[23]++; } // caps
   } else if (strcmp(combuf, "reset")) {
     cpu_reset();
   } else if (strcmp(combuf, "clear")) {
@@ -71,7 +81,7 @@ void shexec() {
       strcpy(hardware -> boot_disk_p.itrf_type, outbuf + 37);
     }*/
 
-    read_pio28(0x100000, KERN_LEN, 1, hardware -> boot_disk_p.dev_path[0] & 0x01); // reads disk, has to get master or slave
+    read_pio28(0x100000, disk_config -> exec.lba, disk_config -> exec.len, hardware -> boot_disk_p.dev_path[0] & 0x01); // reads disk, has to get master or slave
 
     int ar = -1;
     if (strlen(combuf) >= 5) {
@@ -85,6 +95,11 @@ void shexec() {
       to_dec(ret);
       strcpy(decbuf, outbuf + 12);
     }
+  } else if (strcmp(combuf, "rconfig")) {
+    fmt = COLOUR(BLACK, B_YELLOW); // fmt
+    strcpy("config.qi\n\tProgram at lba sector 0x__", outbuf);
+    to_hex(&(disk_config -> exec.lba), 2);
+    strcpy(hexbuf, outbuf + 35);
   } else {
     fmt = COLOUR(MAGENTA, B_CYAN); // fmt
     strcpy(combuf, outbuf);
