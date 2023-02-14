@@ -9,6 +9,7 @@
 #include "fs.h"
 #include "hwinf.h"
 #include "timer.h"
+#include "memring.h"
 
 struct idt_entry {
   unsigned short offset_low; // low 16 bits of offset
@@ -52,6 +53,8 @@ void main() {
   asm volatile ("sti"); // set interrupt (opposite of cli)
 
   pic_init(); // pic
+  
+  mem_init(); // init memory
 
   irq_m_free(0x0); // timer
   init_timer(get_divisor(1000));

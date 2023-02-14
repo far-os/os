@@ -4,6 +4,7 @@
 #include "fs.h"
 #include "ata.h"
 #include "config.h"
+#include "memring.h"
 #include "defs.h"
 // #include "kbd.h"
 // because of cyclic include, we declare what we want
@@ -25,28 +26,23 @@ char outbuf[OUT_LEN];
 
 void shexec() {
   unsigned char fmt = COLOUR(BLACK, WHITE);
-  memzero(outbuf, OUT_LEN);
+  char *outbuf = malloc(OUT_LEN);
   if (strcmp(combuf, "info")) {
     fmt = COLOUR(RED, B_YELLOW); // fmt
     strcpy("FarOS v0.0.1.\n\tVol. label \"________________\"\n\tVol. ID 0x________________\n\tDisk __h\n\tVolume size ", outbuf);
     memcpy(&(csdfs -> label), outbuf + 27, 16); // memcpy because we need to control the length
-    to_hex(&(csdfs -> vol_id), 16);
-    strcpy(hexbuf, outbuf + 56);
-    to_hex(&(hardware -> bios_disk), 2);
-    strcpy(hexbuf, outbuf + 79);
-    to_dec(csdfs -> fs_size * SECTOR_LEN);
-    strcpy(decbuf, outbuf + 96); 
+    to_hex(&(csdfs -> vol_id), 16, outbuf + 56);
+    to_hex(&(hardware -> bios_disk), 2, outbuf + 79);
+    to_dec(csdfs -> fs_size * SECTOR_LEN, outbuf + 96);
   } else if (strcmp(combuf, "cpu")) {
     fmt = COLOUR(YELLOW, B_GREEN); // fmt
     strcpy("CPUID.\n\t\x10 ____________\n\tFamily __h, Model __h, Stepping _h\n\tBrand \"________________________________________________\"", outbuf);
     memcpy(&(hardware -> vendor), outbuf + 10, 12); // cpu vendor
 
-    to_hex(&(hardware -> c_family), 2); // family
-    strcpy(hexbuf, outbuf + 31);
-    to_hex(&(hardware -> c_model), 2); // model
-    strcpy(hexbuf, outbuf + 42);
-    to_hex(&(hardware -> c_stepping), 2); // stepping
-    outbuf[56] = hexbuf[1]; // hack
+    to_hex(&(hardware -> c_family), 2, outbuf + 31); // family
+    to_hex(&(hardware -> c_model), 2, outbuf + 42); // model
+    to_hex(&(hardware -> c_stepping), 2, outbuf + 55); // stepping
+    outbuf[55] = ' '; // hack
     if (hardware -> cpuid_ext_leaves >= 0x80000004) {
       strcpy(&(hardware -> brand), outbuf + 67); // brand string
     }
@@ -59,8 +55,7 @@ void shexec() {
   } else if (strcmp(combuf, "time")) {
     fmt = COLOUR(RED, B_CYAN);
     strcpy("Time since kernel load: _________ms", outbuf);
-    to_dec(countx);
-    strcpy(decbuf, outbuf + 24);
+    to_dec(countx, outbuf + 24);
   } else if (strcmp(combuf, "indic")) {
     fmt = COLOUR(GREEN, RED);
     // indicators
@@ -92,19 +87,18 @@ void shexec() {
     if (ret) {
       fmt = COLOUR(BLACK, B_RED);
       strcpy("return code ", outbuf);
-      to_dec(ret);
-      strcpy(decbuf, outbuf + 12);
+      to_dec(ret, outbuf + 12);
     }
   } else if (strcmp(combuf, "rconfig")) {
     fmt = COLOUR(BLACK, B_YELLOW); // fmt
     strcpy("config.qi\n\tProgram at lba sector 0x__", outbuf);
-    to_hex(&(disk_config -> exec.lba), 2);
-    strcpy(hexbuf, outbuf + 35);
+    to_hex(&(disk_config -> exec.lba), 2, outbuf + 35);
   } else {
     fmt = COLOUR(MAGENTA, B_CYAN); // fmt
     strcpy(combuf, outbuf);
   }
   write_str(outbuf, fmt);
+  free(outbuf, OUT_LEN);
   line_feed();
 }
 
@@ -138,7 +132,7 @@ void comupd() {
 
 void shell() {
 //  set_cur(POS(0, 1)); // new line
-  char *headbuf = "FarSH. (c) 2022.\n"; // the underscores are placeholder for the memcpy
+  char *headbuf = "FarSH. (c) 2023.\n"; // the underscores are placeholder for the memcpy
   write_str(headbuf, COLOUR(BLUE, B_RED));
 //  write_hex(buf, -1);
   

@@ -1,4 +1,9 @@
 #include "text.h"
+// #include "memring.h"
+// cyclic, declare what we want
+
+void *malloc(unsigned int);
+void free(void *, unsigned int);
 
 #ifndef UTIL_H
 #define UTIL_H
@@ -72,13 +77,17 @@ unsigned char strcmp(char *src, char *dest) {
   return memcmp(src, dest, strlen(src)) && strlen(src) == strlen(dest);
 }
 
-void memzero(void *dest, unsigned int amount) {
+static inline void memset(void *dest, unsigned int amount, unsigned char val) {
   asm volatile ("cld\n"
                 "rep stosb\n":
-    : "a" ((unsigned char) 0),
+    : "a" (val),
       "c" (amount),
       "D" (dest)
     : "memory", "cc" );
+}
+
+static inline void memzero(void *dest, unsigned int amount) {
+  memset(dest, amount, 0);
 }
 
 void memrev(char *src, int len, char *dest) {
@@ -97,28 +106,22 @@ char nybble_to_hex(int num) {
   return (char) value;
 }
 
-char hexbuf[17];
-
-void to_hex(void *data, unsigned char i_len) {
-  memzero(hexbuf, 17);
+void to_hex(void *data, unsigned char i_len, char *out) {
   char temporary;
   for (int j = 0; j < i_len; ++j) {
     temporary = ((char *) data)[((i_len-1) / 2) - (j / 2)];
     temporary >>= (!(j % 2) * 4);
-    hexbuf[j] = nybble_to_hex(temporary);
+    out[j] = nybble_to_hex(temporary);
   }
 }
 
-char decbuf[12];
-char dectempbuf[12];
-
-void to_dec(int input) {
-  memzero(dectempbuf, 12);
-  memzero(decbuf, 12);
+void to_dec(int input, char *out) {
+  char * dectempbuf = malloc(12);
   for (int i = input, j = 0; i > 0; i /= 10, ++j) {
     dectempbuf[j] = (char) (i % 10) + '0';
   }
-  memrev(dectempbuf, strlen(dectempbuf), decbuf);
+  memrev(dectempbuf, strlen(dectempbuf), out);
+  free(dectempbuf, 12);
 }
 
 unsigned int to_uint(char *input) {
