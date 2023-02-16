@@ -1,3 +1,4 @@
+#include "text.h"
 #include "util.h"
 
 #ifndef MEMRING_H
@@ -22,13 +23,14 @@ void mem_init() {
 
 void * malloc(unsigned int len) {
   unsigned int blocks = (len / MEMBLK_SIZE) + !!(len % MEMBLK_SIZE); // amount of blocks taken up
-  unsigned int run;
-  for (run = 0; run < MEMRING_LEN; ++run) { // loop through all memrings
+  unsigned int run = 0;
+  for (; run < MEMRING_LEN; ++run) { // loop through all memrings
     if (memring[run]) { continue; }
+
     else {
       char not_blank = 0;
       for (int i = 0; i < blocks; ++i) {
-        not_blank |= memring[i]; // if any one of them are not zero, not blank will not be zero
+        not_blank |= memring[run + i]; // if any one of them are not zero, not blank will not be zero
       }
       if (!not_blank) { break; }
     }

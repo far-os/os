@@ -1,7 +1,8 @@
 #ifndef DEFS_H
 #define DEFS_H
 
-#define adj(x) x + 0x100000
+#define adj(x) (x) + 0x100000
+#define badj(x) (x) - 0x100000
 // adjusting pointers
 
 unsigned int countx = 0;

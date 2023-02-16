@@ -31,6 +31,9 @@ start:
     cp_437:
         %include "program/include/cp437.asm"
 
+    mem_test:
+        %include "program/include/mem.asm"
+
   x_end:
         xor eax, eax ; no error
    
@@ -44,5 +47,6 @@ start:
 j_table:
         dd col_test
         dd cp_437
+        dd mem_test
 
   j_table_end:

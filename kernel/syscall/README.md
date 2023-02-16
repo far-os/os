@@ -149,3 +149,32 @@ Parameters:
 Return values:
   
   None
+
+## Service `0x01` - Memory management
+
+### Routine `0x00` - Allocate memory
+Parameters:
+
+  | Register | Input |
+  | :- | :- |
+  | `ax` | `0x0100` - Service and Routine Number |
+  | `ecx` | Number of bytes to allocate |
+
+Return values:
+  
+  | Register | Input |
+  | :- | :- |
+  | `edi` | The address of the allocated memory | 
+
+### Routine `0x01` - Free memory
+Parameters:
+
+  | Register | Input |
+  | :- | :- |
+  | `ax` | `0x0101` - Service and Routine Number |
+  | `ecx` | Number of bytes that have been allocated |
+  | `edi` | The address of the allocated memory | 
+
+Return values:
+  
+  None
