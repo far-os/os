@@ -32,7 +32,7 @@ struct drv_param {
   
   unsigned char checksum; // checksum: the 2's complement of the 8-bit sum of all the bytes from 1eh through 40h.
                           // thus, the 8-bit sum of all bytes 1eh through 41h is 0. (including the checksum)
-};
+} __attribute__((packed));
 
 struct hwinf {
   unsigned char bios_disk; // 0xcc00

@@ -73,6 +73,26 @@ static inline unsigned char bitinv(void *src, unsigned int bit) {
   return o;
 }
 
+static inline unsigned char bitclear(void *src, unsigned int bit) {
+  unsigned char o;
+  asm volatile ("btr %2, (%1)" : 
+      "=@ccc" (o)
+      : "r" (src),
+        "ir" (bit)
+      : "cc" );
+  return o;
+}
+
+static inline unsigned char bitset(void *src, unsigned int bit) {
+  unsigned char o;
+  asm volatile ("bts %2, (%1)" : 
+      "=@ccc" (o)
+      : "r" (src),
+        "ir" (bit)
+      : "cc" );
+  return o;
+}
+
 unsigned char strcmp(char *src, char *dest) {
   return memcmp(src, dest, strlen(src)) && strlen(src) == strlen(dest);
 }
@@ -114,6 +134,17 @@ void to_hex(void *data, unsigned char i_len, char *out) {
     out[j] = nybble_to_hex(temporary);
   }
 }
+
+void to_filled_dec(int input, char *out, unsigned char size, char fill) {
+  char * dectempbuf = malloc(size);
+  memset(dectempbuf, size, fill);
+  for (int i = input, j = 0; i > 0; i /= 10, ++j) {
+    dectempbuf[j] = (char) (i % 10) + '0';
+  }
+  memrev(dectempbuf, strlen(dectempbuf), out);
+  free(dectempbuf, size);
+}
+
 
 void to_dec(int input, char *out) {
   char * dectempbuf = malloc(12);

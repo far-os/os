@@ -6,6 +6,7 @@
 #include "config.h"
 #include "memring.h"
 #include "defs.h"
+#include "cmos.h"
 // #include "kbd.h"
 // because of cyclic include, we declare what we want
 
@@ -54,8 +55,24 @@ void shexec() {
     strcpy("\tinfo\n\tcpu\n\thelp\n\ttime\n\tindic\n\treset\n\tclear\n\texec <u32>\n\trconfig", outbuf);
   } else if (strcmp(combuf, "time")) {
     fmt = COLOUR(RED, B_CYAN);
-    strcpy("Time since kernel load: _________ms", outbuf);
+    strcpy("Time since kernel load: _________ms\n", outbuf);
     to_dec(countx, outbuf + 24);
+    struct timestamp *t = malloc(sizeof(struct timestamp));
+    read_rtc(t);
+
+    strcpy(weekmap[t -> weekday - 1], outbuf + strlen(outbuf));
+    outbuf[strlen(outbuf)] = ' ';
+    to_dec(t -> year, outbuf + strlen(outbuf));
+    outbuf[strlen(outbuf)] = '-';
+    to_filled_dec(t -> month, outbuf + strlen(outbuf), 2, '0');
+    outbuf[strlen(outbuf)] = '-';
+    to_filled_dec(t -> date, outbuf + strlen(outbuf), 2, '0');
+    outbuf[strlen(outbuf)] = ' ';
+    to_filled_dec(t -> hour, outbuf + strlen(outbuf), 2, '0');
+    outbuf[strlen(outbuf)] = ':';
+    to_filled_dec(t -> minute, outbuf + strlen(outbuf), 2, '0');
+    outbuf[strlen(outbuf)] = ':';
+    to_filled_dec(t -> second, outbuf + strlen(outbuf), 2, '0');
   } else if (strcmp(combuf, "indic")) {
     fmt = COLOUR(GREEN, RED);
     // indicators
