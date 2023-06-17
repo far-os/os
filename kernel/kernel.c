@@ -10,6 +10,7 @@
 #include "hwinf.h"
 #include "timer.h"
 #include "memring.h"
+#include "err.h"
 
 struct idt_entry {
   unsigned short offset_low; // low 16 bits of offset
@@ -67,7 +68,10 @@ void main() {
  
   // magic check
   if (disk_config -> qi_magic != CONFIG_MAGIC) {
-    write_str("\tWarn: bad config, invalid magic\n", COLOUR(BLACK, B_RED)); 
+    msg(INFO, 0, hardware -> boot_disk_p.itrf_type);
+    line_feed();
+    msg(KERNERR, 18, "Bad kernel config: invalid magic"); 
+    line_feed();
   }
 
   shell();

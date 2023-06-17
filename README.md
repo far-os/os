@@ -65,5 +65,9 @@ To syscall to the kernel, use `int 0x33`. The service code goes in `ah`, and the
 |-|-|
 | `0` | No error |
 | `1` | Program error |
-| `2` | Error caused externally, e.g. a `bound` instruction failing |
+| `2` | Error caused externally |
+| `7` | `bound` instruction failing (Program not found) |
+| `11` | Unknown value/command |
 | `15` | Program loading error, e.g. not a binary file |
+| `18` | Error in configuration |
+| `23` | Buffer space exceeded (Command too long) |

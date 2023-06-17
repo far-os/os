@@ -7,6 +7,7 @@
 #include "memring.h"
 #include "defs.h"
 #include "cmos.h"
+#include "err.h"
 // #include "kbd.h"
 // because of cyclic include, we declare what we want
 
@@ -101,18 +102,17 @@ void shexec() {
     }
 
     int ret = prog(ar);
-    if (ret) {
-      fmt = COLOUR(BLACK, B_RED);
-      strcpy("return code ", outbuf);
-      to_dec(ret, outbuf + 12);
+    if (ret == 7) {
+      msg(PROGERR, 7, "Program not found");
     }
   } else if (strcmp(combuf, "rconfig")) {
     fmt = COLOUR(BLACK, B_YELLOW); // fmt
     strcpy("config.qi\n\tProgram at lba sector 0x__", outbuf);
     to_hex(&(disk_config -> exec.lba), 2, outbuf + 35);
   } else {
-    fmt = COLOUR(MAGENTA, B_CYAN); // fmt
-    strcpy(combuf, outbuf);
+    msg(WARN, 11, "Unknown command");
+    //fmt = COLOUR(MAGENTA, B_CYAN); // fmt
+    //strcpy(combuf, outbuf);
   }
   write_str(outbuf, fmt);
   free(outbuf, OUT_LEN);
@@ -121,7 +121,9 @@ void shexec() {
 
 void comupd() {
   if (strlen(combuf) >= COM_LEN) {
-    write_str(" - FATAL: Command too long\n", COLOUR(BLACK, B_RED));
+    line_feed();
+    msg(PROGERR, 23, "Command too long");
+    line_feed();
     memzero(combuf, COM_LEN);
   }
 
