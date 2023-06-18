@@ -29,7 +29,9 @@ char outbuf[OUT_LEN];
 void shexec() {
   unsigned char fmt = COLOUR(BLACK, WHITE);
   char *outbuf = malloc(OUT_LEN);
-  if (strcmp(combuf, "info")) {
+  if (strlen(combuf) == 0) {
+    return;
+  } else if (strcmp(combuf, "info")) {
     fmt = COLOUR(RED, B_YELLOW); // fmt
     strcpy("FarOS v0.0.1.\n\tVol. label \"________________\"\n\tVol. ID 0x________________\n\tDisk __h\n\tVolume size ", outbuf);
     memcpy(&(csdfs -> label), outbuf + 27, 16); // memcpy because we need to control the length
@@ -48,9 +50,6 @@ void shexec() {
     if (hardware -> cpuid_ext_leaves >= 0x80000004) {
       strcpy(&(hardware -> brand), outbuf + 67); // brand string
     }
-//  } else if (strcmp(combuf, "disk")) {
-//    fmt = COLOUR(GREEN, B_WHITE);
-//    strcpy(outbuf,
   } else if (strcmp(combuf, "help")) {
     fmt = COLOUR(BLUE, B_MAGENTA);
     strcpy("\tinfo\n\tcpu\n\thelp\n\ttime\n\tindic\n\treset\n\tclear\n\texec <u32>\n\trconfig", outbuf);
@@ -88,11 +87,11 @@ void shexec() {
     set_cur(POS(0, 0));
     return;
   } else if (memcmp(combuf, "exec", 4)) {
-    /*if (!memcmp(hardware -> boot_disk_p.itrf_type, "ATA", 3)) { // check if ata device
-      fmt = COLOUR(BLACK, B_RED);
-      strcpy("FATAL: not an ATA device, is instead ________", outbuf);
-      strcpy(hardware -> boot_disk_p.itrf_type, outbuf + 37);
-    }*/
+    if (disk_config -> qi_magic != CONFIG_MAGIC) {
+      msg(KERNERR, 4, "Disk is unavailable");
+      line_feed();
+      return;
+    }
 
     read_pio28(0x100000, disk_config -> exec.lba, disk_config -> exec.len, hardware -> boot_disk_p.dev_path[0] & 0x01); // reads disk, has to get master or slave
 
@@ -106,13 +105,12 @@ void shexec() {
       msg(PROGERR, 7, "Program not found");
     }
   } else if (strcmp(combuf, "rconfig")) {
-    fmt = COLOUR(BLACK, B_YELLOW); // fmt
-    strcpy("config.qi\n\tProgram at lba sector 0x__", outbuf);
+    fmt = COLOUR(BLUE, B_YELLOW); // fmt
+    strcpy("config.qi\n\tProgram at lba sector 0x__\n\t", outbuf);
+    strcpy(hardware -> boot_disk_p.itrf_type, outbuf + strlen(outbuf));
     to_hex(&(disk_config -> exec.lba), 2, outbuf + 35);
   } else {
     msg(WARN, 11, "Unknown command");
-    //fmt = COLOUR(MAGENTA, B_CYAN); // fmt
-    //strcpy(combuf, outbuf);
   }
   write_str(outbuf, fmt);
   free(outbuf, OUT_LEN);

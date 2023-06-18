@@ -96,6 +96,26 @@ void write_cell_cur(char ch, unsigned char style) {
   adv_cur();
 }
 
+void write_str_at(char *str, short pos, unsigned char style) {
+  for (int i = 0; str[i] != 0; ++i) {
+    switch (str[i]) {
+    case '\n':
+      line_feed();
+      break;
+    case '\t':
+      tab();
+      break;
+    case '\r':
+      carriage_return();
+      break;
+    default:
+      write_cell(str[i], pos + (short) i, style);
+      break;
+    }
+  }
+}
+
+// mostly duplicate code
 void write_str(char *str, unsigned char style) {
   for (int i = 0; str[i] != 0; ++i) {
     switch (str[i]) {
@@ -113,13 +133,6 @@ void write_str(char *str, unsigned char style) {
       break;
     }
   }
-}
-
-void write_str_at(char *str, short pos, unsigned char style) {
-  short x = get_cur();
-  set_cur(pos);
-  write_str(str, style);
-  set_cur(x);
 }
 
 /*void clear_scr() {

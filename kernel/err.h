@@ -32,6 +32,15 @@ void msg(enum MSG_TYPE type, int sig, char* supp) {
   write_cell_cur(msg_symbs[type], msg_style);
   adv_cur();
   write_str(supp, msg_style);
+
+  if (sig != 0) {
+    char *sigbuf = malloc(12);
+    to_dec(sig, sigbuf);
+    short pos = ((get_cur() / VGA_WIDTH) + 1) * VGA_WIDTH;
+    pos -= strlen(sigbuf);
+    write_str_at(sigbuf, pos, msg_style);
+    free(sigbuf, 12);
+  }
 }
 
 #endif

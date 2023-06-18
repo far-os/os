@@ -14,14 +14,17 @@ The kernel code is located in `kernel/`, and the boot sector is located in `boot
 
 The kernel's files are explained below: 
 - `ata.h`: Contains the ATA disk driver
+- `cmos.h`: Functions for reading the time from the CMOS RTC
 - `config.h`: Contains code to handle the configuration file.
 - `defs.h`: Definitions - structs, `#define`s, etc
+- `err.h`: Error message system - warnings, panics, etc
 - `entry.asm`: The extended bootloader which calls `main`. It also contains the IDT as well.
 - `fs.h`: Contains the CSDFS driver.
 - `hwinf.h`: Detecting and identifying detected hardware.
 - `ih.h`: Interrupt handling functions.
 - `kbd.h`: Utilities for reading input from the 8042 PS/2 device.
 - `kernel.c`: The kernel itself.
+- `memring.h`: Memory management: malloc and free
 - `pic.h`: Utilities for initialising the PIC, masking the PIC, etc.
 - `port.h`: Code to communicate to the I/O ports.
 - `shell.h`: Contains FarSH, the shell.
@@ -66,6 +69,7 @@ To syscall to the kernel, use `int 0x33`. The service code goes in `ah`, and the
 | `0` | No error |
 | `1` | Program error |
 | `2` | Error caused externally |
+| `4` | Storage medium unavailable |
 | `7` | `bound` instruction failing (Program not found) |
 | `11` | Unknown value/command |
 | `15` | Program loading error, e.g. not a binary file |
