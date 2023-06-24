@@ -92,21 +92,22 @@ void read_rtc(struct timestamp *ts) {
 
 void time(void *tbuf) {
   // get two readings - check if they are equal. a very naive method.
-  //struct timestamp *temp = malloc(sizeof(struct timestamp));
+  struct timestamp *temp = malloc(sizeof(struct timestamp));
   struct timestamp *next = malloc(sizeof(struct timestamp));
 
-  //read_rtc(temp);
+  read_rtc(temp);
   read_rtc(next);
 
-/*  while (!memcmp(temp, next, sizeof(struct timestamp))) {
+  while (!memcmp(temp, next, sizeof(struct timestamp))) {
     free(temp, sizeof(struct timestamp));
     temp = next;
     next = malloc(sizeof(struct timestamp));
     read_rtc(next);
-  } */
+  }
 
-//  free(temp, sizeof(struct timestamp));
+  free(temp, sizeof(struct timestamp));
   memcpy(next, tbuf, sizeof(struct timestamp));
+  free(next, sizeof(struct timestamp));
 }
 
 #endif

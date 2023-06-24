@@ -30,7 +30,7 @@ void shexec() {
   unsigned char fmt = COLOUR(BLACK, WHITE);
   char *outbuf = malloc(OUT_LEN);
   if (strlen(combuf) == 0) {
-    return;
+    goto shell_clean;
   } else if (strcmp(combuf, "info")) {
     fmt = COLOUR(RED, B_YELLOW); // fmt
     strcpy("FarOS v0.0.1.\n\tVol. label \"________________\"\n\tVol. ID 0x________________\n\tDisk __h\n\tVolume size ", outbuf);
@@ -58,7 +58,7 @@ void shexec() {
     strcpy("Time since kernel load: _________ms\n", outbuf);
     to_dec(countx, outbuf + 24);
     struct timestamp *t = malloc(sizeof(struct timestamp));
-    read_rtc(t);
+    time(t);
 
     strcpy(weekmap[t -> weekday - 1], outbuf + strlen(outbuf));
     outbuf[strlen(outbuf)] = ' ';
@@ -73,6 +73,8 @@ void shexec() {
     to_filled_dec(t -> minute, outbuf + strlen(outbuf), 2, '0');
     outbuf[strlen(outbuf)] = ':';
     to_filled_dec(t -> second, outbuf + strlen(outbuf), 2, '0');
+
+    free(t, sizeof(struct timestamp));
   } else if (strcmp(combuf, "indic")) {
     fmt = COLOUR(GREEN, RED);
     // indicators
@@ -85,12 +87,12 @@ void shexec() {
   } else if (strcmp(combuf, "clear")) {
     clear_scr();
     set_cur(POS(0, 0));
-    return;
+    goto shell_clean;
   } else if (memcmp(combuf, "exec", 4)) {
     if (disk_config -> qi_magic != CONFIG_MAGIC) {
       msg(KERNERR, 4, "Disk is unavailable");
       line_feed();
-      return;
+      goto shell_clean;
     }
 
     read_pio28(0x100000, disk_config -> exec.lba, disk_config -> exec.len, hardware -> boot_disk_p.dev_path[0] & 0x01); // reads disk, has to get master or slave
@@ -113,8 +115,10 @@ void shexec() {
     msg(WARN, 11, "Unknown command");
   }
   write_str(outbuf, fmt);
-  free(outbuf, OUT_LEN);
   line_feed();
+
+shell_clean:
+  free(outbuf, OUT_LEN);
 }
 
 void comupd() {
