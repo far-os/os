@@ -6,6 +6,7 @@
 // adjusting pointers
 
 unsigned int countx = 0;
+const short int FAR_VER = 0x003;
 
 struct keystates { /* a 104-bit struct containing data */
   /*

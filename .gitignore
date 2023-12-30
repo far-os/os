@@ -1,3 +1,5 @@
 *.bin
+*.qi
 *.img
 *.o
+util/bin

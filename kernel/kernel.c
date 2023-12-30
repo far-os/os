@@ -31,7 +31,15 @@ void main() {
 //  clear_scr();
 
   set_cur(POS(0, 0)); // cursor at top left
-  write_str("Welcome to the Kernel!\n", COLOUR(CYAN, B_YELLOW)); // welcome message
+   
+  char * vbf = malloc(32);
+  strcpy("Welcome to ", vbf);
+  to_ver_string(FAR_VER, vbf + strlen(vbf));
+  vbf[strlen(vbf)] = '!';
+  write_str(vbf, COLOUR(MAGENTA, B_GREEN)); // welcome message
+  line_feed();
+  free(vbf, 32);
+  
 //  cp437(); // codepage 437: for testing purposes
 
   __attribute__((aligned(0x10)))

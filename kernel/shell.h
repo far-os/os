@@ -33,7 +33,7 @@ void shexec() {
     goto shell_clean;
   } else if (strcmp(combuf, "info")) {
     fmt = COLOUR(RED, B_YELLOW); // fmt
-    strcpy("FarOS v0.0.1.\n\tVol. label \"________________\"\n\tVol. ID 0x________________\n\tDisk __h\n\tVolume size ", outbuf);
+    strcpy("FarOS Kernel:\n\tVol. label \"________________\"\n\tVol. ID 0x________________\n\tDisk __h\n\tVolume size ", outbuf);
     memcpy(&(csdfs -> label), outbuf + 27, 16); // memcpy because we need to control the length
     to_hex(&(csdfs -> vol_id), 16, outbuf + 56);
     to_hex(&(hardware -> bios_disk), 2, outbuf + 79);
@@ -52,7 +52,10 @@ void shexec() {
     }
   } else if (strcmp(combuf, "help")) {
     fmt = COLOUR(BLUE, B_MAGENTA);
-    strcpy("\tinfo\n\tcpu\n\thelp\n\ttime\n\tindic\n\treset\n\tclear\n\texec <u32>\n\trconfig", outbuf);
+    strcpy("\tinfo\n\tcpu\n\thelp\n\ttime\n\tindic\n\treset\n\tclear\n\texec <u32>\n\tver\n\trconfig", outbuf);
+  } else if (strcmp(combuf, "ver")) {
+    fmt = COLOUR(CYAN, B_YELLOW);
+    to_ver_string(FAR_VER, outbuf);
   } else if (strcmp(combuf, "time")) {
     fmt = COLOUR(RED, B_CYAN);
     strcpy("Time since kernel load: _________ms\n", outbuf);
@@ -153,7 +156,7 @@ void comupd() {
 
 void shell() {
 //  set_cur(POS(0, 1)); // new line
-  char *headbuf = "FarSH. (c) 2023.\n"; // the underscores are placeholder for the memcpy
+  char *headbuf = "Kernel Executive Shell. (c) 2022-4.\n"; // the underscores are placeholder for the memcpy
   write_str(headbuf, COLOUR(BLUE, B_RED));
 //  write_hex(buf, -1);
   

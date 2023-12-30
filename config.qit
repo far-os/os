@@ -1,0 +1,8 @@
+## config.qi ##
+
+block exec ## executable block ##
+  int32 sector : [e$KERN_SIZE + 0x1];
+  int8  len    : 0x1;
+endblock
+
+!align 0x200

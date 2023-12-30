@@ -27,13 +27,18 @@ prog.bin: program/main.asm $(program/include/*.asm)
 boot.kern.bin: boot.bin kernel.bin
 	cat $^ > $@
 
-disk_config.bin: disk_config.asm
-	nasm $< -f bin -o $@
+./util/bin/qic:
+	mkdir ./util/bin
+	cargo build --manifest-path=./util/qic/Cargo.toml --release
+	cp ./util/qic/target/release/qic ./util/bin
 
-os.img: boot.kern.bin disk_config.bin prog.bin
+config.qi: ./util/bin/qic config.qit
+	$^
+
+os.img: boot.kern.bin config.qi prog.bin
 	dd if=/dev/zero of=$@ bs=512K count=$(DISK_SIZE_HM)
 	dd if=$< of=$@ conv=notrunc
-	dd if=disk_config.bin of=$@ bs=512 conv=notrunc seek=$(KERN_SIZE)
+	dd if=config.qi of=$@ bs=512 conv=notrunc seek=$(KERN_SIZE)
 	dd if=prog.bin of=$@ bs=512 conv=notrunc seek=$$(( $(KERN_SIZE) + 1 ))
 
 qemu: os.img
@@ -43,4 +48,6 @@ bochs: os.img .bochsrc
 	$@ -q
 
 clean:
-	rm -f *.bin *.o *.img
+	cargo clean --manifest-path=./util/qic/Cargo.toml
+	rm -rf ./util/bin
+	rm -f *.qi *.bin *.o *.img

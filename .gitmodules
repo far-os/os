@@ -1,0 +1,3 @@
+[submodule "util/qic"]
+	path = util/qic
+	url = https://github.com/far-os/qic

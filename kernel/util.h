@@ -1,4 +1,5 @@
 #include "text.h"
+#include "defs.h"
 // #include "memring.h"
 // cyclic, declare what we want
 
@@ -148,11 +149,22 @@ void to_filled_dec(int input, char *out, unsigned char size, char fill) {
 
 void to_dec(int input, char *out) {
   char * dectempbuf = malloc(12);
-  for (int i = input, j = 0; i > 0; i /= 10, ++j) {
-    dectempbuf[j] = (char) (i % 10) + '0';
+  if (!input) {
+    dectempbuf[0] = '0';
+  } else {
+    for (int i = input, j = 0; i > 0; i /= 10, ++j) {
+      dectempbuf[j] = (char) (i % 10) + '0';
+    }
   }
   memrev(dectempbuf, strlen(dectempbuf), out);
   free(dectempbuf, 12);
+}
+
+void to_ver_string(short int ver, char * vbuf) {
+  strcpy("FarOS v_._._\0\0", vbuf);
+  to_dec((ver >> 8) & 0xf, vbuf + 7);
+  to_dec((ver >> 4) & 0xf, vbuf + 9);
+  to_dec(ver & 0xf, vbuf + 11);
 }
 
 unsigned int to_uint(char *input) {
