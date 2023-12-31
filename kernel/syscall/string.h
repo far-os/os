@@ -74,6 +74,7 @@ void sys_0(struct cpu_state *c, unsigned char rout) {
     fmt = c -> ebx & 0xff;
     address = c -> esi;
     write_str_at(adj(address), c -> ecx & 0xffff, fmt);
+    break;
 
   default:
     break;

@@ -34,7 +34,7 @@ void main() {
    
   char * vbf = malloc(32);
   strcpy("Welcome to ", vbf);
-  to_ver_string(FAR_VER, vbf + strlen(vbf));
+  to_ver_string(curr_ver, vbf + strlen(vbf));
   vbf[strlen(vbf)] = '!';
   write_str(vbf, COLOUR(MAGENTA, B_GREEN)); // welcome message
   line_feed();

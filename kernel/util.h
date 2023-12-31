@@ -160,11 +160,13 @@ void to_dec(int input, char *out) {
   free(dectempbuf, 12);
 }
 
-void to_ver_string(short int ver, char * vbuf) {
-  strcpy("FarOS v_._._\0\0", vbuf);
-  to_dec((ver >> 8) & 0xf, vbuf + 7);
-  to_dec((ver >> 4) & 0xf, vbuf + 9);
-  to_dec(ver & 0xf, vbuf + 11);
+void to_ver_string(struct far_ver * ver, char * vbuf) {
+  strcpy("FarOS v", vbuf);
+  to_dec(ver -> major, vbuf + strlen(vbuf));
+  vbuf[strlen(vbuf)] = '.';
+  to_dec(ver -> minor, vbuf + strlen(vbuf));
+  vbuf[strlen(vbuf)] = '.';
+  to_dec(ver -> patch, vbuf + strlen(vbuf));
 }
 
 unsigned int to_uint(char *input) {

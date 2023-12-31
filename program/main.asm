@@ -19,11 +19,48 @@ start:
 
         mov edx, [ebp+12] ; retreive parameter - this is a far call so +12 not +8
 
+        test edx, edx
+        jz com_amount
+        dec edx
+
         lea eax, [j_table+edx*4] ; gets location in jump table
         bound eax, [j_table_data] ; test if eax is within bounds
         jmp dword [eax]
 
 
+    com_amount:
+        pushad
+
+        mov bl, 0x4b ; cyan fore, red back
+
+        mov edx, j_table_end
+        lea edx, [edx - j_table]
+        shr edx, 2
+        
+        mov ax, 0x0100 ; malloc
+        xor ecx, ecx
+        mov cl, 16 ; 16 bytes
+        int 0x33 ; exec
+
+        inc ah ; itoa (0x0200)
+        int 0x33 ; exec
+
+        mov esi, edi ; will be able to write string
+        xor ax, ax
+        mov al, 0x05 ; string call
+        int 0x33
+
+        mov esi, com_amnt_str
+        int 0x33
+
+        mov ax, 0x0101 ; free
+        int 0x33
+
+        popad
+        jmp x_end
+
+    com_amnt_str:
+        db " commands available", 0x0
  
     col_test:
         %include "program/include/col.asm"

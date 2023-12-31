@@ -6,7 +6,20 @@
 // adjusting pointers
 
 unsigned int countx = 0;
-const short int FAR_VER = 0x003;
+
+struct far_ver {
+  unsigned char major;
+  unsigned char minor;
+  unsigned char patch;
+  unsigned char build;
+} __attribute__((packed));
+
+struct far_ver * curr_ver = &((struct far_ver) {
+  .major = 0,
+  .minor = 0,
+  .patch = 3,
+  .build = 1,
+});
 
 struct keystates { /* a 104-bit struct containing data */
   /*

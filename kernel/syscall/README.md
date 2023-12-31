@@ -136,18 +136,18 @@ Return values:
   
   None
 
-### Routine `0x0a` - Write String at Cursor
+### Routine `0x0a` - Write String at Location
 Parameters:
 
   | Register | Input |
   | :- | :- |
   | `ax` | `0x000a` - Service and Routine Number |
   | `esi` | Address of null-terminated string to print |
-  | `bl` | Formatting - bits 0-2 forground colour, bit 3 foreground intensity, bit 4-6 background colour, bit 7 blink | 
+  | `bl` | Formatting - bits 0-2 forground colour, bit 3 foreground intensity, bit 4-6 background colour, bit 7 blink |
   | `cx` | Location on screen to print at |
 
 Return values:
-  
+
   None
 
 ## Service `0x01` - Memory management
@@ -178,3 +178,20 @@ Parameters:
 Return values:
   
   None
+
+## Service `0x02` - Util functions
+
+### Routine `0x00` - Integer to ASCII
+Parameters:
+
+  | Register | Input |
+  | :- | :- |
+  | `ax` | `0x0200` - Service and Routine Number |
+  | `edx` | Number to convert |
+  | `edi` | Buffer location |
+
+Return values:
+
+  | `[edi]` | ASCII representation of integer |
+
+

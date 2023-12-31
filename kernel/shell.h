@@ -55,7 +55,9 @@ void shexec() {
     strcpy("\tinfo\n\tcpu\n\thelp\n\ttime\n\tindic\n\treset\n\tclear\n\texec <u32>\n\tver\n\trconfig", outbuf);
   } else if (strcmp(combuf, "ver")) {
     fmt = COLOUR(CYAN, B_YELLOW);
-    to_ver_string(FAR_VER, outbuf);
+    to_ver_string(curr_ver, outbuf);
+    strcpy(" build ", outbuf + strlen(outbuf));
+    to_dec(curr_ver -> build, outbuf + strlen(outbuf));
   } else if (strcmp(combuf, "time")) {
     fmt = COLOUR(RED, B_CYAN);
     strcpy("Time since kernel load: _________ms\n", outbuf);
@@ -101,7 +103,7 @@ void shexec() {
     read_pio28(0x100000, disk_config -> exec.lba, disk_config -> exec.len, hardware -> boot_disk_p.dev_path[0] & 0x01); // reads disk, has to get master or slave
 
     int ar = -1;
-    if (strlen(combuf) >= 5) {
+    if (strlen(combuf) > 5) {
       ar = to_uint(combuf + 5);
     }
 
