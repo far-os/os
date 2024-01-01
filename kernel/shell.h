@@ -113,9 +113,11 @@ void shexec() {
     }
   } else if (strcmp(combuf, "rconfig")) {
     fmt = COLOUR(BLUE, B_YELLOW); // fmt
-    strcpy("config.qi\n\tProgram at lba sector 0x__\n\t", outbuf);
-    strcpy(hardware -> boot_disk_p.itrf_type, outbuf + strlen(outbuf));
+    strcpy("config.qi\n\tProgram at lba sector 0x__, ", outbuf);
     to_hex(&(disk_config -> exec.lba), 2, outbuf + 35);
+    to_dec(disk_config -> exec.len, outbuf + strlen(outbuf));
+    strcpy(" sector(s)\n\t", outbuf + strlen(outbuf));
+    strcpy(hardware -> boot_disk_p.itrf_type, outbuf + strlen(outbuf));
   } else {
     msg(WARN, 11, "Unknown command");
   }
