@@ -109,9 +109,9 @@ void shexec() {
 
     int ret = prog(ar);
     if (ret == 7) {
-      msg(PROGERR, 9, "Program not found");
+      msg(PROGERR, ret, "Program not found");
     } else if (ret == 9) {
-      msg(KERNERR, 9, "Program executed illegal instruction");
+      msg(KERNERR, ret, "Program executed illegal instruction");
     }
   } else if (strcmp(combuf, "rconfig")) {
     fmt = COLOUR(BLUE, B_YELLOW); // fmt

@@ -6,18 +6,21 @@
 #ifndef IH_H
 #define IH_H
 
+static inline void retto_progeh(struct stack_state *s) {
+  if (s -> cs != 0x08) { // if not called by kernel
+    s -> eip = prog_head -> eh_ptr; // set eip to error handler
+  }
+}
+
 void eh_c(struct cpu_state c, unsigned int i, struct stack_state s) {
   switch (i) {
   case 0x05: // #BR - Bound
     c.eax = 7; // returns an error code, indicating the bound was not in range
-    goto retto_progeh;
+    retto_progeh(&s);
     break;
   case 0x06: // #UD - Illegal instruction
     c.eax = 9;
-  retto_progeh:
-    if (s.cs != 0x08) { // if not called by kernel
-      s.eip = prog_head -> eh_ptr; // set eip to error handler
-    }
+    retto_progeh(&s);
     break;
   case 0x20: // timer
     countx++; // increment millisecond counter
