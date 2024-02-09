@@ -18,7 +18,7 @@ struct far_ver * curr_ver = &((struct far_ver) {
   .major = 0,
   .minor = 0,
   .patch = 3,
-  .build = 2,
+  .build = 3,
 });
 
 struct keystates { /* a 104-bit struct containing data */

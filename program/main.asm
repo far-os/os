@@ -82,6 +82,13 @@ start:
     mem_test:
         %include "program/include/mem.asm"
 
+    mmx_out:
+        %include "program/include/mmx.asm"
+
+    death:
+        ud2
+        jmp x_end
+
   x_end:
         xor eax, eax ; no error
    
@@ -96,5 +103,7 @@ j_table:
         dd col_test
         dd cp_437
         dd mem_test
+        dd mmx_out
+        dd death
 
   j_table_end:

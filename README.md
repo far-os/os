@@ -71,6 +71,7 @@ To syscall to the kernel, use `int 0x33`. The service code goes in `ah`, and the
 | `2` | Error caused externally |
 | `4` | Storage medium unavailable |
 | `7` | `bound` instruction failing (Program not found) |
+| `9` | Illegal instruction (#UD exception) |
 | `11` | Unknown value/command |
 | `15` | Program loading error, e.g. not a binary file |
 | `18` | Error in configuration |
