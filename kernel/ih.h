@@ -2,6 +2,7 @@
 #include "kbd.h"
 #include "defs.h"
 #include "syscall.h"
+#include "cmos.h"
 
 #ifndef IH_H
 #define IH_H
@@ -23,7 +24,9 @@ void eh_c(struct cpu_state c, unsigned int i, struct stack_state s) {
     retto_progeh(&s);
     break;
   case 0x20: // timer
-    countx++; // increment millisecond counter
+    if (!(++countx % 100)) {
+      adv_time(curr_time);
+    } // increment centisecond counter
     break;
   case 0x21: // PS/2 keyboard
     read_kbd(); // send to the keyboard

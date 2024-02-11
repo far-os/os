@@ -3,7 +3,7 @@
 
 # Disk size in units of 512KiB (Half MiB)
 export DISK_SIZE_HM := 1
-export KERN_SIZE := 32
+export KERN_SIZE := 40
 
 boot.bin: boot.asm
 	nasm $^ -f bin -o $@

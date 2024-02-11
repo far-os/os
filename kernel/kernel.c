@@ -65,8 +65,9 @@ void main() {
   
   mem_init(); // init memory
 
+  time(curr_time);
   irq_m_free(0x0); // timer
-  init_timer(get_divisor(1000));
+  init_timer(get_divisor(100));
 
   irq_m_free(0x1); // keyboard
 

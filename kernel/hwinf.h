@@ -87,7 +87,7 @@ void query_cpuid() {
     : "a" (0x80000000)
     : "ebx", "ecx", "edx");
 
-  // get family/model/steping and feature flags
+  // get family/model/stepping and feature flags
   unsigned int fms;
   asm volatile ("cpuid"
     : "=a" (fms),
@@ -101,8 +101,8 @@ void query_cpuid() {
   hardware -> c_family = ((fms >> 20) & 0xff) + ((fms >> 8) & 0x0f); // fms[27:20] + fms[11:8]
   
   if ((hardware -> cpuid_ext_leaves & 0xff) >= 0x04) {
-    int brandbuf[12];
-    for (int i = 0; i < 12; i += 4) {
+    unsigned int brandbuf[12];
+    for (unsigned int i = 0; i < 12; i += 4) {
       asm volatile ("cpuid"
         : "=a" (brandbuf[i]),
           "=b" (brandbuf[i + 1]),

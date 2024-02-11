@@ -13,7 +13,7 @@
 #define TIMER_CPORT 0x43
 
 // get the divisor - the amount the time needs to count down from - from a number in hz
-static inline unsigned short get_divisor(int freq) {
+static inline unsigned short get_divisor(unsigned int freq) {
   return (unsigned short) (PIT_FREQ_HZ / freq);
 }
 

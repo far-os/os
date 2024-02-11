@@ -60,26 +60,25 @@ void shexec() {
     to_dec(curr_ver -> build, outbuf + strlen(outbuf));
   } else if (strcmp(combuf, "time")) {
     fmt = COLOUR(RED, B_CYAN);
-    strcpy("Time since kernel load: _________ms\n", outbuf);
+    strcpy("Time since kernel load: _________cs\n", outbuf);
     to_dec(countx, outbuf + 24);
-    struct timestamp *t = malloc(sizeof(struct timestamp));
-    time(t);
 
-    strcpy(weekmap[t -> weekday - 1], outbuf + strlen(outbuf));
-    outbuf[strlen(outbuf)] = ' ';
-    to_dec(t -> year, outbuf + strlen(outbuf));
-    outbuf[strlen(outbuf)] = '-';
-    to_filled_dec(t -> month, outbuf + strlen(outbuf), 2, '0');
-    outbuf[strlen(outbuf)] = '-';
-    to_filled_dec(t -> date, outbuf + strlen(outbuf), 2, '0');
-    outbuf[strlen(outbuf)] = ' ';
-    to_filled_dec(t -> hour, outbuf + strlen(outbuf), 2, '0');
-    outbuf[strlen(outbuf)] = ':';
-    to_filled_dec(t -> minute, outbuf + strlen(outbuf), 2, '0');
-    outbuf[strlen(outbuf)] = ':';
-    to_filled_dec(t -> second, outbuf + strlen(outbuf), 2, '0');
+    if (curr_time -> weekday) { // if weekday isn't valid (probably zero)
+      strcpy(weekmap[curr_time -> weekday], outbuf + strlen(outbuf));
+      outbuf[strlen(outbuf)] = ' ';
+    }
 
-    free(t, sizeof(struct timestamp));
+    to_dec(curr_time -> year, outbuf + strlen(outbuf));
+    outbuf[strlen(outbuf)] = '-';
+    to_filled_dec(curr_time -> month, outbuf + strlen(outbuf), 2, '0');
+    outbuf[strlen(outbuf)] = '-';
+    to_filled_dec(curr_time -> date, outbuf + strlen(outbuf), 2, '0');
+    outbuf[strlen(outbuf)] = ' ';
+    to_filled_dec(curr_time -> hour, outbuf + strlen(outbuf), 2, '0');
+    outbuf[strlen(outbuf)] = ':';
+    to_filled_dec(curr_time -> minute, outbuf + strlen(outbuf), 2, '0');
+    outbuf[strlen(outbuf)] = ':';
+    to_filled_dec(curr_time -> second, outbuf + strlen(outbuf), 2, '0');
   } else if (strcmp(combuf, "indic")) {
     fmt = COLOUR(GREEN, RED);
     // indicators

@@ -45,7 +45,7 @@ void * malloc(unsigned int len) {
 
 void free(void * ptr, unsigned int len) {
   unsigned int blocks = (len / MEMBLK_SIZE) + !!(len % MEMBLK_SIZE); // amount of blocks taken up
-  memzero((int) ptr / MEMBLK_SIZE, blocks);
+  memzero((unsigned int) ptr / MEMBLK_SIZE, blocks);
 }
 
 #endif
