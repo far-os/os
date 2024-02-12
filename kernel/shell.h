@@ -60,11 +60,14 @@ void shexec() {
     to_dec(curr_ver -> build, outbuf + strlen(outbuf));
   } else if (strcmp(combuf, "time")) {
     fmt = COLOUR(RED, B_CYAN);
-    strcpy("Time since kernel load: _________cs\n", outbuf);
-    to_dec(countx, outbuf + 24);
+    strcpy("Time since kernel load: ", outbuf);
+    to_dec(countx / 100, outbuf + strlen(outbuf));
+    outbuf[strlen(outbuf)] = '.';
+    to_dec(countx % 100, outbuf + strlen(outbuf));
+    strcpy("s\n", outbuf + strlen(outbuf));
 
     if (curr_time -> weekday) { // if weekday isn't valid (probably zero)
-      strcpy(weekmap[curr_time -> weekday], outbuf + strlen(outbuf));
+      strcpy(weekmap[curr_time -> weekday - 1], outbuf + strlen(outbuf));
       outbuf[strlen(outbuf)] = ' ';
     }
 

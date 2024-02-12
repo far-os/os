@@ -77,8 +77,9 @@ void read_rtc(struct timestamp *ts) {
   ts -> year    = (unsigned int) get_cmos_reg(RTC_YR);
   unsigned char century = get_cmos_reg(RTC_CENT);
 
-  if (ts -> weekday >= 7) {
+  if (!ts -> weekday || ts -> weekday > 7) {
     msg(INFO, 12, "Invalid weekday");
+    line_feed();
     ts -> weekday = 0;
   }
   
@@ -100,6 +101,7 @@ void read_rtc(struct timestamp *ts) {
 
   if (century < 19) {
     msg(INFO, 12, "Invalid century or before 1900 - assuming year 20xx");
+    line_feed();
     century = 20;
   }
 
@@ -133,18 +135,18 @@ unsigned char days_per_mo[13] = {29, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30,
 
 void adv_time(struct timestamp *ts) {
   // unholy horrors
-  if (!(++ts -> second % 60)) {
+  if (++ts -> second >= 60) {
     ts -> second = 0;
-    if (!(++ts -> minute % 60)) {
+    if (++ts -> minute >= 60) {
       ts -> minute = 0;
-      if (!(++ts -> hour % 24)) {
+      if (++ts -> hour >= 24) {
         ts -> hour = 0;
         if (ts -> weekday) {
           ts -> weekday = (ts -> weekday % 7) + 1;
         }
-        if (!(++ts -> date % days_per_mo[ts -> month == 2 ? !IS_LEAP_YR(ts -> year) * 2 : ts -> month] + 1)) {
+        if (++ts -> date > days_per_mo[ts -> month == 2 ? !IS_LEAP_YR(ts -> year) * 2 : ts -> month]) {
           ts -> date = 1;
-          if (!(++ts -> month % 13)) {
+          if (++ts -> month > 12) {
             ts -> month = 1;
             ++ts -> year;
           }
