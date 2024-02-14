@@ -74,8 +74,13 @@ void carriage_return() {
 }
 
 void tab() {
+  short i = get_cur() / 8;
+  set_cur((i + 1) * 8);
+}
+
+void v_tab() {
   short i = get_cur();
-  set_cur(i + 8);
+  set_cur(i + VGA_WIDTH);
 }
 
 void write_cell(char ch, short pos, unsigned char style) {
@@ -97,7 +102,7 @@ void write_cell_cur(char ch, unsigned char style) {
 }
 
 void write_str_at(char *str, short pos, unsigned char style) {
-  for (int i = 0; str[i] != 0; ++i) {
+  for (short i = 0; str[i] != 0; ++i) {
     switch (str[i]) {
     case '\n':
       line_feed();
@@ -108,8 +113,11 @@ void write_str_at(char *str, short pos, unsigned char style) {
     case '\r':
       carriage_return();
       break;
+    case '\v':
+      v_tab();
+      break;
     default:
-      write_cell(str[i], pos + (short) i, style);
+      write_cell(str[i], pos + i, style);
       break;
     }
   }
@@ -127,6 +135,9 @@ void write_str(char *str, unsigned char style) {
       break;
     case '\r':
       carriage_return();
+      break;
+    case '\v':
+      v_tab();
       break;
     default:
       write_cell_cur(str[i], style);

@@ -81,7 +81,7 @@ char scan_map_en_UK[96] = { // scancode map for UK keyboard.
   '\0', // TODO: F7
   '\0', // TODO: F8
   '\0', // TODO: F9
-  '\0', // TODO: F10
+  '\0', // shift+f10 => clrscr
   '\0', // NUMLCK
   '\0', // SCRLLCK
   '7', // KEYPAD
@@ -173,7 +173,7 @@ char scan_map_en_UK_shift[96] = { // scancode map for UK keyboard.
   '\0', // TODO: F7
   '\0', // TODO: F8
   '\0', // TODO: F9
-  '\0', // TODO: F10
+  '\0', // F10: shift+f10 to clear screen
   '\0', // NUMLCK
   '\0', // SCRLLCK
   '7', // KEYPAD
@@ -207,7 +207,7 @@ static inline void charinv(unsigned char sc) {
 }
 
 static inline void ps2_wait() { // wait for ps2 controller to be ready
-  while ((pbyte_in(0x64) & 0x02) != 0x0);
+  while (pbyte_in(0x64) & 0x02);
 }
 
 
@@ -221,6 +221,8 @@ void indic_light_upd() { // update indicator lights
 
 char alt_code_buf[4];
 int xgg = 0;
+
+unsigned char quitting_prog = 0;
 
 static inline void putch(char vf) {
   combuf[strlen(combuf)] = vf;
@@ -263,6 +265,14 @@ void read_kbd() {
       memzero(alt_code_buf, 4);
       break;
 
+    case 0x44: // shift-f10
+      if (keys -> modifs & (1 << 3)) {
+        clear_scr();
+        set_cur(0);
+        comupd();
+      }
+      break;
+
     case 0x47:
     case 0x48:
     case 0x49:
@@ -291,9 +301,17 @@ void read_kbd() {
         break;
       }
       if (!(keys -> modifs & (1 << 1)) || keys -> modifs & (1 << 7)) {
-        break; // TODO: Cursor keys
+        if (scan == 0x48) {
+          // up_key
+          sh_hist_restore();
+        }
+        break; // TODO: down, left, right cursor keys
       }
     default:
+      if (scan == 0x2e && keys -> modifs & (1 << 4)) { // ctrl-c
+        sh_ctrl_c();
+        break;
+      }
       char ascii;
       char is_letter = scan_map_en_UK[scan] >= 'a' && scan_map_en_UK[scan] <= 'z';
       if (!!(keys -> modifs & 0b00001000) != ((keys -> modifs & 0b00000100) && is_letter)) {

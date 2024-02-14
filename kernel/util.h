@@ -23,8 +23,8 @@ void free(void *, unsigned int);
 }*/
 
 int strlen(char *str) {
-  int i = 0;
-  for (; str[i] != 0; ++i);
+  int i = -1;
+  while (str[++i]);
   return i;
 }
 

@@ -30,6 +30,10 @@ void eh_c(struct cpu_state c, unsigned int i, struct stack_state s) {
     break;
   case 0x21: // PS/2 keyboard
     read_kbd(); // send to the keyboard
+    if (quitting_prog) {
+      quitting_prog = 0;
+      retto_progeh(&s);
+    }
     break;
   case 0x33: // SYSCALL
     syscall(&c); // tell kernel about syscall
@@ -39,7 +43,6 @@ void eh_c(struct cpu_state c, unsigned int i, struct stack_state s) {
   }
 
   pic_ack(i);
-
 }
 
 #endif

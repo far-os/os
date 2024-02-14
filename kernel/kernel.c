@@ -32,6 +32,8 @@ void main() {
 
   set_cur(POS(0, 0)); // cursor at top left
    
+  quitting_prog = 0;
+
   char * vbf = malloc(32);
   strcpy("Welcome to ", vbf);
   to_ver_string(curr_ver, vbf + strlen(vbf));

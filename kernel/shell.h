@@ -22,9 +22,10 @@ extern int prog(int arg);
 #define COM_LEN 16
 
 char combuf[COM_LEN]; 
+char hist_combuf[COM_LEN];
 
 #define OUT_LEN 120
-char outbuf[OUT_LEN];
+char *outbuf;
 
 void shexec() {
   unsigned char fmt = COLOUR(BLACK, WHITE);
@@ -63,7 +64,7 @@ void shexec() {
     strcpy("Time since kernel load: ", outbuf);
     to_dec(countx / 100, outbuf + strlen(outbuf));
     outbuf[strlen(outbuf)] = '.';
-    to_dec(countx % 100, outbuf + strlen(outbuf));
+    to_filled_dec(countx % 100, outbuf + strlen(outbuf), 2, '0');
     strcpy("s\n", outbuf + strlen(outbuf));
 
     if (curr_time -> weekday) { // if weekday isn't valid (probably zero)
@@ -129,6 +130,7 @@ void shexec() {
   line_feed();
 
 shell_clean:
+  memcpy(combuf, hist_combuf, COM_LEN);
   free(outbuf, OUT_LEN);
 }
 
@@ -162,16 +164,28 @@ void comupd() {
   write_str(printbuf, COLOUR(BLACK, WHITE));
 }
 
+void sh_hist_restore() {
+  memcpy(hist_combuf, combuf, COM_LEN);
+  comupd();
+}
+
+void sh_ctrl_c() {
+  line_feed();
+  memzero(combuf, 16);
+  comupd();
+}
+
 void shell() {
 //  set_cur(POS(0, 1)); // new line
+  memset(hist_combuf, 16, 0xff);
   char *headbuf = "Kernel Executive Shell. (c) 2022-4.\n"; // the underscores are placeholder for the memcpy
   write_str(headbuf, COLOUR(BLUE, B_RED));
 //  write_hex(buf, -1);
   
   comupd();
 
-  while (1) {
-    asm volatile ("sti; hlt");
+  for (;;) {
+    asm volatile ("hlt");
   }
 }
 
