@@ -10,7 +10,9 @@
 #define MEMRING_LEN 1024 // 16k of mem free
 
 #define FREE 0x00
-#define IN_USE 0x01
+#define BLK_START 0x01 // 0b01
+#define IN_USE 0x02 // 0b10
+#define BLK_END 0x04 // 0b100
 
 // the memring sits at 0x12_000 whereas the memory it points to sits at 0x120_000 (<< 4)
 // each byte in the memring points to a 16 byte block
@@ -37,14 +39,19 @@ void * malloc(unsigned int len) {
   }
   
   memset(&(memring[run]), blocks, IN_USE);
+  memring[run] |= BLK_START;
+  memring[run + blocks - 1] |= BLK_END;
   
   void * ptr = (void *) MEM_LOC + (run * MEMBLK_SIZE);
   memzero(ptr, blocks * MEMBLK_SIZE);
   return ptr;
 }
 
-void free(void * ptr, unsigned int len) {
-  unsigned int blocks = (len / MEMBLK_SIZE) + !!(len % MEMBLK_SIZE); // amount of blocks taken up
+void free(void * ptr) {
+  unsigned int blocks = 1; // amount of blocks taken up
+  for (unsigned char * ptr_lc = (unsigned int) ptr / MEMBLK_SIZE; !(*(ptr_lc++) & BLK_END);)
+    ++blocks;
+
   memzero((unsigned int) ptr / MEMBLK_SIZE, blocks);
 }
 

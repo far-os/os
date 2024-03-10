@@ -39,7 +39,7 @@ void msg(enum MSG_TYPE type, int sig, char* supp) {
     short pos = ((get_cur() / VGA_WIDTH) + 1) * VGA_WIDTH;
     pos -= strlen(sigbuf);
     write_str_at(sigbuf, pos, msg_style);
-    free(sigbuf, 12);
+    free(sigbuf);
   }
 }
 

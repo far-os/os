@@ -117,15 +117,15 @@ void time(void *tbuf) {
   read_rtc(next);
 
   while (!memcmp(temp, next, sizeof(struct timestamp))) {
-    free(temp, sizeof(struct timestamp));
+    free(temp);
     temp = next;
     next = malloc(sizeof(struct timestamp));
     read_rtc(next);
   }
 
-  free(temp, sizeof(struct timestamp));
+  free(temp);
   memcpy(next, tbuf, sizeof(struct timestamp));
-  free(next, sizeof(struct timestamp));
+  free(next);
 }
 
 // AARGH

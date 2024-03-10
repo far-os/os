@@ -131,7 +131,7 @@ void shexec() {
 
 shell_clean:
   memcpy(combuf, hist_combuf, COM_LEN);
-  free(outbuf, OUT_LEN);
+  free(outbuf);
 }
 
 void comupd() {

@@ -172,7 +172,6 @@ Parameters:
   | Register | Input |
   | :- | :- |
   | `ax` | `0x0101` - Service and Routine Number |
-  | `ecx` | Number of bytes that have been allocated |
   | `edi` | The address of the allocated memory | 
 
 Return values:

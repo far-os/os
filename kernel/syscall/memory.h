@@ -16,7 +16,7 @@ void sys_1(struct cpu_state *c, unsigned char rout) {
 
   // Free memory
   case 0x01:
-    free(adj(c -> edi), c -> ecx);
+    free(adj(c -> edi));
     break;
 
   default:

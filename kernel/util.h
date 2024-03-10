@@ -4,7 +4,7 @@
 // cyclic, declare what we want
 
 void *malloc(unsigned int);
-void free(void *, unsigned int);
+void free(void *);
 
 #ifndef UTIL_H
 #define UTIL_H
@@ -143,7 +143,7 @@ void to_filled_dec(int input, char *out, unsigned char size, char fill) {
     dectempbuf[j] = (char) (i % 10) + '0';
   }
   memrev(dectempbuf, strlen(dectempbuf), out);
-  free(dectempbuf, size);
+  free(dectempbuf);
 }
 
 
@@ -157,7 +157,7 @@ void to_dec(int input, char *out) {
     }
   }
   memrev(dectempbuf, strlen(dectempbuf), out);
-  free(dectempbuf, 12);
+  free(dectempbuf);
 }
 
 void to_ver_string(struct far_ver * ver, char * vbuf) {

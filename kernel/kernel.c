@@ -40,7 +40,7 @@ void main() {
   vbf[strlen(vbf)] = '!';
   write_str(vbf, COLOUR(MAGENTA, B_GREEN)); // welcome message
   line_feed();
-  free(vbf, 32);
+  free(vbf);
   
 //  cp437(); // codepage 437: for testing purposes
 
