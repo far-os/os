@@ -38,6 +38,15 @@ void memcpy(void *src, void *dest, unsigned int amount) {
     src -= amount;
 }
 
+void backmemcpy(void *srcend, void *destend, unsigned int amount) {
+  asm volatile ("std\n"
+                "rep movsb\n" :
+    : "c" (amount),
+      "S" (srcend),
+      "D" (destend)
+    : "memory", "cc" );
+}
+
 void strcpy(char *src, char *dest) {
   memcpy(src, dest, strlen(src));
 }

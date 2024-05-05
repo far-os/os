@@ -27,7 +27,7 @@
 #define VGA_HEIGHT 25
 
 #define COLOUR(back, fore) (unsigned char) ((back << 4) + fore)
-#define POS(x, y) (short) y * VGA_WIDTH + x
+#define POS(x, y) (short) (y) * VGA_WIDTH + (x)
 
 #define VRAM_CTRL_PORT 0x3d4
 #define VRAM_DATA_PORT 0x3d5
@@ -63,13 +63,17 @@ short get_cur() {
 
 #pragma GCC pop_options
 
+short ln_nr() {
+  return get_cur() / VGA_WIDTH;
+}
+
 void line_feed() {
-  short i = get_cur() / VGA_WIDTH;
+  short i = ln_nr();
   set_cur(++i * VGA_WIDTH);
 }
 
 void carriage_return() {
-  short i = get_cur() / VGA_WIDTH;
+  short i = ln_nr();
   set_cur(i * VGA_WIDTH);
 }
 

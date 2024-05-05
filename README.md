@@ -13,12 +13,12 @@ CSDFS (**C**ompact **S**ystem **D**isk **F**ile **S**ystem) is the file system u
 The kernel code is located in `kernel/`, and the boot sector is located in `boot.asm`.
 
 The kernel's files are explained below: 
+- `entry.asm`: The extended bootloader which calls `main`. It also contains the IDT as well.
 - `ata.h`: Contains the ATA disk driver
 - `cmos.h`: Functions for reading the time from the CMOS RTC
 - `config.h`: Contains code to handle the configuration file.
 - `defs.h`: Definitions - structs, `#define`s, etc
 - `err.h`: Error message system - warnings, panics, etc
-- `entry.asm`: The extended bootloader which calls `main`. It also contains the IDT as well.
 - `fs.h`: Contains the CSDFS driver.
 - `hwinf.h`: Detecting and identifying detected hardware.
 - `ih.h`: Interrupt handling functions.

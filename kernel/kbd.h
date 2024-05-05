@@ -225,7 +225,9 @@ int xgg = 0;
 unsigned char quitting_prog = 0;
 
 static inline void putch(char vf) {
-  combuf[strlen(combuf)] = vf;
+  backmemcpy(combuf + COM_LEN - 2, combuf + COM_LEN - 1, COM_LEN - (comdex + 1));
+  combuf[comdex] = vf;
+  comdex++;
   comupd();
 }
 
@@ -304,8 +306,28 @@ void read_kbd() {
         if (scan == 0x48) {
           // up_key
           sh_hist_restore();
-        }
-        break; // TODO: down, left, right cursor keys
+        } else if (scan == 0x4b) {
+          // left_key
+          comdex--;
+          curupd();
+        } else if (scan == 0x4d) {
+          // right_key
+          comdex++;
+          curupd();
+        } else if (scan == 0x53) {
+          // del_key
+          memcpy(combuf + comdex + 1, combuf + comdex, COM_LEN - (comdex + 1));
+          clear_ln(ln_nr());
+          comupd();
+        } else if (scan == 0x47) {
+          // home_key
+          comdex = 0;
+          comupd();
+        } else if (scan == 0x4f) {
+          comdex = strlen(combuf);
+          comupd();
+        } 
+        break; // TODO: down cursor key
       }
     default:
       if (scan == 0x2e && keys -> modifs & (1 << 4)) { // ctrl-c
@@ -341,6 +363,7 @@ void read_kbd() {
           unsigned int fl = to_uint(alt_code_buf);
           if (fl >= 256) break;
           putch(fl);
+          memzero(alt_code_buf, 4);
         }
 
 

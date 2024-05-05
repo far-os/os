@@ -5,8 +5,6 @@
         mov cl, 8 ; repeat eight times, and alloc eight bytes
         int 0x33
 
-        push ecx
-
       mm_load_data_lp: ; creates 0x13_11_0f_0d_0b_09_07_05
         lea dx, [ecx * 2 + 3]
         mov [edi + ecx - 1], dl
@@ -34,7 +32,6 @@
         int 0x33 ; put string, should be j+JN
 
         mov ax, 0x0101
-        pop ecx ; retrieve memory amount
         int 0x33 ; free
 
         popad

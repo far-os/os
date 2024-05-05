@@ -23,6 +23,7 @@ extern int prog(int arg);
 
 char combuf[COM_LEN]; 
 char hist_combuf[COM_LEN];
+unsigned char comdex = 0;
 
 #define OUT_LEN 120
 char *outbuf;
@@ -131,7 +132,13 @@ void shexec() {
 
 shell_clean:
   memcpy(combuf, hist_combuf, COM_LEN);
+  comdex = 0;
   free(outbuf);
+}
+
+void curupd() {
+  if (comdex > strlen(combuf)) comdex = strlen(combuf);
+  set_cur(POS(comdex + 3, ln_nr()));
 }
 
 void comupd() {
@@ -140,36 +147,42 @@ void comupd() {
     msg(PROGERR, 23, "Command too long");
     line_feed();
     memzero(combuf, COM_LEN);
+    comdex = 0;
   }
 
   int comlen = strlen(combuf);
 
-  switch (combuf[comlen - 1]) {
+  switch (combuf[comdex - 1]) {
   case '\b':
-    combuf[comlen - 2] = '\0';
-    combuf[comlen - 1] = '\0';
-    clear_ln((get_cur() / 80));
+    memcpy(combuf + comdex, combuf + comdex - 2, COM_LEN - (comdex + 2));
+    comdex -= 2;
+    clear_ln(ln_nr());
     break;
   case '\n':
     line_feed();
-    combuf[comlen - 1] = '\0';
+    combuf[comdex - 1] = '\0';
+    memcpy(combuf + comdex, combuf + comdex - 1, COM_LEN - (comdex + 1));
 
     shexec();
     memzero(combuf, COM_LEN);
+    comdex = 0;
     break;
   }
 
   char printbuf[20] = "\r\x13> "; // 0x13 is the !! symbol
   strcpy(combuf, printbuf + 4);
   write_str(printbuf, COLOUR(BLACK, WHITE));
+  curupd();
 }
 
 void sh_hist_restore() {
   memcpy(hist_combuf, combuf, COM_LEN);
+  comdex = strlen(combuf);
   comupd();
 }
 
 void sh_ctrl_c() {
+  write_str("^C", COLOUR(BLACK, B_BLACK));
   line_feed();
   memzero(combuf, 16);
   comupd();
@@ -177,7 +190,7 @@ void sh_ctrl_c() {
 
 void shell() {
 //  set_cur(POS(0, 1)); // new line
-  memset(hist_combuf, 16, 0xff);
+  memzero(hist_combuf, 16);
   char *headbuf = "Kernel Executive Shell. (c) 2022-4.\n"; // the underscores are placeholder for the memcpy
   write_str(headbuf, COLOUR(BLUE, B_RED));
 //  write_hex(buf, -1);
