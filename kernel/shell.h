@@ -54,7 +54,7 @@ void shexec() {
     }
   } else if (strcmp(combuf, "help")) {
     fmt = COLOUR(BLUE, B_MAGENTA);
-    strcpy("\tinfo\n\tcpu\n\thelp\n\ttime\n\tindic\n\treset\n\tclear\n\texec <u32>\n\tver\n\trconfig", outbuf);
+    strcpy("\tinfo\n\tcpu\n\thelp\n\ttime\n\tindic\n\treset\n\tclear\n\texec <u32>\n\tfile\n\tver\n\trconfig", outbuf);
   } else if (strcmp(combuf, "ver")) {
     fmt = COLOUR(CYAN, B_YELLOW);
     to_ver_string(curr_ver, outbuf);
@@ -117,13 +117,29 @@ void shexec() {
     } else if (ret == 9) {
       msg(KERNERR, ret, "Program executed illegal instruction");
     }
+  } else if (strcmp(combuf, "file")) {
+    char *datablk = malloc(disk_config -> wdata.len << 9);
+
+    read_pio28(datablk, disk_config -> wdata.lba, disk_config -> wdata.len, hardware -> boot_disk_p.dev_path[0] & 0x01); // reads disk, has to get master or slave
+
+    write_str(datablk, COLOUR(BLACK, WHITE));
+
+    free(datablk);
+    line_feed();
+    goto shell_clean;
   } else if (strcmp(combuf, "rconfig")) {
     fmt = COLOUR(BLUE, B_YELLOW); // fmt
     strcpy("config.qi\n\tProgram at lba sector 0x__, ", outbuf);
     to_hex(&(disk_config -> exec.lba), 2, outbuf + 35);
     to_dec(disk_config -> exec.len, outbuf + strlen(outbuf));
-    strcpy(" sector(s)\n\t", outbuf + strlen(outbuf));
+    strcpy(" sector(s)\n\t\x10\t", outbuf + strlen(outbuf));
     strcpy(hardware -> boot_disk_p.itrf_type, outbuf + strlen(outbuf));
+
+    strcpy("\n\tWritable data at lba sector 0x", outbuf + strlen(outbuf));
+    to_hex(&(disk_config -> wdata.lba), 2, outbuf + strlen(outbuf));
+    strcpy(", ", outbuf + strlen(outbuf));
+    to_dec(disk_config -> wdata.len, outbuf + strlen(outbuf));
+    strcpy(" sector(s)", outbuf + strlen(outbuf));
   } else {
     msg(WARN, 11, "Unknown command");
   }

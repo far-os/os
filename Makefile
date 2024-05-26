@@ -12,8 +12,7 @@ entry.o: kernel/entry.asm
 	nasm $^ -f elf -o $@
 
 kernel.o: kernel/kernel.c $(wildcard kernel/*.h) $(wildcard kernel/syscall/*.h)
-	gcc -falign-functions=1 -fno-stack-protector -ffreestanding -m32 -march=i686 -Wall -D"KERN_LEN=$(KERN_SIZE)" -c $< -o $@
-
+	gcc -falign-functions=1 -fno-stack-protector -ffreestanding -m32 -march=i686 -Wall -Wno-error=int-conversion -Wno-error=incompatible-pointer-types -D"KERN_LEN=$(KERN_SIZE)" -c $< -o $@
 
 kernel.entry.o: link.ld entry.o kernel.o
 	ld -o $@ -melf_i386 -T $+
@@ -35,11 +34,12 @@ boot.kern.bin: boot.bin kernel.bin
 config.qi: ./util/bin/qic config.qit
 	$^
 
-os.img: boot.kern.bin config.qi prog.bin
+os.img: boot.kern.bin config.qi prog.bin program/data.txt
 	dd if=/dev/zero of=$@ bs=512K count=$(DISK_SIZE_HM)
 	dd if=$< of=$@ conv=notrunc
 	dd if=config.qi of=$@ bs=512 conv=notrunc seek=$(KERN_SIZE)
 	dd if=prog.bin of=$@ bs=512 conv=notrunc seek=$$(( $(KERN_SIZE) + 1 ))
+	dd if=program/data.txt of=$@ bs=512 conv=notrunc seek=$$(( $(KERN_SIZE) + 2 ))
 
 qemu: os.img
 	$@-system-i386 -hda $< -boot c
