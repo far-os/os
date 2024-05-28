@@ -187,8 +187,8 @@ unsigned int to_uint(char *input) {
   return f;
 }
 
-char *strcat(char *out, char *in) {
-  strcpy(in, out + strlen(out));
+static inline char *strcat(char *out, char *in) {
+  strcpy(in, endof(out));
   return out;
 }
 
@@ -233,7 +233,6 @@ void sprintf(char *dest, const char *fmt, ...) {
         case 'd':
           if (length_modif) {
             to_filled_dec(va_arg(args, unsigned int), dest + di, length_modif, '0');
-            length_modif = 0;
           } else {
             to_dec(va_arg(args, unsigned int), dest + di);
           }
@@ -245,12 +244,10 @@ void sprintf(char *dest, const char *fmt, ...) {
         case 'x':
           if (length_modif == 1) {
             dest[di++] = nybble_to_hex(va_arg(args, unsigned int));
-            length_modif = 0;
             goto stop_waiting;
           }
 
           to_hex(va_arg(args, unsigned int), length_modif ? length_modif : 8, dest + di);
-          length_modif = 0;
           di = strlen(dest);
           goto stop_waiting;
         case 's':
@@ -258,7 +255,6 @@ void sprintf(char *dest, const char *fmt, ...) {
           if (ptr) { // ie, not null
             if (length_modif) {
               memcpy(ptr, dest + di, length_modif);
-              length_modif = 0;
             } else {
               strcpy(ptr, dest + di);
             }
@@ -278,6 +274,7 @@ void sprintf(char *dest, const char *fmt, ...) {
           msg(WARN, 1, k);
 
         stop_waiting:
+          length_modif = 0;
           waiting = NOT_WAITING;
           break;
       }

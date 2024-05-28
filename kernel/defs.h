@@ -5,6 +5,9 @@
 #define badj(x) (x) - 0x100000
 // adjusting pointers
 
+#define NULL (void *) 0
+#define endof(str) (str + strlen(str))
+
 // centisec (100ths of sec) since load
 unsigned int countx = 0;
 
@@ -19,7 +22,7 @@ struct far_ver * curr_ver = &((struct far_ver) {
   .major = 0,
   .minor = 0,
   .patch = 3,
-  .build = 11, // minor changes + hotfixes
+  .build = 12, // minor changes + hotfixes
 });
 
 struct keystates { /* a 104-bit struct containing data */

@@ -28,6 +28,22 @@ unsigned char comdex = 0;
 #define OUT_LEN 128
 char *outbuf;
 
+const char *comnames[] = { // starting with 0xff, means arg for previous
+  "clear",
+  "cpu",
+  "exec",
+  "\xff<u32>",
+  "file",
+  "help",
+  "indic",
+  "info",
+  "rconfig",
+  "reset",
+  "time",
+  "ver",
+  NULL, // nullptr
+};
+
 void shexec() {
   unsigned char fmt = COLOUR(BLACK, WHITE);
   char *outbuf = malloc(OUT_LEN);
@@ -48,22 +64,28 @@ void shexec() {
       &(hardware -> c_family), // family
       &(hardware -> c_model), // model
       &(hardware -> c_stepping), // stepping
-      hardware -> cpuid_ext_leaves >= 0x80000004 ? &(hardware -> brand) : 0 // brand string
+      hardware -> cpuid_ext_leaves >= 0x80000004 ? &(hardware -> brand) : NULL // brand string
     );
   } else if (strcmp(combuf, "help")) {
     fmt = COLOUR(BLUE, B_MAGENTA);
-    sprintf(outbuf, "\tinfo\n\tcpu\n\thelp\n\ttime\n\tindic\n\treset\n\tclear\n\texec <u32>\n\tfile\n\tver\n\trconfig");
+    for (int cm = 0; comnames[cm]; ++cm) {
+      if (comnames[cm][0] == -1) {
+        sprintf(endof(outbuf), " %s", comnames[cm] + 1);
+      } else {
+        sprintf(endof(outbuf), "%c\t%s", cm ? '\n' : 0, comnames[cm]);
+      }
+    }
   } else if (strcmp(combuf, "ver")) {
     fmt = COLOUR(CYAN, B_YELLOW);
     to_ver_string(curr_ver, outbuf);
-    sprintf(outbuf + strlen(outbuf), " build %d", curr_ver -> build);
+    sprintf(endof(outbuf), " build %d", curr_ver -> build);
   } else if (strcmp(combuf, "time")) {
     fmt = COLOUR(RED, B_CYAN);
-    sprintf(outbuf, "Time since kernel load: %d.%ds\n%s%c%2d-%2d-%2d %2d:%2d:%2d",
+    sprintf(outbuf, "Time since kernel load: %d.%2ds\n%s%c%2d-%2d-%2d %2d:%2d:%2d",
       countx / 100,
       countx % 100,
-      curr_time -> weekday ? weekmap[curr_time -> weekday - 1] : 0,
-      curr_time -> weekday ? ' ' : 0,
+      curr_time -> weekday ? weekmap[curr_time -> weekday - 1] : NULL,
+      curr_time -> weekday ? ' ' : NULL,
       curr_time -> year,
       curr_time -> month,
       curr_time -> date,
@@ -154,14 +176,14 @@ void comupd() {
 
   switch (combuf[comdex - 1]) {
   case '\b':
-    memcpy(combuf + comdex, combuf + comdex - 2, COM_LEN - (comdex + 2));
+    memcpy(combuf + comdex, combuf + comdex - 2, COM_LEN - comdex);
     comdex -= 2;
     clear_ln(ln_nr());
     break;
   case '\n':
     line_feed();
     combuf[comdex - 1] = '\0';
-    memcpy(combuf + comdex, combuf + comdex - 1, COM_LEN - (comdex + 1));
+    memcpy(combuf + comdex, combuf + comdex - 1, COM_LEN - comdex);
 
     shexec();
     memzero(combuf, COM_LEN);
