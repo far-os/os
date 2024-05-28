@@ -19,7 +19,7 @@ struct far_ver * curr_ver = &((struct far_ver) {
   .major = 0,
   .minor = 0,
   .patch = 3,
-  .build = 10, // minor changes + hotfixes
+  .build = 11, // minor changes + hotfixes
 });
 
 struct keystates { /* a 104-bit struct containing data */
@@ -77,6 +77,23 @@ struct sector_box { // a pointer to a place of disk
   unsigned int lba; // lba of start
   unsigned char len; // length
 } __attribute__((packed));
+
+// error message shit
+enum MSG_TYPE {
+  INFO = 0, // ->
+  WARN = 1, // +
+  PROGERR = 2, // !
+  KERNERR = 3, // !!
+  PANIC = 4, // x
+};
+
+char msg_symbs[5] = {
+  0x1a, // -> symbol
+  '+',
+  '!',
+  0x13, // !! symbol
+  'x',
+};
 
 #endif
 

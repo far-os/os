@@ -1,23 +1,8 @@
 #include "text.h"
+#include "defs.h"
 
 #ifndef ERR_H
 #define ERR_H
-
-enum MSG_TYPE {
-  INFO = 0, // ->
-  WARN = 1, // +
-  PROGERR = 2, // !
-  KERNERR = 3, // !!
-  PANIC = 4, // x
-};
-
-char msg_symbs[5] = {
-  0x1a, // -> symbol
-  '+',
-  '!',
-  0x13, // !! symbol
-  'x',
-};
 
 void msg(enum MSG_TYPE type, int sig, char* supp) {
   unsigned char msg_style;

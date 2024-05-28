@@ -25,7 +25,7 @@ char combuf[COM_LEN];
 char hist_combuf[COM_LEN];
 unsigned char comdex = 0;
 
-#define OUT_LEN 120
+#define OUT_LEN 128
 char *outbuf;
 
 void shexec() {
@@ -35,62 +35,50 @@ void shexec() {
     goto shell_clean;
   } else if (strcmp(combuf, "info")) {
     fmt = COLOUR(RED, B_YELLOW); // fmt
-    strcpy("FarOS Kernel:\n\tVol. label \"________________\"\n\tVol. ID 0x________________\n\tDisk __h\n\tVolume size ", outbuf);
-    memcpy(&(csdfs -> label), outbuf + 27, 16); // memcpy because we need to control the length
-    to_hex(&(csdfs -> vol_id), 16, outbuf + 56);
-    to_hex(&(hardware -> bios_disk), 2, outbuf + 79);
-    to_dec(csdfs -> fs_size * SECTOR_LEN, outbuf + 96);
+    sprintf(outbuf, "FarOS Kernel:\n\tVol. label \"%16s\"\n\tVol. ID %16X\n\tDisk %2xh\n\tVolume size %d",
+      &(csdfs -> label),
+      &(csdfs -> vol_id),
+      &(hardware -> bios_disk),
+      csdfs -> fs_size * SECTOR_LEN
+    );
   } else if (strcmp(combuf, "cpu")) {
     fmt = COLOUR(YELLOW, B_GREEN); // fmt
-    strcpy("CPUID.\n\t\x10 ____________\n\tFamily __h, Model __h, Stepping _h\n\tBrand \"________________________________________________\"", outbuf);
-    memcpy(&(hardware -> vendor), outbuf + 10, 12); // cpu vendor
-
-    to_hex(&(hardware -> c_family), 2, outbuf + 31); // family
-    to_hex(&(hardware -> c_model), 2, outbuf + 42); // model
-    to_hex(&(hardware -> c_stepping), 2, outbuf + 55); // stepping
-    outbuf[55] = ' '; // hack
-    if (hardware -> cpuid_ext_leaves >= 0x80000004) {
-      strcpy(&(hardware -> brand), outbuf + 67); // brand string
-    }
+    sprintf(outbuf, "CPUID.\n\t\x10 %12s\n\tFamily %2xh, Model %2xh, Stepping %1xh\n\tBrand \"%s\"",
+      &(hardware -> vendor),
+      &(hardware -> c_family), // family
+      &(hardware -> c_model), // model
+      &(hardware -> c_stepping), // stepping
+      hardware -> cpuid_ext_leaves >= 0x80000004 ? &(hardware -> brand) : 0 // brand string
+    );
   } else if (strcmp(combuf, "help")) {
     fmt = COLOUR(BLUE, B_MAGENTA);
-    strcpy("\tinfo\n\tcpu\n\thelp\n\ttime\n\tindic\n\treset\n\tclear\n\texec <u32>\n\tfile\n\tver\n\trconfig", outbuf);
+    sprintf(outbuf, "\tinfo\n\tcpu\n\thelp\n\ttime\n\tindic\n\treset\n\tclear\n\texec <u32>\n\tfile\n\tver\n\trconfig");
   } else if (strcmp(combuf, "ver")) {
     fmt = COLOUR(CYAN, B_YELLOW);
     to_ver_string(curr_ver, outbuf);
-    strcpy(" build ", outbuf + strlen(outbuf));
-    to_dec(curr_ver -> build, outbuf + strlen(outbuf));
+    sprintf(outbuf + strlen(outbuf), " build %d", curr_ver -> build);
   } else if (strcmp(combuf, "time")) {
     fmt = COLOUR(RED, B_CYAN);
-    strcpy("Time since kernel load: ", outbuf);
-    to_dec(countx / 100, outbuf + strlen(outbuf));
-    outbuf[strlen(outbuf)] = '.';
-    to_filled_dec(countx % 100, outbuf + strlen(outbuf), 2, '0');
-    strcpy("s\n", outbuf + strlen(outbuf));
-
-    if (curr_time -> weekday) { // if weekday isn't valid (probably zero)
-      strcpy(weekmap[curr_time -> weekday - 1], outbuf + strlen(outbuf));
-      outbuf[strlen(outbuf)] = ' ';
-    }
-
-    to_dec(curr_time -> year, outbuf + strlen(outbuf));
-    outbuf[strlen(outbuf)] = '-';
-    to_filled_dec(curr_time -> month, outbuf + strlen(outbuf), 2, '0');
-    outbuf[strlen(outbuf)] = '-';
-    to_filled_dec(curr_time -> date, outbuf + strlen(outbuf), 2, '0');
-    outbuf[strlen(outbuf)] = ' ';
-    to_filled_dec(curr_time -> hour, outbuf + strlen(outbuf), 2, '0');
-    outbuf[strlen(outbuf)] = ':';
-    to_filled_dec(curr_time -> minute, outbuf + strlen(outbuf), 2, '0');
-    outbuf[strlen(outbuf)] = ':';
-    to_filled_dec(curr_time -> second, outbuf + strlen(outbuf), 2, '0');
+    sprintf(outbuf, "Time since kernel load: %d.%ds\n%s%c%2d-%2d-%2d %2d:%2d:%2d",
+      countx / 100,
+      countx % 100,
+      curr_time -> weekday ? weekmap[curr_time -> weekday - 1] : 0,
+      curr_time -> weekday ? ' ' : 0,
+      curr_time -> year,
+      curr_time -> month,
+      curr_time -> date,
+      curr_time -> hour,
+      curr_time -> minute,
+      curr_time -> second
+    );
   } else if (strcmp(combuf, "indic")) {
     fmt = COLOUR(GREEN, RED);
     // indicators
-    strcpy("scroll: 0\nnum: 0\ncaps: 0", outbuf);
-    if (bittest(&(keys -> modifs), 0)) { outbuf[8]++; } // scroll
-    if (bittest(&(keys -> modifs), 1)) { outbuf[15]++; } // num
-    if (bittest(&(keys -> modifs), 2)) { outbuf[23]++; } // caps
+    sprintf(outbuf, "scroll: %d\nnum: %d\ncaps: %d",
+      bittest(&(keys -> modifs), 0),
+      bittest(&(keys -> modifs), 1),
+      bittest(&(keys -> modifs), 2)
+    );
   } else if (strcmp(combuf, "reset")) {
     cpu_reset();
   } else if (strcmp(combuf, "clear")) {
@@ -129,17 +117,13 @@ void shexec() {
     goto shell_clean;
   } else if (strcmp(combuf, "rconfig")) {
     fmt = COLOUR(BLUE, B_YELLOW); // fmt
-    strcpy("config.qi\n\tProgram at lba sector 0x__, ", outbuf);
-    to_hex(&(disk_config -> exec.lba), 2, outbuf + 35);
-    to_dec(disk_config -> exec.len, outbuf + strlen(outbuf));
-    strcpy(" sector(s)\n\t\x10\t", outbuf + strlen(outbuf));
-    strcpy(hardware -> boot_disk_p.itrf_type, outbuf + strlen(outbuf));
-
-    strcpy("\n\tWritable data at lba sector 0x", outbuf + strlen(outbuf));
-    to_hex(&(disk_config -> wdata.lba), 2, outbuf + strlen(outbuf));
-    strcpy(", ", outbuf + strlen(outbuf));
-    to_dec(disk_config -> wdata.len, outbuf + strlen(outbuf));
-    strcpy(" sector(s)", outbuf + strlen(outbuf));
+    sprintf(outbuf, "config.qi\n\tProgram at lba sector %2X, %d sector(s)\n\t\x10\t%s\n\tWritable data at lba sector %2X, %d sector(s)",
+      &(disk_config -> exec.lba),
+      disk_config -> exec.len,
+      hardware -> boot_disk_p.itrf_type,
+      &(disk_config -> wdata.lba),
+      disk_config -> wdata.len
+    );
   } else {
     msg(WARN, 11, "Unknown command");
   }
