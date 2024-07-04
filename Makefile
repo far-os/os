@@ -40,6 +40,7 @@ os.img: boot.kern.bin config.qi prog.bin program/data.txt
 	dd if=config.qi of=$@ bs=512 conv=notrunc seek=$(KERN_SIZE)
 	dd if=prog.bin of=$@ bs=512 conv=notrunc seek=$$(( $(KERN_SIZE) + 1 ))
 	dd if=program/data.txt of=$@ bs=512 conv=notrunc seek=$$(( $(KERN_SIZE) + 2 ))
+	chmod +w $@
 
 qemu: os.img
 	$@-system-i386 -hda $< -boot c

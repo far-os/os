@@ -34,6 +34,7 @@ const char *comnames[] = { // starting with 0xff, means arg for previous
   "exec",
   "\xff<u32>",
   "file",
+  "\xff<r|w [data]>",
   "help",
   "indic",
   "info",
@@ -114,7 +115,11 @@ void shexec() {
       goto shell_clean;
     }
 
-    read_pio28(0x100000, disk_config -> exec.lba, disk_config -> exec.len, hardware -> boot_disk_p.dev_path[0] & 0x01); // reads disk, has to get master or slave
+    read_pio28(
+      0x100000,
+      disk_config -> exec,
+      hardware -> boot_disk_p.dev_path[0] & 0x01
+    ); // reads disk, has to get master or slave
 
     int ar = -1;
     if (strlen(combuf) > 5) {
@@ -127,16 +132,32 @@ void shexec() {
     } else if (ret == 9) {
       msg(KERNERR, ret, "Program executed illegal instruction");
     }
-  } else if (strcmp(combuf, "file")) {
+  } else if (memcmp(combuf, "file", 4)) {
     char *datablk = malloc(disk_config -> wdata.len << 9);
-
-    read_pio28(datablk, disk_config -> wdata.lba, disk_config -> wdata.len, hardware -> boot_disk_p.dev_path[0] & 0x01); // reads disk, has to get master or slave
-
-    write_str(datablk, COLOUR(BLACK, WHITE));
+    switch (combuf[5]) { // r or w
+      case 'r':
+        read_pio28(
+          datablk,
+          disk_config -> wdata,
+          hardware -> boot_disk_p.dev_path[0] & 0x01
+        ); // reads disk, has to get master or slave
+        write_str(datablk, COLOUR(BLACK, WHITE));
+        break;
+      case 'w':
+        memcpy(hist_combuf, datablk, 16);
+        write_pio28(
+          datablk,
+          disk_config -> wdata,
+          hardware -> boot_disk_p.dev_path[0] & 0x01
+        ); // writes to disk, see above
+        msg(INFO, 0, "File written");
+        break;
+    }
 
     free(datablk);
     line_feed();
     goto shell_clean;
+
   } else if (strcmp(combuf, "rconfig")) {
     fmt = COLOUR(BLUE, B_YELLOW); // fmt
     sprintf(outbuf, "config.qi\n\tProgram at lba sector %2X, %d sector(s)\n\t\x10\t%s\n\tWritable data at lba sector %2X, %d sector(s)",

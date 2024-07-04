@@ -61,7 +61,6 @@ void main() {
   }
 
   asm volatile ("lidt %0" : : "m"(idtr)); // load idt
-  asm volatile ("sti"); // set interrupt (opposite of cli)
 
   pic_init(); // pic
   
@@ -73,9 +72,16 @@ void main() {
 
   irq_m_free(0x1); // keyboard
 
+  asm volatile ("sti"); // set interrupt (opposite of cli)
+  // do it after pic init and stuff, to avoid somewhat rare qemu race condition
+
   query_cpuid();
 
-  read_pio28(disk_config, KERN_LEN, 1, hardware -> boot_disk_p.dev_path[0] & 0x01); // reads disk for config, has to get master or slave
+  read_pio28(
+    disk_config,
+    (struct sector_box){ .lba = KERN_LEN, .len = 1 },
+    hardware -> boot_disk_p.dev_path[0] & 0x01
+  ); // reads disk for config, has to get master or slave
  
   // magic check
   if (disk_config -> qi_magic != CONFIG_MAGIC) {

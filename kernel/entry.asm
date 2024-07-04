@@ -130,6 +130,30 @@ a20_test:
         popad
         ret
 
+[global fake_outsw]
+fake_outsw:
+        push ebp
+        mov ebp, esp
+        ; outsw function, but manual loops instead of rep
+        pushad
+        mov dx, [ebp + 0x8] ; port
+        mov ecx, [ebp + 0xc] ; length
+        mov esi, [ebp + 0x10] ; startpoint
+
+        dec ecx
+
+  fake_outsw_lp:
+        outsw
+
+        jmp $+2 ; timewaster, the reason we can't use rep
+        nop
+
+        dec ecx
+        jns fake_outsw_lp
+
+        popad
+        leave
+        ret
 
 print_32:
         pushad ; pusha but 32bit this time

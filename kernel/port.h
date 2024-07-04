@@ -36,10 +36,21 @@ static inline void pword_out(unsigned short port, unsigned short data) {
 static inline void rep_insw(unsigned short port, unsigned int length, void *dest) {
   asm volatile ("cld\n"
       "rep insw\n" :
-   : "c" (length << 1),
+   : "c" (length),
      "d" (port),
      "D" (dest)
    : "memory", "cc");
 }
+
+static inline void rep_outsw(unsigned short port, unsigned int length, void *src) {
+  asm volatile ("cld\n"
+      "rep outsw\n" :
+   : "c" (length),
+     "d" (port),
+     "S" (src)
+   : "memory", "cc");
+}
+
+extern void fake_outsw(unsigned short, unsigned int, void *);
 
 #endif
