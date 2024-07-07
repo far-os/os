@@ -225,9 +225,9 @@ int xgg = 0;
 unsigned char quitting_prog = 0;
 
 static inline void putch(char vf) {
-  backmemcpy(combuf + COM_LEN - 2, combuf + COM_LEN - 1, COM_LEN - (comdex + 1));
-  combuf[comdex] = vf;
-  comdex++;
+  backmemcpy(comd.buf + comd.len - 2, comd.buf + comd.len - 1, comd.len - (comd.ix + 1));
+  comd.buf[comd.ix] = vf;
+  comd.ix++;
   comupd();
 }
 
@@ -308,23 +308,23 @@ void read_kbd() {
           sh_hist_restore();
         } else if (scan == 0x4b) {
           // left_key
-          comdex--;
+          comd.ix--;
           curupd();
         } else if (scan == 0x4d) {
           // right_key
-          comdex++;
+          comd.ix++;
           curupd();
         } else if (scan == 0x53) {
           // del_key
-          memcpy(combuf + comdex + 1, combuf + comdex, COM_LEN - (comdex + 1));
+          memcpy(comd.buf + comd.ix + 1, comd.buf + comd.ix, comd.len - (comd.ix + 1));
           clear_ln(ln_nr());
           comupd();
         } else if (scan == 0x47) {
           // home_key
-          comdex = 0;
+          comd.ix = 0;
           comupd();
         } else if (scan == 0x4f) {
-          comdex = strlen(combuf);
+          comd.ix = strlen(comd.buf);
           comupd();
         } 
         break; // TODO: down cursor key
@@ -361,7 +361,7 @@ void read_kbd() {
       altput:
         if (xgg) {
           unsigned int fl = to_uint(alt_code_buf);
-          if (fl >= 256) break;
+          if (!fl || fl >= 256) break;
           putch(fl);
           memzero(alt_code_buf, 4);
         }

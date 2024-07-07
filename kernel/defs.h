@@ -22,7 +22,7 @@ struct far_ver * curr_ver = &((struct far_ver) {
   .major = 0,
   .minor = 0,
   .patch = 3,
-  .build = 13, // minor changes + hotfixes
+  .build = 14, // minor changes + hotfixes
 });
 
 struct keystates { /* a 104-bit struct containing data */
@@ -96,6 +96,12 @@ char msg_symbs[5] = {
   '!',
   0x13, // !! symbol
   'x',
+};
+
+struct inp_strbuf {
+  char *buf;
+  unsigned int len;
+  unsigned int ix;
 };
 
 #endif

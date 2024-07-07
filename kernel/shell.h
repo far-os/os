@@ -19,11 +19,14 @@ extern int prog(int arg);
 #ifndef SHELL_H
 #define SHELL_H
 
-#define COM_LEN 16
+#define COMLEN 16
+struct inp_strbuf comd = {
+  .buf = NULL,
+  .len = COMLEN,
+  .ix = 0
+};
 
-char combuf[COM_LEN]; 
-char hist_combuf[COM_LEN];
-unsigned char comdex = 0;
+char hist_combuf[COMLEN];
 
 #define OUT_LEN 128
 char *outbuf;
@@ -48,9 +51,9 @@ const char *comnames[] = { // starting with 0xff, means arg for previous
 void shexec() {
   unsigned char fmt = COLOUR(BLACK, WHITE);
   char *outbuf = malloc(OUT_LEN);
-  if (strlen(combuf) == 0) {
+  if (strlen(comd.buf) == 0) {
     goto shell_clean;
-  } else if (strcmp(combuf, "info")) {
+  } else if (strcmp(comd.buf, "info")) {
     fmt = COLOUR(RED, B_YELLOW); // fmt
     sprintf(outbuf, "FarOS Kernel:\n\tVol. label \"%16s\"\n\tVol. ID %16X\n\tDisk %2xh\n\tVolume size %d",
       &(csdfs -> label),
@@ -58,7 +61,7 @@ void shexec() {
       &(hardware -> bios_disk),
       csdfs -> fs_size * SECTOR_LEN
     );
-  } else if (strcmp(combuf, "cpu")) {
+  } else if (strcmp(comd.buf, "cpu")) {
     fmt = COLOUR(YELLOW, B_GREEN); // fmt
     sprintf(outbuf, "CPUID.\n\t\x10 %12s\n\tFamily %2xh, Model %2xh, Stepping %1xh\n\tBrand \"%s\"",
       &(hardware -> vendor),
@@ -67,7 +70,7 @@ void shexec() {
       &(hardware -> c_stepping), // stepping
       hardware -> cpuid_ext_leaves >= 0x80000004 ? &(hardware -> brand) : NULL // brand string
     );
-  } else if (strcmp(combuf, "help")) {
+  } else if (strcmp(comd.buf, "help")) {
     fmt = COLOUR(BLUE, B_MAGENTA);
     for (int cm = 0; comnames[cm]; ++cm) {
       if (comnames[cm][0] == -1) {
@@ -76,11 +79,11 @@ void shexec() {
         sprintf(endof(outbuf), "%c\t%s", cm ? '\n' : 0, comnames[cm]);
       }
     }
-  } else if (strcmp(combuf, "ver")) {
+  } else if (strcmp(comd.buf, "ver")) {
     fmt = COLOUR(CYAN, B_YELLOW);
     to_ver_string(curr_ver, outbuf);
     sprintf(endof(outbuf), " build %d", curr_ver -> build);
-  } else if (strcmp(combuf, "time")) {
+  } else if (strcmp(comd.buf, "time")) {
     fmt = COLOUR(RED, B_CYAN);
     sprintf(outbuf, "Time since kernel load: %d.%2ds\n%s%c%2d-%2d-%2d %2d:%2d:%2d",
       countx / 100,
@@ -94,7 +97,7 @@ void shexec() {
       curr_time -> minute,
       curr_time -> second
     );
-  } else if (strcmp(combuf, "indic")) {
+  } else if (strcmp(comd.buf, "indic")) {
     fmt = COLOUR(GREEN, RED);
     // indicators
     sprintf(outbuf, "scroll: %d\nnum: %d\ncaps: %d",
@@ -102,13 +105,13 @@ void shexec() {
       bittest(&(keys -> modifs), 1),
       bittest(&(keys -> modifs), 2)
     );
-  } else if (strcmp(combuf, "reset")) {
+  } else if (strcmp(comd.buf, "reset")) {
     cpu_reset();
-  } else if (strcmp(combuf, "clear")) {
+  } else if (strcmp(comd.buf, "clear")) {
     clear_scr();
     set_cur(POS(0, 0));
     goto shell_clean;
-  } else if (memcmp(combuf, "exec", 4)) {
+  } else if (memcmp(comd.buf, "exec", 4)) {
     if (disk_config -> qi_magic != CONFIG_MAGIC) {
       msg(KERNERR, 4, "Disk is unavailable");
       line_feed();
@@ -122,8 +125,8 @@ void shexec() {
     ); // reads disk, has to get master or slave
 
     int ar = -1;
-    if (strlen(combuf) > 5) {
-      ar = to_uint(combuf + 5);
+    if (strlen(comd.buf) > 5) {
+      ar = to_uint(comd.buf + 5);
     }
 
     int ret = prog(ar);
@@ -132,9 +135,9 @@ void shexec() {
     } else if (ret == 9) {
       msg(KERNERR, ret, "Program executed illegal instruction");
     }
-  } else if (memcmp(combuf, "file", 4)) {
+  } else if (memcmp(comd.buf, "file", 4)) {
     char *datablk = malloc(disk_config -> wdata.len << 9);
-    switch (combuf[5]) { // r or w
+    switch (comd.buf[5]) { // r or w
       case 'r':
         read_pio28(
           datablk,
@@ -144,7 +147,7 @@ void shexec() {
         write_str(datablk, COLOUR(BLACK, WHITE));
         break;
       case 'w':
-        memcpy(hist_combuf, datablk, 16);
+        memcpy(hist_combuf, datablk, comd.len);
         write_pio28(
           datablk,
           disk_config -> wdata,
@@ -158,7 +161,7 @@ void shexec() {
     line_feed();
     goto shell_clean;
 
-  } else if (strcmp(combuf, "rconfig")) {
+  } else if (strcmp(comd.buf, "rconfig")) {
     fmt = COLOUR(BLUE, B_YELLOW); // fmt
     sprintf(outbuf, "config.qi\n\tProgram at lba sector %2X, %d sector(s)\n\t\x10\t%s\n\tWritable data at lba sector %2X, %d sector(s)",
       &(disk_config -> exec.lba),
@@ -174,66 +177,68 @@ void shexec() {
   line_feed();
 
 shell_clean:
-  memcpy(combuf, hist_combuf, COM_LEN);
-  comdex = 0;
+  memcpy(comd.buf, hist_combuf, comd.len);
+  comd.ix = 0;
   free(outbuf);
 }
 
 void curupd() {
-  if (comdex > strlen(combuf)) comdex = strlen(combuf);
-  set_cur(POS(comdex + 3, ln_nr()));
+  if (comd.ix > strlen(comd.buf)) comd.ix = strlen(comd.buf);
+  set_cur(POS(comd.ix + 3, ln_nr()));
 }
 
 void comupd() {
-  if (strlen(combuf) >= COM_LEN) {
+  if (strlen(comd.buf) >= comd.len) {
     line_feed();
     msg(PROGERR, 23, "Command too long");
     line_feed();
-    memzero(combuf, COM_LEN);
-    comdex = 0;
+    memzero(comd.buf, comd.len);
+    comd.ix = 0;
   }
 
-  int comlen = strlen(combuf);
+  int comlen = strlen(comd.buf);
 
-  switch (combuf[comdex - 1]) {
+  switch (comd.buf[comd.ix - 1]) {
   case '\b':
-    memcpy(combuf + comdex, combuf + comdex - 2, COM_LEN - comdex);
-    comdex -= 2;
+    memcpy(comd.buf + comd.ix, comd.buf + comd.ix - 2, comd.len - comd.ix);
+    comd.ix -= 2;
     clear_ln(ln_nr());
     break;
   case '\n':
     line_feed();
-    combuf[comdex - 1] = '\0';
-    memcpy(combuf + comdex, combuf + comdex - 1, COM_LEN - comdex);
+    comd.buf[comd.ix - 1] = '\0';
+    memcpy(comd.buf + comd.ix, comd.buf + comd.ix - 1, comd.len - comd.ix);
 
     shexec();
-    memzero(combuf, COM_LEN);
-    comdex = 0;
+    memzero(comd.buf, comd.len);
+    comd.ix = 0;
     break;
   }
 
   char printbuf[20] = "\r\x13> "; // 0x13 is the !! symbol
-  strcpy(combuf, printbuf + 4);
+  strcpy(comd.buf, printbuf + 4);
   write_str(printbuf, COLOUR(BLACK, WHITE));
   curupd();
 }
 
 void sh_hist_restore() {
-  memcpy(hist_combuf, combuf, COM_LEN);
-  comdex = strlen(combuf);
+  
+  memcpy(hist_combuf, comd.buf, comd.len);
+  comd.ix = strlen(comd.buf);
   comupd();
 }
 
 void sh_ctrl_c() {
   write_str("^C", COLOUR(BLACK, B_BLACK));
   line_feed();
-  memzero(combuf, 16);
+  memzero(comd.buf, comd.len);
   comupd();
 }
 
 void shell() {
+  comd.buf = malloc(comd.len);
 //  set_cur(POS(0, 1)); // new line
-  memzero(hist_combuf, 16);
+  memzero(hist_combuf, comd.len);
   char *headbuf = "Kernel Executive Shell. (c) 2022-4.\n"; // the underscores are placeholder for the memcpy
   write_str(headbuf, COLOUR(BLUE, B_RED));
 //  write_hex(buf, -1);
