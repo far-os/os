@@ -16,6 +16,9 @@ void cpu_reset();
 
 extern int prog(int arg);
 
+#define IS_COM actv == &comd
+#define IS_USR actv == &usrd
+
 #ifndef SHELL_H
 #define SHELL_H
 
@@ -31,7 +34,16 @@ char hist_combuf[COMLEN];
 #define OUT_LEN 128
 char *outbuf;
 
+struct inp_strbuf usrd = {
+  .buf = NULL,
+  .len = 0,
+  .ix = 0,
+};
+
+struct inp_strbuf *actv = &comd;
+
 const char *comnames[] = { // starting with 0xff, means arg for previous
+  "bufedit",
   "clear",
   "cpu",
   "exec",
@@ -135,6 +147,33 @@ void shexec() {
     } else if (ret == 9) {
       msg(KERNERR, ret, "Program executed illegal instruction");
     }
+  } else if (strcmp(comd.buf, "bufedit")) {
+    clear_scr();
+    set_cur(0);
+
+    char * linebox = malloc(23);
+    memset(linebox, 22, 0xcd); // double line box drawing
+
+    write_str(linebox, COLOUR(GREEN, RED));
+    write_str(" Editor \x07 Press ", COLOUR(GREEN, B_WHITE));
+    write_str("^D", COLOUR(GREEN, B_CYAN));
+    write_str(" to save and exit ", COLOUR(GREEN, B_WHITE));
+    write_str(linebox, COLOUR(GREEN, RED));
+
+    free(linebox);
+
+    // usermode init
+    usrd.len = disk_config -> wdata.len << 9; // 1 sector
+    usrd.buf = malloc(usrd.len);
+    read_pio28(
+      usrd.buf,
+      disk_config -> wdata,
+      hardware -> boot_disk_p.dev_path[0] & 0x01
+    ); // reads disk, has to get master or slave
+    usrd.ix = strlen(usrd.buf);
+
+    actv = &usrd;
+    goto shell_clean;
   } else if (memcmp(comd.buf, "file", 4)) {
     char *datablk = malloc(disk_config -> wdata.len << 9);
     switch (comd.buf[5]) { // r or w
@@ -183,28 +222,54 @@ shell_clean:
 }
 
 void curupd() {
-  if (comd.ix > strlen(comd.buf)) comd.ix = strlen(comd.buf);
-  set_cur(POS(comd.ix + 3, ln_nr()));
+  if (actv -> ix > strlen(actv -> buf)) actv -> ix = strlen(actv -> buf);
+  // TODO: take into account new lines
+  if (IS_COM) {
+    set_cur(POS(actv->ix + 3, ln_nr()));
+  } else if (IS_USR) {
+    unsigned short runx = POS(0, 1);
+    for (int ii = 0; ii < actv -> ix; ii++) {
+      switch (actv->buf[ii]) {
+      case '\n':
+        runx /= POS(0, 1);
+        runx++;
+        runx *= POS(0, 1);
+        break;
+      case '\b':
+        runx--;
+        break;
+      default:
+        runx++;
+      }
+    }
+    set_cur(runx);
+  }
 }
 
+void usr_ctrl_d();
 void comupd() {
-  if (strlen(comd.buf) >= comd.len) {
-    line_feed();
-    msg(PROGERR, 23, "Command too long");
-    line_feed();
-    memzero(comd.buf, comd.len);
-    comd.ix = 0;
+  if (strlen(actv -> buf) >= actv -> len) {
+    if (IS_COM) {
+      line_feed();
+      msg(PROGERR, 23, "Buffer size exceeded");
+      line_feed();
+      memzero(actv -> buf, actv -> len);
+      actv -> ix = 0;
+    } else if (IS_USR) {
+      actv->buf[actv->len -1] = 0;
+    }
   }
 
-  int comlen = strlen(comd.buf);
+  int comlen = strlen(actv -> buf);
 
-  switch (comd.buf[comd.ix - 1]) {
+  switch (actv -> buf[actv -> ix - 1]) {
   case '\b':
-    memcpy(comd.buf + comd.ix, comd.buf + comd.ix - 2, comd.len - comd.ix);
-    comd.ix -= 2;
+    memcpy(actv -> buf + actv -> ix, actv -> buf + actv -> ix - 2, actv -> len - actv -> ix);
+    actv -> ix -= 2;
     clear_ln(ln_nr());
     break;
   case '\n':
+    if (IS_USR) break;
     line_feed();
     comd.buf[comd.ix - 1] = '\0';
     memcpy(comd.buf + comd.ix, comd.buf + comd.ix - 1, comd.len - comd.ix);
@@ -215,14 +280,18 @@ void comupd() {
     break;
   }
 
-  char printbuf[20] = "\r\x13> "; // 0x13 is the !! symbol
-  strcpy(comd.buf, printbuf + 4);
-  write_str(printbuf, COLOUR(BLACK, WHITE));
+  if (IS_COM) {
+    char printbuf[20] = "\r\x13> "; // 0x13 is the !! symbol
+    strcpy(comd.buf, printbuf + 4);
+    write_str(printbuf, COLOUR(BLACK, WHITE));
+  } else if (IS_USR) {
+    set_cur(POS(0, 1));
+    write_str(usrd.buf, COLOUR(BLACK, WHITE));
+  }
   curupd();
 }
 
 void sh_hist_restore() {
-  
   memcpy(hist_combuf, comd.buf, comd.len);
   comd.ix = strlen(comd.buf);
   comupd();
@@ -232,6 +301,24 @@ void sh_ctrl_c() {
   write_str("^C", COLOUR(BLACK, B_BLACK));
   line_feed();
   memzero(comd.buf, comd.len);
+  comupd();
+}
+
+void usr_ctrl_d() {
+  usrd.ix = strlen(usrd.buf);
+  write_str("^D", COLOUR(BLACK, B_BLACK));
+  curupd();
+  write_pio28(
+    usrd.buf,
+    disk_config -> wdata,
+    hardware -> boot_disk_p.dev_path[0] & 0x01
+  ); // writes to disk, see above
+
+  if (usrd.buf != NULL) free(usrd.buf);
+  usrd.len = 0;
+  usrd.ix = 0;
+  actv = &comd;
+  line_feed();
   comupd();
 }
 

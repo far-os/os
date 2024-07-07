@@ -1,13 +1,2 @@
-ÉÍÍÍÍÍÍÍÍÍÍÍÍÍÍ»
-º Hello World! º
-ÓÄÄÄÄÄÄÄÄÄÄÄÄÄÄ½
-
+This is a test file. Do with it as you please.
 The quick brown fox jumps over the lazy dog.
-Sphinx of black quartz, judge my vow!
-
-Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
-To be or not to be, that is the question.
-According to all known laws of aviation, there is no way a bee should be able to fly. Its wings are too small to get its fat little body off the ground.
-
- Special Char Test:
-m s que; une mŠre; ein M„dchen; œ‘ğ

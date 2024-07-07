@@ -210,7 +210,6 @@ static inline void ps2_wait() { // wait for ps2 controller to be ready
   while (pbyte_in(0x64) & 0x02);
 }
 
-
 void indic_light_upd() { // update indicator lights
   ps2_wait();
   pbyte_out(K_PORT, 0xed);
@@ -225,11 +224,17 @@ int xgg = 0;
 unsigned char quitting_prog = 0;
 
 static inline void putch(char vf) {
-  backmemcpy(comd.buf + comd.len - 2, comd.buf + comd.len - 1, comd.len - (comd.ix + 1));
-  comd.buf[comd.ix] = vf;
-  comd.ix++;
+  if (actv->ix >= (actv -> len)) return;
+  backmemcpy(actv->buf + actv->len - 2, actv->buf + actv->len - 1, actv->len - (actv->ix + 1));
+  actv -> buf[actv -> ix] = vf;
+  actv -> ix++;
   comupd();
 }
+
+enum what_upd {
+  CURSOR,
+  COMMAND
+};
 
 void read_kbd() {
   unsigned char scan = pbyte_in(K_PORT);
@@ -303,35 +308,41 @@ void read_kbd() {
         break;
       }
       if (!(keys -> modifs & (1 << 1)) || keys -> modifs & (1 << 7)) {
-        if (scan == 0x48) {
+        if (scan == 0x48 && IS_COM) {
           // up_key
           sh_hist_restore();
         } else if (scan == 0x4b) {
           // left_key
-          comd.ix--;
+          actv -> ix--;
           curupd();
         } else if (scan == 0x4d) {
           // right_key
-          comd.ix++;
+          actv -> ix++;
           curupd();
         } else if (scan == 0x53) {
           // del_key
-          memcpy(comd.buf + comd.ix + 1, comd.buf + comd.ix, comd.len - (comd.ix + 1));
+          if (actv->ix >= (actv -> len)) break;
+          memcpy(actv -> buf + actv -> ix + 1, actv -> buf + actv -> ix, actv -> len - (actv -> ix + 1));
           clear_ln(ln_nr());
           comupd();
         } else if (scan == 0x47) {
           // home_key
-          comd.ix = 0;
+          actv -> ix = 0;
           comupd();
         } else if (scan == 0x4f) {
-          comd.ix = strlen(comd.buf);
+          actv -> ix = strlen(actv -> buf);
           comupd();
         } 
         break; // TODO: down cursor key
       }
     default:
-      if (scan == 0x2e && keys -> modifs & (1 << 4)) { // ctrl-c
+      if (scan == 0x2e && keys -> modifs & (1 << 4) && IS_COM) { // ctrl-c
         sh_ctrl_c();
+        break;
+      }
+
+      if (scan == 0x20 && keys -> modifs & (1 << 4) && IS_USR) { // ctrl-c
+        usr_ctrl_d();
         break;
       }
       char ascii;
