@@ -341,8 +341,8 @@ void read_kbd() {
         break;
       }
 
-      if (scan == 0x20 && keys -> modifs & (1 << 4) && IS_USR) { // ctrl-c
-        usr_ctrl_d();
+      if (scan == 0x1f && keys -> modifs & (1 << 4) && IS_USR) { // ctrl-s
+        usr_ctrl_s();
         break;
       }
       char ascii;

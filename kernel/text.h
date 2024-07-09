@@ -32,11 +32,21 @@
 #define VRAM_CTRL_PORT 0x3d4
 #define VRAM_DATA_PORT 0x3d5
 
+#define PAGE_COUNT 8
 char *vram = (char *) 0xb8000;
+unsigned char page = 0;
+short page_curloc_cache[PAGE_COUNT]; 
 
-extern void clear_scr();
-extern void clear_ln(int lnr);
-extern void scroll_scr();
+#define PAGE(p) (vram + (p << 12))
+#define CPAGE PAGE(page)
+
+extern void clear_pag(unsigned char p);
+extern void clear_pag_ln(unsigned char p, int lnr);
+extern void scroll_pag(unsigned char p);
+
+#define clear_scr() clear_pag(page)
+#define clear_ln(lnr) clear_pag_ln(page, lnr)
+#define scroll_scr() scroll_pag(page)
 
 #pragma GCC push_options
 #pragma GCC optimize "O3"
@@ -46,6 +56,8 @@ void set_cur(short pos) {
     pos -= VGA_WIDTH;
     scroll_scr();
   }
+
+  pos += page << 11;
   pbyte_out(VRAM_CTRL_PORT, 0xe); // we are sending the high 8 bits of position
   pbyte_out(VRAM_DATA_PORT, ((pos >> 8) & 0x00ff)); // the high eight bits
   pbyte_out(VRAM_CTRL_PORT, 0xf); // we are sending the low 8 bits of position
@@ -58,9 +70,21 @@ short get_cur() {
   pos |= ((short) pbyte_in(VRAM_DATA_PORT)) << 8; // the high eight bits
   pbyte_out(VRAM_CTRL_PORT, 0xf); // we are getting the low 8 bits of position
   pos |= pbyte_in(VRAM_DATA_PORT); // the low eight bits
-  return pos;
+  return pos & 0x7ff;
 }
 
+void set_page(unsigned char pg) {
+  page_curloc_cache[page] = get_cur();
+  page = pg;
+  set_cur(page_curloc_cache[page]);
+
+  pbyte_out(VRAM_CTRL_PORT, 0xc); // we are sending the high 8 bits of position
+  pbyte_out(VRAM_DATA_PORT, ((pg << 3) & 0x00ff)); // the high eight bits
+  // always zero, no point
+  //pbyte_out(VRAM_CTRL_PORT, 0xd); // we are sending the low 8 bits of position
+  //pbyte_out(VRAM_DATA_PORT, ((pos << 11) & 0x00ff)); // the low eight bits
+  idle();
+}
 #pragma GCC pop_options
 
 short ln_nr() {
@@ -88,8 +112,8 @@ void v_tab() {
 }
 
 void write_cell(char ch, short pos, unsigned char style) {
-  vram[pos * 2] = ch;
-  vram[pos * 2 + 1] = style;
+  CPAGE[pos * 2] = ch;
+  CPAGE[pos * 2 + 1] = style;
 }
 
 void adv_cur() {

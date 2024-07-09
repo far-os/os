@@ -23,65 +23,82 @@ kernel_entry:
 
         call a20_test
         
-        call clear_scr
+        push 0
+        call clear_pag
+        sub esp, 4
+
         call main
 
         cli
         hlt
 
-[global clear_scr]
-clear_scr: ; clear screen
-        pushad
-        pushf
-        mov ax, 0x0700
-        mov ecx, (80 * 25)
-        mov edi, 0xb8000
-        cld
-        rep stosw
-        popf
-        popad
-        ret
-
-[global clear_ln]
-clear_ln: ; void clear_ln(int lnr);
+[global clear_pag]
+clear_pag: ; clear screen
         push ebp ; c calling convention
         mov ebp, esp
-        pushad
-        pushf
+        push edi
         
-        mov edx, [ebp+8] ; load argument
+        mov edx, [ebp+8] ; page nr
+        shl edx, 12
+
+        mov ax, 0x0700
+        mov ecx, (80 * 25)
+        lea edi, [0xb8000 + edx]
+
+        cld
+        rep stosw
+
+        pop edi
+        leave
+        ret
+
+[global clear_pag_ln]
+clear_pag_ln: ; void clear_pag_ln(unsigned char p, int lnr);
+        push ebp ; c calling convention
+        mov ebp, esp
+        push edi
+        
+        mov edx, [ebp+12] ; load argument
 
         shl edx, 5 ; times by 32 - below it is times by 5 overall multiplying by 160
 
-        lea edi, [edx * 5 + 0xb8000]
+        mov ecx, [ebp+8] ; page nr
+        shl ecx, 12
+
+        lea edi, [edx * 4 + ecx + 0xb8000]
+        add edi, edx
         mov ecx, 80
         mov ax, 0x0700
 
         cld
         rep stosw
         
-        popf
-        popad
+        pop edi
         leave
         ret
 
-[global scroll_scr]
-scroll_scr:
+[global scroll_pag]
+scroll_pag:
+        push ebp ; c calling convention
+        mov ebp, esp
         pushad
-        pushf
-        mov esi, 0xb8000 + (80 * 2)
-        mov edi, 0xb8000
+        mov edx, [ebp+8] ; page nr
+        shl edx, 12
+
+        lea esi, [0xb80a0 + edx]
+        lea edi, [0xb8000 + edx]
         mov ecx, (80 * 24 / 2)
         cld
         rep movsd
 
         push 24
-        call clear_ln
-        pop edx
+        push edx
+        call clear_pag_ln
+        add esp, 8 ; pop what we just did
 
-        popf
         popad
 
+        leave
         ret
 
 [global check_cpuid_avail]

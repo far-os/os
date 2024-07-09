@@ -43,13 +43,12 @@ struct inp_strbuf usrd = {
 struct inp_strbuf *actv = &comd;
 
 const char *comnames[] = { // starting with 0xff, means arg for previous
-  "bufedit",
   "clear",
   "cpu",
   "exec",
   "\xff<u32>",
   "file",
-  "\xff<r|w [data]>",
+  "\xff<r|ed>",
   "help",
   "indic",
   "info",
@@ -147,17 +146,18 @@ void shexec() {
     } else if (ret == 9) {
       msg(KERNERR, ret, "Program executed illegal instruction");
     }
-  } else if (strcmp(comd.buf, "bufedit")) {
-    clear_scr();
+  } else if (strcmp(comd.buf, "file ed")) {
+    set_page(1);
     set_cur(0);
+    clear_scr();
 
     char * linebox = malloc(23);
     memset(linebox, 22, 0xcd); // double line box drawing
 
     write_str(linebox, COLOUR(GREEN, RED));
-    write_str(" Editor \x07 Press ", COLOUR(GREEN, B_WHITE));
-    write_str("^D", COLOUR(GREEN, B_CYAN));
-    write_str(" to save and exit ", COLOUR(GREEN, B_WHITE));
+    write_str(" Editor \x07 Press ", COLOUR(GREEN, B_YELLOW));
+    write_str("^S", COLOUR(GREEN, B_CYAN));
+    write_str(" to save and exit ", COLOUR(GREEN, B_YELLOW));
     write_str(linebox, COLOUR(GREEN, RED));
 
     free(linebox);
@@ -174,27 +174,14 @@ void shexec() {
 
     actv = &usrd;
     goto shell_clean;
-  } else if (memcmp(comd.buf, "file", 4)) {
+  } else if (strcmp(comd.buf, "file r")) {
     char *datablk = malloc(disk_config -> wdata.len << 9);
-    switch (comd.buf[5]) { // r or w
-      case 'r':
-        read_pio28(
-          datablk,
-          disk_config -> wdata,
-          hardware -> boot_disk_p.dev_path[0] & 0x01
-        ); // reads disk, has to get master or slave
-        write_str(datablk, COLOUR(BLACK, WHITE));
-        break;
-      case 'w':
-        memcpy(hist_combuf, datablk, comd.len);
-        write_pio28(
-          datablk,
-          disk_config -> wdata,
-          hardware -> boot_disk_p.dev_path[0] & 0x01
-        ); // writes to disk, see above
-        msg(INFO, 0, "File written");
-        break;
-    }
+    read_pio28(
+      datablk,
+      disk_config -> wdata,
+      hardware -> boot_disk_p.dev_path[0] & 0x01
+    ); // reads disk, has to get master or slave
+    write_str(datablk, COLOUR(BLACK, WHITE));
 
     free(datablk);
     line_feed();
@@ -246,7 +233,6 @@ void curupd() {
   }
 }
 
-void usr_ctrl_d();
 void comupd() {
   if (strlen(actv -> buf) >= actv -> len) {
     if (IS_COM) {
@@ -262,14 +248,21 @@ void comupd() {
 
   int comlen = strlen(actv -> buf);
 
-  switch (actv -> buf[actv -> ix - 1]) {
+  switch (actv->buf[actv->ix - 1]) {
   case '\b':
-    memcpy(actv -> buf + actv -> ix, actv -> buf + actv -> ix - 2, actv -> len - actv -> ix);
+    memcpy(actv->buf + actv->ix, actv->buf + actv->ix - 2, actv->len - actv->ix);
     actv -> ix -= 2;
-    clear_ln(ln_nr());
+
+    if (IS_COM) clear_ln(ln_nr());
+    else for (int il = 1; il < VGA_WIDTH; ++il) clear_ln(il); // extremely 100% not cursed else for
+
     break;
   case '\n':
-    if (IS_USR) break;
+    if (IS_USR) {
+      for (int il = 1; il < VGA_WIDTH; ++il) clear_ln(il);
+      break;
+    }
+
     line_feed();
     comd.buf[comd.ix - 1] = '\0';
     memcpy(comd.buf + comd.ix, comd.buf + comd.ix - 1, comd.len - comd.ix);
@@ -304,9 +297,9 @@ void sh_ctrl_c() {
   comupd();
 }
 
-void usr_ctrl_d() {
+void usr_ctrl_s() {
   usrd.ix = strlen(usrd.buf);
-  write_str("^D", COLOUR(BLACK, B_BLACK));
+  write_str("^S", COLOUR(BLACK, B_BLACK));
   curupd();
   write_pio28(
     usrd.buf,
@@ -318,6 +311,10 @@ void usr_ctrl_d() {
   usrd.len = 0;
   usrd.ix = 0;
   actv = &comd;
+
+  set_page(0);
+  page_curloc_cache[1] = 0;
+  msg(INFO, 0, "File written");
   line_feed();
   comupd();
 }

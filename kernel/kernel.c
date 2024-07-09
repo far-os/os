@@ -30,6 +30,8 @@ extern void *eh_list[];
 void main() {
 //  clear_scr();
 
+  // clear cursor location cache
+  memzero(page_curloc_cache, sizeof page_curloc_cache);
   set_cur(POS(0, 0)); // cursor at top left
    
   quitting_prog = 0;
