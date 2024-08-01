@@ -179,7 +179,10 @@ unsigned int to_uint(char *input) {
   for (int i = 0; i < strlen(input); ++i) {
     unsigned char x = input[i];
     x -= '0';
-    if (x > 9) break;
+    if (x > 9) {
+      if (i == 0) f = -1;
+      break;
+    }
 
     f *= 10;
     f += (unsigned int) x;

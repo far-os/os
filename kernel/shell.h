@@ -22,7 +22,7 @@ extern int prog(int arg);
 #ifndef SHELL_H
 #define SHELL_H
 
-#define COMLEN 16
+#define COMLEN 32
 struct inp_strbuf comd = {
   .buf = NULL,
   .len = COMLEN,
@@ -52,8 +52,11 @@ const char *comnames[] = { // starting with 0xff, means arg for previous
   "help",
   "indic",
   "info",
+  "ls",
   "rconfig",
   "reset",
+  "stat",
+  "\xff<inode|filename>",
   "time",
   "ver",
   NULL, // nullptr
@@ -96,7 +99,7 @@ void shexec() {
     sprintf(endof(outbuf), " build %d", curr_ver -> build);
   } else if (strcmp(comd.buf, "time")) {
     fmt = COLOUR(RED, B_CYAN);
-    sprintf(outbuf, "Time since kernel load: %d.%2ds\n%s%c%2d-%2d-%2d %2d:%2d:%2d",
+    sprintf(outbuf, "Time since kernel load: %d.%2ds\n%s%c%4d-%2d-%2d %2d:%2d:%2d",
       countx / 100,
       countx % 100,
       curr_time -> weekday ? weekmap[curr_time -> weekday - 1] : NULL,
@@ -108,6 +111,12 @@ void shexec() {
       curr_time -> minute,
       curr_time -> second
     );
+  } else if (strcmp(comd.buf, "ls")) {
+    fmt = COLOUR(BLACK, B_WHITE);
+    for (int filek = 0; file_table[filek].name; filek++) {
+      strcat(outbuf, file_table[filek].name);
+      *endof(outbuf) = ' ';
+    }
   } else if (strcmp(comd.buf, "indic")) {
     fmt = COLOUR(GREEN, RED);
     // indicators
@@ -122,6 +131,36 @@ void shexec() {
     clear_scr();
     set_cur(POS(0, 0));
     goto shell_clean;
+  } else if (memcmp(comd.buf, "stat", 4)) {
+    int ar = -1;
+    if (strlen(comd.buf) > 5) {
+      ar = to_uint(comd.buf + 5);
+      if (ar < 0) {
+        ar = name2inode(comd.buf + 5);
+        if (ar < 0) goto shell_clean;
+      }
+    }
+    
+    if (ar < 0 || !(file_table[ar].name)) {
+      msg(PROGERR, 3, "Invalid inode");
+      line_feed();
+      goto shell_clean;
+    }
+
+    sprintf(outbuf, "%s <%d>\n\t%d bytes, sector %2X\n\tCreated %4d-%2d-%2d %2d:%2d:%2d",
+      file_table[ar].name,
+      ar,
+      file_table[ar].loc.len << 9,
+      &(file_table[ar].loc.lba),
+      file_table[ar].created.year,
+      file_table[ar].created.month,
+      file_table[ar].created.date,
+      file_table[ar].created.hour,
+      file_table[ar].created.minute,
+      file_table[ar].created.second
+    );
+
+    fmt = COLOUR(GREEN, RED);
   } else if (memcmp(comd.buf, "exec", 4)) {
     if (disk_config -> qi_magic != CONFIG_MAGIC) {
       msg(KERNERR, 4, "Disk is unavailable");
@@ -183,7 +222,6 @@ void shexec() {
     free(datablk);
     line_feed();
     goto shell_clean;
-
   } else if (strcmp(comd.buf, "rconfig")) {
     fmt = COLOUR(BLUE, B_YELLOW); // fmt
     sprintf(outbuf, "config.qi\n\tProgram at lba sector %2X, %d sector(s)\n\t\x10\t%s\n\tWritable data at lba sector %2X, %d sector(s)",
@@ -270,7 +308,7 @@ void comupd() {
   }
 
   if (IS_COM) {
-    char printbuf[20] = "\r\x13> "; // 0x13 is the !! symbol
+    char printbuf[COMLEN + 4] = "\r\x13> "; // 0x13 is the !! symbol
     strcpy(comd.buf, printbuf + 4);
     write_str(printbuf, COLOUR(BLACK, WHITE));
   } else if (IS_USR) {

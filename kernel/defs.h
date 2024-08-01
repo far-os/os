@@ -34,7 +34,7 @@ struct far_ver * curr_ver = &((struct far_ver) {
   .major = 0,
   .minor = 0,
   .patch = 3,
-  .build = 17, // minor changes + hotfixes
+  .build = 18, // minor changes + hotfixes
 });
 
 struct keystates { /* a 104-bit struct containing data */
