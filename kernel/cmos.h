@@ -51,18 +51,6 @@ char *weekmap[7] = {
   "Sat"
 };
 
-struct timestamp {
-  unsigned char second;
-  unsigned char minute;
-  unsigned char hour;
-  unsigned char weekday;
-  unsigned char date;
-  unsigned char month;
-  unsigned int year;
-} __attribute__((packed));
-
-struct timestamp *curr_time = (struct timestamp *) 0xab00;
-
 void read_rtc(struct timestamp *ts) {
   // update in progress flag
 //  while (get_cmos_reg(RTC_STAT_A) | 0x80);

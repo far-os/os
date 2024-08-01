@@ -79,12 +79,17 @@ void main() {
 
   query_cpuid();
 
-  read_pio28(
-    disk_config,
-    (struct sector_box){ .lba = KERN_LEN, .len = 1 },
-    hardware -> boot_disk_p.dev_path[0] & 0x01
-  ); // reads disk for config, has to get master or slave
+  // init fs and inode table
+  fs_init();
+
+  read_inode(
+    name2inode("config.qi"),
+    disk_config
+  );
  
+  // init fs (again) - for new files found in config.qi
+  fs_init();
+
   // magic check
   if (disk_config -> qi_magic != CONFIG_MAGIC) {
     msg(INFO, 0, hardware -> boot_disk_p.itrf_type);

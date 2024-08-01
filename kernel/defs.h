@@ -8,6 +8,18 @@
 #define NULL (void *) 0
 #define endof(str) (str + strlen(str))
 
+struct timestamp {
+  unsigned char second;
+  unsigned char minute;
+  unsigned char hour;
+  unsigned char weekday;
+  unsigned char date;
+  unsigned char month;
+  unsigned int year;
+} __attribute__((packed));
+
+struct timestamp *curr_time = (struct timestamp *) 0xc7f0;
+
 // centisec (100ths of sec) since load
 unsigned int countx = 0;
 
@@ -22,7 +34,7 @@ struct far_ver * curr_ver = &((struct far_ver) {
   .major = 0,
   .minor = 0,
   .patch = 3,
-  .build = 16, // minor changes + hotfixes
+  .build = 17, // minor changes + hotfixes
 });
 
 struct keystates { /* a 104-bit struct containing data */

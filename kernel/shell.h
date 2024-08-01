@@ -129,10 +129,9 @@ void shexec() {
       goto shell_clean;
     }
 
-    read_pio28(
-      0x100000,
-      disk_config -> exec,
-      hardware -> boot_disk_p.dev_path[0] & 0x01
+    read_inode(
+      name2inode("prog.bin"),
+      0x100000
     ); // reads disk, has to get master or slave
 
     int ar = -1;
@@ -165,10 +164,9 @@ void shexec() {
     // usermode init
     usrd.len = disk_config -> wdata.len << 9; // 1 sector
     usrd.buf = malloc(usrd.len);
-    read_pio28(
-      usrd.buf,
-      disk_config -> wdata,
-      hardware -> boot_disk_p.dev_path[0] & 0x01
+    read_inode(
+      name2inode("data.txt"),
+      usrd.buf
     ); // reads disk, has to get master or slave
     usrd.ix = strlen(usrd.buf);
 
@@ -176,10 +174,9 @@ void shexec() {
     goto shell_clean;
   } else if (strcmp(comd.buf, "file r")) {
     char *datablk = malloc(disk_config -> wdata.len << 9);
-    read_pio28(
-      datablk,
-      disk_config -> wdata,
-      hardware -> boot_disk_p.dev_path[0] & 0x01
+    read_inode(
+      name2inode("data.txt"),
+      datablk
     ); // reads disk, has to get master or slave
     write_str(datablk, COLOUR(BLACK, WHITE));
 
@@ -210,7 +207,6 @@ shell_clean:
 
 void curupd() {
   if (actv -> ix > strlen(actv -> buf)) actv -> ix = strlen(actv -> buf);
-  // TODO: take into account new lines
   if (IS_COM) {
     set_cur(POS(actv->ix + 3, ln_nr()));
   } else if (IS_USR) {
@@ -301,10 +297,9 @@ void usr_ctrl_s() {
   usrd.ix = strlen(usrd.buf);
   write_str("^S", COLOUR(BLACK, B_BLACK));
   curupd();
-  write_pio28(
-    usrd.buf,
-    disk_config -> wdata,
-    hardware -> boot_disk_p.dev_path[0] & 0x01
+  write_inode(
+    name2inode("data.txt"),
+    usrd.buf
   ); // writes to disk, see above
 
   if (usrd.buf != NULL) free(usrd.buf);
