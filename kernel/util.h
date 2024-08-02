@@ -290,4 +290,29 @@ void to_ver_string(struct far_ver * ver, char * vbuf) {
   sprintf(vbuf, "FarOS v%d.%d.%d", ver -> major, ver -> minor, ver -> patch);
 }
 
+#define trace_ch_until(a,b) trace_ch_until_with(a,b,0)
+unsigned short trace_ch_until_with(char *str, int until, int start) {
+  unsigned short int runx = start;
+  for (int ii = 0; ii < until; ii++) {
+    switch (str[ii]) {
+    case '\n':
+      runx /= POS(0, 1);
+      runx++;
+      runx *= POS(0, 1);
+      break;
+    case '\t':
+      runx /= 8;
+      runx++;
+      runx *= 8;
+      break;
+    case '\b':
+      runx--;
+      break;
+    default:
+      runx++;
+    }
+  }
+  return runx;
+}
+
 #endif

@@ -115,7 +115,7 @@ void shexec() {
     fmt = COLOUR(BLACK, B_WHITE);
     for (int filek = 0; file_table[filek].name; filek++) {
       strcat(outbuf, file_table[filek].name);
-      *endof(outbuf) = ' ';
+      *endof(outbuf) = '\t';
     }
   } else if (strcmp(comd.buf, "indic")) {
     fmt = COLOUR(GREEN, RED);
@@ -147,17 +147,17 @@ void shexec() {
       goto shell_clean;
     }
 
-    sprintf(outbuf, "%s <%d>\n\t%d bytes, sector %2X\n\tCreated %4d-%2d-%2d %2d:%2d:%2d",
+    sprintf(outbuf, "%s <%d>\n\t%d bytes, sector %2X\n\tModified %4d-%2d-%2d %2d:%2d:%2d",
       file_table[ar].name,
       ar,
       file_table[ar].loc.len << 9,
       &(file_table[ar].loc.lba),
-      file_table[ar].created.year,
-      file_table[ar].created.month,
-      file_table[ar].created.date,
-      file_table[ar].created.hour,
-      file_table[ar].created.minute,
-      file_table[ar].created.second
+      file_table[ar].modified.year,
+      file_table[ar].modified.month,
+      file_table[ar].modified.date,
+      file_table[ar].modified.hour,
+      file_table[ar].modified.minute,
+      file_table[ar].modified.second
     );
 
     fmt = COLOUR(GREEN, RED);
@@ -246,24 +246,9 @@ shell_clean:
 void curupd() {
   if (actv -> ix > strlen(actv -> buf)) actv -> ix = strlen(actv -> buf);
   if (IS_COM) {
-    set_cur(POS(actv->ix + 3, ln_nr()));
+    set_cur(POS(trace_ch_until_with(actv->buf, actv->ix, 3), ln_nr()));
   } else if (IS_USR) {
-    unsigned short runx = POS(0, 1);
-    for (int ii = 0; ii < actv -> ix; ii++) {
-      switch (actv->buf[ii]) {
-      case '\n':
-        runx /= POS(0, 1);
-        runx++;
-        runx *= POS(0, 1);
-        break;
-      case '\b':
-        runx--;
-        break;
-      default:
-        runx++;
-      }
-    }
-    set_cur(runx);
+    set_cur(POS(trace_ch_until(actv->buf, actv->ix), 1));
   }
 }
 

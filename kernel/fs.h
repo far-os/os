@@ -21,7 +21,7 @@ struct csdfs_superblock *csdfs = (struct csdfs_superblock *) 0x19fc0;
 struct inode {
   char *name;
   struct sector_box loc;
-  struct timestamp created;
+  struct timestamp modified;
 } __attribute__((packed));
 
 typedef int inode_n;
@@ -30,19 +30,19 @@ struct inode *file_table = (void *) 0x30000;
 void fs_init() {
   file_table[0].name = "kernel.bin";
   file_table[0].loc = (struct sector_box){ .lba = 0, .len = KERN_LEN },
-  memcpy(curr_time, &file_table[0].created, sizeof(struct timestamp));
+  memcpy(curr_time, &file_table[0].modified, sizeof(struct timestamp));
 
   file_table[1].name = "config.qi";
   file_table[1].loc = (struct sector_box){ .lba = KERN_LEN, .len = 1 },
-  memcpy(curr_time, &file_table[1].created, sizeof(struct timestamp));
+  memcpy(curr_time, &file_table[1].modified, sizeof(struct timestamp));
 
   file_table[2].name = "prog.bin";
   memcpy(&disk_config -> exec, &file_table[2].loc, sizeof(struct sector_box));
-  memcpy(curr_time, &file_table[2].created, sizeof(struct timestamp));
+  memcpy(curr_time, &file_table[2].modified, sizeof(struct timestamp));
 
   file_table[3].name = "data.txt";
   memcpy(&disk_config -> wdata, &file_table[3].loc, sizeof(struct sector_box));
-  memcpy(curr_time, &file_table[3].created, sizeof(struct timestamp));
+  memcpy(curr_time, &file_table[3].modified, sizeof(struct timestamp));
 
   file_table[4].name = NULL;
 }
@@ -82,6 +82,9 @@ void write_inode(inode_n file, void * where) {
     file_table[file].loc,
     hardware -> boot_disk_p.dev_path[0] & 0x01
   ); // reads disk for config, has to get master or slave
+
+  // changes mtime to most recent write
+  memcpy(curr_time, &file_table[file].modified, sizeof(struct timestamp));
 }
 
 #endif
