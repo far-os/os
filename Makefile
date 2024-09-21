@@ -20,8 +20,9 @@ kernel.entry.o: link.ld entry.o kernel.o
 kernel.bin: kernel.entry.o
 	objcopy -O binary $^ $@
 
-prog.bin: program/main.asm $(wildcard program/include/*.asm)
-	nasm $< -f bin -o $@
+prog.bin: program/main.s $(wildcard program/include/*.s)
+	as $< --32 -o prog.o
+	objcopy -O binary prog.o -j .prog $@
 
 boot.kern.bin: boot.bin kernel.bin
 	cat $^ > $@

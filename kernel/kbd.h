@@ -1,7 +1,7 @@
 #include "port.h"
 #include "text.h"
 #include "util.h"
-#include "shell.h" //cyclic include
+#include "kapps/kshell.h" //cyclic include
 
 #ifndef KBD_H
 #define KBD_H

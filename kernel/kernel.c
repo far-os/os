@@ -5,7 +5,7 @@
 #include "util.h"
 #include "pic.h"
 #include "ih.h"
-#include "shell.h"
+#include "kapps/kshell.h"
 #include "fs.h"
 #include "hwinf.h"
 #include "timer.h"
