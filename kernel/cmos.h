@@ -66,7 +66,7 @@ void read_rtc(struct timestamp *ts) {
   unsigned char century = get_cmos_reg(RTC_CENT);
 
   if (!ts -> weekday || ts -> weekday > 7) {
-    msg(INFO, 12, "Invalid weekday");
+    msg(INFO, E_TIME, "Invalid weekday");
     line_feed();
     ts -> weekday = 0;
   }
@@ -88,7 +88,7 @@ void read_rtc(struct timestamp *ts) {
   }
 
   if (century < 19) {
-    msg(INFO, 12, "Invalid century or before 1900 - assuming year 20xx");
+    msg(INFO, E_TIME, "Invalid century or before 1900 - assuming year 20xx");
     line_feed();
     century = 20;
   }

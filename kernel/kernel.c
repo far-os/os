@@ -92,9 +92,9 @@ void main() {
 
   // magic check
   if (disk_config -> qi_magic != CONFIG_MAGIC) {
-    msg(INFO, 0, hardware -> boot_disk_p.itrf_type);
+    msg(INFO, NONE, hardware -> boot_disk_p.itrf_type);
     line_feed();
-    msg(KERNERR, 18, "Bad kernel config: invalid magic"); 
+    msg(KERNERR, E_CONFIG, "Bad kernel config: invalid magic"); 
     line_feed();
   }
 

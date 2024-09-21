@@ -7,7 +7,7 @@
 #define MEMBLK_SIZE 16
 #define MEMRING_LOC 0x12000
 #define MEM_LOC (MEMRING_LOC * MEMBLK_SIZE)
-#define MEMRING_LEN 1024 // 16k of mem free
+#define MEMRING_LEN 1024 // 16k of mem free. don't try and increase this, youll prob wind up overwriting the os itself
 
 #define FREE 0x00
 #define BLK_START 0x01 // 0b01
@@ -21,6 +21,12 @@ unsigned char * memring = (unsigned char *) MEMRING_LOC;
 
 void mem_init() {
   memzero(MEMRING_LOC, MEMRING_LEN * MEMBLK_SIZE);
+}
+
+// checks if an address is a valid memring address (i.e. not out of bounds)
+static inline char is_memring(void *ptr) {
+  unsigned int addr = ((unsigned int) ptr / MEMBLK_SIZE) - MEMRING_LOC;
+  return addr < MEMRING_LEN;
 }
 
 void * malloc(unsigned int len) {
@@ -48,11 +54,54 @@ void * malloc(unsigned int len) {
 }
 
 void free(void * ptr) {
+  if (!(is_memring(ptr))) {
+    msg(KERNERR, E_BADADDR, "free: invalid address\n");
+    return;
+  }
+
   unsigned int blocks = 1; // amount of blocks taken up
   for (unsigned char * ptr_lc = (unsigned int) ptr / MEMBLK_SIZE; !(*(ptr_lc++) & BLK_END);)
     ++blocks;
 
   memzero((unsigned int) ptr / MEMBLK_SIZE, blocks);
+}
+
+void * realloc(void *ptr, unsigned int len) {
+  // if (!(is_memring(ptr))) {
+  unsigned int blocks = 1; // amount of blocks taken up
+  for (unsigned char * ptr_lc = (unsigned int) ptr / MEMBLK_SIZE; !(*(ptr_lc++) & BLK_END);)
+    ++blocks;
+
+  unsigned int new_blk = (len / MEMBLK_SIZE) + !!(len % MEMBLK_SIZE); // new block count
+
+  unsigned int offset = (unsigned int) (ptr - MEM_LOC) / MEMBLK_SIZE;
+
+  if (!(is_memring(ptr))) goto create_new;
+
+  if (blocks == new_blk) return ptr;
+  else if (blocks > new_blk) {
+    memring[offset + new_blk - 1] |= BLK_END; // add the end where it needs to be
+    memzero(&memring[offset + new_blk], blocks - new_blk); // truncate
+    return ptr;
+  } else { // grow
+    char not_blank = 0;
+    for (int i = blocks; i < new_blk; ++i) {
+      not_blank |= memring[offset + i]; // if any one of them are not zero, not blank will not be zero
+    }
+    if (not_blank) { // can we just naively extend
+      // can't naively extend
+    create_new:
+      void *x = malloc(len);
+      memcpy(ptr, x, blocks * MEMBLK_SIZE);
+      free(ptr);
+      return x;
+    } else { // naive extension
+      memring[offset + blocks - 1] &= ~BLK_END; // delete the end
+      memset(&(memring[offset + blocks]), new_blk - blocks, IN_USE);
+      memring[offset + new_blk - 1] |= BLK_END; // new end
+      return ptr;
+    }
+  }
 }
 
 #endif

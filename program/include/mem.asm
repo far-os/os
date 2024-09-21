@@ -32,12 +32,32 @@
 
         int 0x33
 
-        xchg si, ax ; malloc
-        inc al ; free
+        ; after malloc 2
+
+        pop edx ; edx <- 1
+        xchg edx, edi ; edx = 2, edi = 1
+
+        xchg si, ax ; malloc 
+        mov al, 2 ; realloc
+        mov ecx, 0x30 ; bigger
 
         int 0x33
 
-        pop edi
+        xchg edx, edi ; edx = 1NEW, edi = 2
+        mov bh, dl
+
+        xchg si, ax ; write char
+
+        int 0x33
+
+        ; freeing
+
+        xchg si, ax ; malloc
+        dec al ; free
+
+        int 0x33
+
+        mov edi, edx
 
         int 0x33
 

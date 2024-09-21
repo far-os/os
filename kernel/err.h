@@ -4,7 +4,7 @@
 #ifndef ERR_H
 #define ERR_H
 
-void msg(enum MSG_TYPE type, int sig, char* supp) {
+void msg(enum MSG_TYPE type, enum ERRSIG sig, char* supp) {
   unsigned char msg_style;
   if (type == INFO) {
     msg_style = COLOUR(BLACK, B_CYAN);

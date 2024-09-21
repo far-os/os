@@ -142,7 +142,7 @@ void shexec() {
     }
     
     if (ar < 0 || !(file_table[ar].name)) {
-      msg(PROGERR, 3, "Invalid inode");
+      msg(PROGERR, E_NOFILE, "Invalid inode");
       line_feed();
       goto shell_clean;
     }
@@ -163,7 +163,7 @@ void shexec() {
     fmt = COLOUR(GREEN, RED);
   } else if (memcmp(comd.buf, "exec", 4)) {
     if (disk_config -> qi_magic != CONFIG_MAGIC) {
-      msg(KERNERR, 4, "Disk is unavailable");
+      msg(KERNERR, E_NOSTORAGE, "Disk is unavailable");
       line_feed();
       goto shell_clean;
     }
@@ -178,10 +178,10 @@ void shexec() {
       ar = to_uint(comd.buf + 5);
     }
 
-    int ret = prog(ar);
-    if (ret == 7) {
+    enum ERRSIG ret = prog(ar);
+    if (ret == E_BOUND) {
       msg(PROGERR, ret, "Program not found");
-    } else if (ret == 9) {
+    } else if (ret == E_ILLEGAL) {
       msg(KERNERR, ret, "Program executed illegal instruction");
     }
   } else if (strcmp(comd.buf, "file ed")) {
@@ -232,7 +232,7 @@ void shexec() {
       disk_config -> wdata.len
     );
   } else {
-    msg(WARN, 11, "Unknown command");
+    msg(WARN, E_UNKENTITY, "Unknown command");
   }
   write_str(outbuf, fmt);
   line_feed();
@@ -256,7 +256,7 @@ void comupd() {
   if (strlen(actv -> buf) >= actv -> len) {
     if (IS_COM) {
       line_feed();
-      msg(PROGERR, 23, "Buffer size exceeded");
+      msg(PROGERR, E_BUFOVERFLOW, "Buffer size exceeded");
       line_feed();
       memzero(actv -> buf, actv -> len);
       actv -> ix = 0;
@@ -332,7 +332,7 @@ void usr_ctrl_s() {
 
   set_page(0);
   page_curloc_cache[1] = 0;
-  msg(INFO, 0, "File written");
+  msg(INFO, NONE, "File written");
   line_feed();
   comupd();
 }

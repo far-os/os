@@ -178,6 +178,21 @@ Return values:
   
   None
 
+### Routine `0x02` - Reallocate memory
+Parameters:
+
+  | Register | Input |
+  | :- | :- |
+  | `ax` | `0x0102` - Service and Routine Number |
+  | `edi` | The previous address of the allocated memory | 
+  | `ecx` | Number of bytes to allocate |
+
+Return values:
+  
+  | Register | Input |
+  | :- | :- |
+  | `edi` | The new address of the allocated memory | 
+
 ## Service `0x02` - Util functions
 
 ### Routine `0x00` - Integer to ASCII

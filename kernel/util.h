@@ -7,7 +7,7 @@ void *malloc(unsigned int);
 void free(void *);
 
 enum MSG_TYPE;
-void msg(enum MSG_TYPE, int, char *);
+void msg(enum MSG_TYPE, enum ERRSIG, char *);
 
 // not really using standard library - stdarg just provides platform-dependent defines 
 #include <stdarg.h>
@@ -274,7 +274,7 @@ void sprintf(char *dest, const char *fmt, ...) {
         default:
           char *k = "printf: unknown format %_, ignoring";
           k[24] = fmt[fi];
-          msg(WARN, 1, k);
+          msg(WARN, E_PROG, k);
 
         stop_waiting:
           length_modif = 0;

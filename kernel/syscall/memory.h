@@ -19,6 +19,12 @@ void sys_1(struct cpu_state *c, unsigned char rout) {
     free(adj(c -> edi));
     break;
 
+  // Reallocate memory
+  case 0x02:
+    addr = realloc(adj(c -> edi), c -> ecx);
+    c -> edi = badj((unsigned int) addr);
+    break;
+
   default:
     break;
   }

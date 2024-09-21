@@ -1,5 +1,6 @@
 # FarOS
 A simple OS built in nasm and C.
+To clone, makes sure you use `git clone --recursive`. See [below](#quick-information-compiler-qic)
 
 ## CSDFS
 CSDFS (**C**ompact **S**ystem **D**isk **F**ile **S**ystem) is the file system used by FarOS disks. The bootable disks are organised like this, where each character is one sector:
@@ -45,11 +46,16 @@ You will need access to the following tools:
 - `cat`: To concatenate the bootloader and kernel binaries.
 - `dd`: To create the disk image. **Note**: you will also need access to `/dev/zero` for this step.
 - `make`: A convienent way to run all the commands.
+- `qic`: A custom tool for generating config files, see below
+
+### Quick Information Compiler (qic)
+`qic` is a custom utility for creating compiled configuration files. It is written in rust, so will require the rust toolchain to compile.
+It is imported as a submodule - hence the need to clone recursively.
 
 Once you have all of these, run `make`, and you will have an `os.img` file. This is the raw HDD disk image of the OS.
 
 ## Running
-You can use any hardware or emulator, but the provided `Makefile` includes methods to use `bochs` or `qemu`. Both emulators *(should)* work, however `bochs` is recommended. You can use the provided `.bochsrc` file, or you can use your own.
+You can use any (supported) hardware or emulator, but the provided `Makefile` includes methods to use `bochs` or `qemu`. Both emulators work, however `qemu` is recommended, due to speed.
 
 To build the image and use `bochs` or `qemu` simultaneously, run `make bochs` and `make qemu` respectively.
 It also works on real hardware.
@@ -71,10 +77,11 @@ To syscall to the kernel, use `int 0x33`. The service code goes in `ah`, and the
 | `2` | Error caused externally |
 | `3` | File inode invalid |
 | `4` | Storage medium unavailable |
+| `5` | Invalid address |
 | `7` | `bound` instruction failing (Program not found) |
 | `9` | Illegal instruction (#UD exception) |
 | `11` | Unknown value/command |
-| `12` | Time error (e.g. invalid timezone, incorrect RTC values |
+| `12` | Time error (e.g. invalid timezone, incorrect RTC values) |
 | `15` | Program loading error, e.g. not a binary file |
 | `18` | Error in configuration |
 | `23` | Buffer space exceeded (Command too long) |

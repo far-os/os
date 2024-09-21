@@ -51,14 +51,14 @@ inode_n name2inode(char *name) {
   for (inode_n search = 0; !!(file_table[search].name); search++) {
     if (strcmp(name, file_table[search].name)) return search;
   }
-  msg(PROGERR, 3, "File not found");
+  msg(PROGERR, E_NOFILE, "File not found");
   line_feed();
   return -1;
 }
 
 void read_inode(inode_n file, void * where) {
   if (file < 0) {
-    msg(KERNERR, 3, "Invalid inode");
+    msg(KERNERR, E_NOFILE, "Invalid inode");
     line_feed();
     return;
   }
@@ -72,7 +72,7 @@ void read_inode(inode_n file, void * where) {
 
 void write_inode(inode_n file, void * where) {
   if (file < 0) {
-    msg(KERNERR, 3, "Invalid inode");
+    msg(KERNERR, E_NOFILE, "Invalid inode");
     line_feed();
     return;
   }
