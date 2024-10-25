@@ -1,13 +1,12 @@
-#include "../text.h"
-#include "../util.h"
-#include "../hwinf.h"
-#include "../fs.h"
-#include "../ata.h"
-#include "../config.h"
-#include "../memring.h"
-#include "../defs.h"
-#include "../cmos.h"
-#include "../err.h"
+#include "../include/text.h"
+#include "../include/util.h"
+#include "../include/hwinf.h"
+#include "../include/fs.h"
+#include "../include/ata.h"
+#include "../include/config.h"
+#include "../include/memring.h"
+#include "../include/cmos.h"
+#include "../include/err.h"
 // #include "kbd.h"
 // because of cyclic include, we declare what we want
 
@@ -15,6 +14,12 @@ struct keystates *keys;
 void cpu_reset();
 
 extern int prog(int arg);
+
+struct inp_strbuf {
+  char *buf;
+  unsigned int len;
+  unsigned int ix;
+};
 
 #define IS_COM actv == &comd
 #define IS_USR actv == &usrd

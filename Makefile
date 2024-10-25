@@ -11,10 +11,13 @@ boot.bin: boot.asm
 entry.o: kernel/entry.asm
 	nasm $^ -f elf -o $@
 
-kernel.o: kernel/kernel.c $(wildcard kernel/*.h) $(wildcard kernel/syscall/*.h)
-	gcc -falign-functions=1 -fno-stack-protector -ffreestanding -m32 -march=i686 -Wall -Wno-error=int-conversion -Wno-error=incompatible-pointer-types -D"KERN_LEN=$(KERN_SIZE)" -c $< -o $@
+kernel.a: $(wildcard kernel/*.c) $(wildcard kernel/include/*.h) $(wildcard kernel/syscall/*.h) $(wildcard kernel/kapps/*.h)
+	mkdir -p build
+	cd build
+	gcc -falign-functions=1 -fno-stack-protector -ffreestanding -m32 -march=i686 -Wall -fpermissive -D"KERN_LEN=$(KERN_SIZE)" -c kernel/*.c
+	touch $@
 
-kernel.entry.o: link.ld entry.o kernel.o
+kernel.entry.o: link.ld entry.o kernel.a
 	ld -o $@ -melf_i386 -T $+
 
 kernel.bin: kernel.entry.o

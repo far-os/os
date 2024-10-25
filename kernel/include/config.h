@@ -1,7 +1,4 @@
-#include "defs.h"
-
-#ifndef CONFIG_H
-#define CONFIG_H
+#pragma once
 
 #define CONFIG_MAGIC 0xc091fa2b
 // read config file
@@ -13,5 +10,3 @@ struct config_qi {
 } __attribute__((packed));
 
 struct config_qi *disk_config = (struct config_qi *) 0xc800;
-
-#endif

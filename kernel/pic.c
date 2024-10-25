@@ -1,18 +1,5 @@
-#include "port.h"
-
-#ifndef PIC_H
-#define PIC_H
-
-#define P1_B 0x20 /* base address for PIC1's io */
-#define P1_COM P1_B /* PIC1 command */
-#define P1_DAT (P1_COM + 1) /* PIC1 data */
-
-#define P2_B 0xA0 /* base address for PIC2's io */
-#define P2_COM P2_B /* PIC2 command */
-#define P2_DAT (P2_COM + 1) /* PIC2 data */
-
-#define P1_I 0x20 /* start of PIC1's interrupts */
-#define P2_I (P1_I + 0x08) /* start of PIC2's interrupts */
+#include "include/pic.h"
+#include "include/port.h"
 
 void pic_init() {
   pbyte_out(P1_COM, 0x11); // init with ICW4
@@ -66,5 +53,3 @@ void irq_m_free(unsigned char line) {
   value = pbyte_in(port) & ~(1 << line);
   pbyte_out(port, value);
 }
-
-#endif

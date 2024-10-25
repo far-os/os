@@ -1,55 +1,13 @@
-#include "err.h"
-#include "util.h"
-#include "port.h"
-#include "memring.h"
-
-#ifndef CMOS_H
-#define CMOS_H
-
-#define RTC_SEC  0x00
-#define RTC_MIN  0x02
-#define RTC_HR   0x04
-#define RTC_WKDY 0x06
-#define RTC_DATE 0x07
-#define RTC_MON  0x08
-#define RTC_YR   0x09
-#define RTC_CENT 0x32
-
-#define RTC_STAT_A 0x0a
-#define RTC_STAT_B 0x0b
-
-#define P_CMOS_ADDRESS 0x70
-#define P_CMOS_DATA    0x71
-
-#define MK_BCD(num) num = ((num) & 0x0f) + (((num) >> 4) * 10)
+#include "include/cmos.h"
+#include "include/err.h"
+#include "include/util.h"
+#include "include/port.h"
+#include "include/memring.h"
 
 static inline unsigned char get_cmos_reg(unsigned char reg) {
   pbyte_out(P_CMOS_ADDRESS, reg | 0x80);
   return pbyte_in(P_CMOS_DATA);
 }
-
-// enums are too big
-/*
-enum weekdays {
-  Sunday = 1,
-  Monday = 2,
-  Tuesday = 3,
-  Wednesday = 4,
-  Thursday = 5,
-  Friday = 6,
-  Saturday = 7
-};
-*/
-
-char *weekmap[7] = {
-  "Sun",
-  "Mon",
-  "Tue",
-  "Wed",
-  "Thu",
-  "Fri",
-  "Sat"
-};
 
 void read_rtc(struct timestamp *ts) {
   // update in progress flag
@@ -143,5 +101,3 @@ void adv_time(struct timestamp *ts) {
     }
   }
 }
-
-#endif

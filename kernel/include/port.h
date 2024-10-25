@@ -1,5 +1,4 @@
-#ifndef PORT_H
-#define PORT_H
+#pragma once
 
 static inline unsigned char pbyte_in(unsigned short port) {
   unsigned char result;
@@ -52,5 +51,3 @@ static inline void rep_outsw(unsigned short port, unsigned int length, void *src
 }
 
 extern void fake_outsw(unsigned short, unsigned int, void *);
-
-#endif

@@ -1,14 +1,11 @@
-#include "defs.h"
+#pragma once
+
+#include "ih.h"
 #include "syscall/string.h"
 #include "syscall/memory.h"
 #include "syscall/utilfunc.h"
 
-#ifndef SYSCALL_H
-#define SYSCALL_H
-
 #define SYSCALL_AMOUNT 3
-
-struct cpu_state;
 
 void (*sys_table[SYSCALL_AMOUNT])(struct cpu_state *c, unsigned char rout) = {
   sys_0,
@@ -23,5 +20,3 @@ void syscall(struct cpu_state *c) {
   (*sys_table[serv])(c, rout);
 
 }
-
-#endif
