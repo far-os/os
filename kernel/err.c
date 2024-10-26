@@ -1,6 +1,14 @@
 #include "include/err.h"
 #include "include/text.h"
 
+char msg_symbs[5] = {
+  0x1a, // -> symbol
+  '+',
+  '!',
+  0x13, // !! symbol
+  'x',
+};
+
 void msg(enum MSG_TYPE type, enum ERRSIG sig, char* supp) {
   unsigned char msg_style;
   if (type == INFO) {

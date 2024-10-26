@@ -1,6 +1,10 @@
 #include "include/text.h"
 #include "include/port.h"
 
+char *vram = (char *) 0xb8000;
+unsigned char page = 0;
+short page_curloc_cache[PAGE_COUNT]; 
+
 #pragma GCC push_options
 #pragma GCC optimize "O3"
 

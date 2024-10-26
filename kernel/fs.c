@@ -6,6 +6,9 @@
 #include "include/hwinf.h"
 #include "include/misc.h"
 
+struct csdfs_superblock *csdfs = (struct csdfs_superblock *) 0x19fc0;
+struct inode *file_table = (void *) 0x30000;
+
 void fs_init() {
   file_table[0].name = "kernel.bin";
   file_table[0].loc = (struct sector_box){ .lba = 0, .len = KERN_LEN },

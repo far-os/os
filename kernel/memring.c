@@ -3,6 +3,8 @@
 #include "include/util.h"
 #include "include/err.h"
 
+unsigned char * memring = (unsigned char *) MEMRING_LOC;
+
 void mem_init() {
   memzero(MEMRING_LOC, MEMRING_LEN * MEMBLK_SIZE);
 }

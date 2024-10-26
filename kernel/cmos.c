@@ -4,7 +4,21 @@
 #include "include/port.h"
 #include "include/memring.h"
 
-static inline unsigned char get_cmos_reg(unsigned char reg) {
+struct timestamp *curr_time = (struct timestamp *) 0xc7f0;
+
+// centisec (100ths of sec) since load
+unsigned int countx = 0;
+char *weekmap[7] = {
+  "Sun",
+  "Mon",
+  "Tue",
+  "Wed",
+  "Thu",
+  "Fri",
+  "Sat"
+};
+
+extern inline unsigned char get_cmos_reg(unsigned char reg) {
   pbyte_out(P_CMOS_ADDRESS, reg | 0x80);
   return pbyte_in(P_CMOS_DATA);
 }
@@ -74,7 +88,10 @@ void time(void *tbuf) {
   free(next);
 }
 
-// using dumb almightily horrid macro, see header file
+// AARGH
+#define IS_LEAP_YR(yr) (!(yr % 4) && (!(yr % 400) || (yr % 100)))
+unsigned char days_per_mo[13] = {29, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
+
 void adv_time(struct timestamp *ts) {
   // unholy horrors
   if (++ts -> second >= 60) {

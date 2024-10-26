@@ -27,26 +27,12 @@ struct timestamp {
   unsigned int year;
 } __attribute__((packed));
 
-struct timestamp *curr_time = (struct timestamp *) 0xc7f0;
+extern struct timestamp *curr_time;
+extern unsigned int countx;
+extern char *weekmap[7];
 
-// centisec (100ths of sec) since load
-unsigned int countx = 0;
-char *weekmap[7] = {
-  "Sun",
-  "Mon",
-  "Tue",
-  "Wed",
-  "Thu",
-  "Fri",
-  "Sat"
-};
-
-static inline unsigned char get_cmos_reg(unsigned char reg);
+extern inline unsigned char get_cmos_reg(unsigned char reg);
 void read_rtc(struct timestamp *ts);
 void time(void *tbuf);
-
-// AARGH
-unsigned char days_per_mo[13] = {29, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
-#define IS_LEAP_YR(yr) (!(yr % 4) && (!(yr % 400) || (yr % 100)))
 
 void adv_time(struct timestamp *ts);

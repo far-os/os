@@ -4,7 +4,8 @@
 #include "include/util.h"
 #include "include/pic.h"
 #include "include/ih.h"
-#include "kapps/kshell.h"
+// hold on
+// #include "kapps/kshell.h"
 #include "include/fs.h"
 #include "include/hwinf.h"
 #include "include/timer.h"

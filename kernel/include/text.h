@@ -30,9 +30,9 @@
 #define VRAM_DATA_PORT 0x3d5
 
 #define PAGE_COUNT 8
-char *vram = (char *) 0xb8000;
-unsigned char page = 0;
-short page_curloc_cache[PAGE_COUNT]; 
+extern char *vram;
+extern unsigned char page;
+extern short page_curloc_cache[PAGE_COUNT]; 
 
 #define PAGE(p) (vram + (p << 12))
 #define CPAGE PAGE(page)

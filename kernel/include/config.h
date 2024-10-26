@@ -1,3 +1,5 @@
+#include "fs.h"
+
 #pragma once
 
 #define CONFIG_MAGIC 0xc091fa2b
@@ -9,4 +11,5 @@ struct config_qi {
   struct sector_box wdata;
 } __attribute__((packed));
 
-struct config_qi *disk_config = (struct config_qi *) 0xc800;
+// this is in misc.c, because like i dont feel like creating a one-line c file
+extern struct config_qi *disk_config;

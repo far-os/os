@@ -19,7 +19,7 @@ struct csdfs_superblock {
   unsigned char block_size; // block size in sectors
 } __attribute__((packed));
 
-struct csdfs_superblock *csdfs = (struct csdfs_superblock *) 0x19fc0;
+extern struct csdfs_superblock *csdfs;
 
 // file system is purely in-memory, is abstracted to disk sectors in real time
 struct inode {
@@ -30,7 +30,7 @@ struct inode {
 
 typedef int inode_n;
 
-struct inode *file_table = (void *) 0x30000;
+extern struct inode *file_table;
 
 void fs_init();
 inode_n name2inode(char *name);

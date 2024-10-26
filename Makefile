@@ -3,7 +3,7 @@
 
 # Disk size in units of 512KiB (Half MiB)
 export DISK_SIZE_HM := 1
-export KERN_SIZE := 48
+export KERN_SIZE := 56
 
 boot.bin: boot.asm
 	nasm $^ -f bin -o $@
@@ -13,7 +13,7 @@ entry.o: kernel/entry.asm
 
 kernel.a: $(wildcard kernel/*.c) $(wildcard kernel/include/*.h) $(wildcard kernel/syscall/*.h) $(wildcard kernel/kapps/*.h)
 	mkdir -p obj
-	cd obj && gcc -w -falign-functions=1 -fno-stack-protector -ffreestanding -m32 -march=i686 -Wall -fpermissive -D"KERN_LEN=$(KERN_SIZE)" -c ../kernel/*.c
+	cd obj && gcc -falign-functions=1 -fno-stack-protector -ffreestanding -m32 -march=i686 -Wall -fpermissive -D"KERN_LEN=$(KERN_SIZE)" -c ../kernel/*.c
 	ar rv $@ obj/*.o
 
 kernel.entry.o: link.ld entry.o kernel.a
@@ -54,4 +54,4 @@ bochs: os.img .bochsrc
 clean:
 	cargo clean --manifest-path=./util/qic/Cargo.toml
 	rm -rf ./util/bin ./obj
-	rm -f *.qi *.bin *.o *.img
+	rm -f *.qi *.bin *.o *.a *.img

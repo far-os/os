@@ -1,6 +1,8 @@
 #include "include/hwinf.h"
 #include "include/util.h"
 
+struct hwinf *hardware = (struct hwinf *) 0xcc00;
+
 static inline int chk_cflag (unsigned char feat) {
   return bittest(&(hardware -> f_flags_edx), feat);
 }

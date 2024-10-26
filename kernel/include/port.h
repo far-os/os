@@ -14,10 +14,6 @@ static inline void pbyte_out(unsigned short port, unsigned char data) {
         "d" (port));
 }
 
-void idle() {
-  pbyte_out(0x80, 0x0); // just passing the time (1-4 microseconds)
-}
-
 static inline unsigned short pword_in(unsigned short port) {
   unsigned char result;
   asm volatile ("in %%dx, %%ax"

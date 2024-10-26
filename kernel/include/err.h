@@ -25,12 +25,6 @@ enum ERRSIG {
   E_BUFOVERFLOW = 23
 };
 
-char msg_symbs[5] = {
-  0x1a, // -> symbol
-  '+',
-  '!',
-  0x13, // !! symbol
-  'x',
-};
+extern char msg_symbs[5];
 
 void msg(enum MSG_TYPE type, enum ERRSIG sig, char* supp);

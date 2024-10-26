@@ -13,7 +13,7 @@
 // the memring sits at 0x12_000 whereas the memory it points to sits at 0x120_000 (<< 4)
 // each byte in the memring points to a 16 byte block
 
-unsigned char * memring = (unsigned char *) MEMRING_LOC;
+extern unsigned char * memring;
 
 void mem_init();
 static inline char is_memring(void *ptr);

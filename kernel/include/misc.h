@@ -15,12 +15,8 @@ struct far_ver {
   unsigned char build;
 } __attribute__((packed));
 
-struct far_ver * curr_ver = &((struct far_ver) {
-  .major = 0,
-  .minor = 0,
-  .patch = 3,
-  .build = 22, // minor changes + hotfixes
-});
+// current vrsion
+extern struct far_ver * curr_ver;
 
 struct farb_header {
   char farb_magic[4]; // should be equal to FARb
@@ -29,4 +25,4 @@ struct farb_header {
   int eh_ptr; // error handler pointer
 } __attribute__((packed));
 
-struct farb_header __seg_fs *prog_head = 0;
+extern struct farb_header __seg_fs *prog_head;

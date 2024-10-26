@@ -3,6 +3,9 @@
 #include "include/kbd.h"
 #include "include/syscall.h"
 #include "include/cmos.h"
+#include "include/misc.h"
+
+unsigned char quitting_prog = 0;
 
 static inline void retto_progeh(struct stack_state *s) {
   if (s -> cs != 0x08) { // if not called by kernel

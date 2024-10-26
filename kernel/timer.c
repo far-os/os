@@ -1,10 +1,6 @@
 #include "include/timer.h"
+#include "include/port.h"
 #include "include/util.h"
-
-// get the divisor - the amount the time needs to count down from - from a number in hz
-static inline unsigned short get_divisor(unsigned int freq) {
-  return (unsigned short) (PIT_FREQ_HZ / freq);
-}
 
 void init_timer(unsigned short divisor) {
   // com[7:6] - channel

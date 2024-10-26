@@ -2,8 +2,194 @@
 #include "include/port.h"
 #include "include/text.h"
 #include "include/util.h"
+#include "include/ih.h"
 #include "kapps/kshell.h" //cyclic include
 
+struct keystates *keys = &((struct keystates) { .states_high = 0x0, .states_low = 0x0, .modifs = 0b00000000 });
+
+char scan_map_en_UK[96] = { // scancode map for UK keyboard.
+  '\0',
+  '\x1b', // ESC
+  '1',
+  '2',
+  '3',
+  '4',
+  '5',
+  '6',
+  '7',
+  '8',
+  '9',
+  '0',
+  '-',
+  '=',
+  '\b', // BACK
+  '\t', // TAB
+  'q',
+  'w',
+  'e',
+  'r',
+  't',
+  'y',
+  'u',
+  'i',
+  'o',
+  'p',
+  '[',
+  ']',
+  '\n', // ENTER
+  '\0', // LCTRL
+  'a',
+  's',
+  'd',
+  'f',
+  'g',
+  'h',
+  'j',
+  'k',
+  'l',
+  ';',
+  '\'',
+  '`',
+  '\0', // LSHIFT
+  '#',
+  'z',
+  'x',
+  'c',
+  'v',
+  'b',
+  'n',
+  'm',
+  ',',
+  '.',
+  '/',
+  '\0', // RSHIFT
+  '*', // KEYPAD
+  '\0', // LALT
+  ' ',
+  '\0',
+  '\0', // TODO: F1
+  '\0', // TODO: F2
+  '\0', // TODO: F3
+  '\0', // TODO: F4
+  '\0', // TODO: F5
+  '\0', // TODO: F6
+  '\0', // TODO: F7
+  '\0', // TODO: F8
+  '\0', // TODO: F9
+  '\0', // shift+f10 => clrscr
+  '\0', // NUMLCK
+  '\0', // SCRLLCK
+  '7', // KEYPAD
+  '8', // KEYPAD
+  '9', // KEYPAD
+  '-', // KEYPAD
+  '4', // KEYPAD
+  '5', // KEYPAD
+  '6', // KEYPAD
+  '+', // KEYPAD
+  '1', // KEYPAD
+  '2', // KEYPAD
+  '3', // KEYPAD
+  '0', // KEYPAD
+  '.', // KEYPAD
+  '\0', // 0x54
+  '\0', // 0x55
+  '\\',
+  '\0', // TODO: F11
+  '\0' // TODO: F12
+};
+
+char scan_map_en_UK_shift[96] = { // scancode map for UK keyboard.
+  '\0',
+  '\x1b',
+  '!',
+  '"',
+  0x9c, // £ in cp437
+  '$',
+  '%',
+  '^',
+  '&',
+  '*',
+  '(',
+  ')',
+  '_',
+  '+',
+  '\b', // BACK
+  '\t', // TAB
+  'Q',
+  'W',
+  'E',
+  'R',
+  'T',
+  'Y',
+  'U',
+  'I',
+  'O',
+  'P',
+  '{',
+  '}',
+  '\n', // ENTER
+  '\0', // LCTRL
+  'A',
+  'S',
+  'D',
+  'F',
+  'G',
+  'H',
+  'J',
+  'K',
+  'L',
+  ':',
+  '@',
+  0xaa, // ¬ in cp437
+  '\0', // LSHIFT
+  '~',
+  'Z',
+  'X',
+  'C',
+  'V',
+  'B',
+  'N',
+  'M',
+  '<',
+  '>',
+  '?',
+  '\0', // RSHIFT
+  '*', // KEYPAD
+  '\0', // LALT
+  ' ',
+  '\0',
+  '\0', // TODO: F1
+  '\0', // TODO: F2
+  '\0', // TODO: F3
+  '\0', // TODO: F4
+  '\0', // TODO: F5
+  '\0', // TODO: F6
+  '\0', // TODO: F7
+  '\0', // TODO: F8
+  '\0', // TODO: F9
+  '\0', // F10: shift+f10 to clear screen
+  '\0', // NUMLCK
+  '\0', // SCRLLCK
+  '7', // KEYPAD
+  '8', // KEYPAD
+  '9', // KEYPAD
+  '-', // KEYPAD
+  '4', // KEYPAD
+  '5', // KEYPAD
+  '6', // KEYPAD
+  '+', // KEYPAD
+  '1', // KEYPAD
+  '2', // KEYPAD
+  '3', // KEYPAD
+  '0', // KEYPAD
+  '.', // KEYPAD
+  '\0', // 0x54
+  '\0', // 0x55
+  '\\',
+  '\0', // TODO: F11
+  '\0' // TODO: F12
+};
 static inline void charinv(unsigned char sc) {
   /*if (sc < 0x40) {
     keys -> states_low ^= (1 << sc);
@@ -28,8 +214,6 @@ void indic_light_upd() { // update indicator lights
 
 char alt_code_buf[4];
 int xgg = 0;
-
-unsigned char quitting_prog = 0;
 
 static inline void putch(char vf) {
   if (actv->ix >= (actv -> len)) return;

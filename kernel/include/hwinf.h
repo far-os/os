@@ -52,9 +52,8 @@ struct hwinf {
                             // 0xcc96
 } __attribute__((packed));
 
-struct hwinf *hardware = (struct hwinf *) 0xcc00;
+extern struct hwinf *hardware;
 
 extern char check_cpuid_avail();
 
-static inline int chk_cflag(unsigned char feat);
 void query_cpuid();

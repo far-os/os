@@ -3,9 +3,14 @@
 #include "include/misc.h"
 #include "include/text.h"
 #include "include/memring.h"
+#include "include/port.h"
 
 // not really using standard library - stdarg just provides platform-dependent defines 
 #include <stdarg.h>
+
+extern inline void idle() {
+  pbyte_out(0x80, 0x0); // just passing the time (1-4 microseconds)
+}
 
 int strlen(char *str) {
   int i = -1;
@@ -48,7 +53,7 @@ unsigned char memcmp(void *src, void *dest, unsigned int amount) {
   return o;
 }
 
-static inline unsigned char bittest(void *src, unsigned int bit) {
+extern inline unsigned char bittest(void *src, unsigned int bit) {
   unsigned char o;
   asm volatile ("bt %2, (%1)" : 
       "=@ccc" (o)
@@ -58,7 +63,7 @@ static inline unsigned char bittest(void *src, unsigned int bit) {
   return o;
 }
 
-static inline unsigned char bitinv(void *src, unsigned int bit) {
+extern inline unsigned char bitinv(void *src, unsigned int bit) {
   unsigned char o;
   asm volatile ("btc %2, (%1)" : 
       "=@ccc" (o)
@@ -68,7 +73,7 @@ static inline unsigned char bitinv(void *src, unsigned int bit) {
   return o;
 }
 
-static inline unsigned char bitclear(void *src, unsigned int bit) {
+extern inline unsigned char bitclear(void *src, unsigned int bit) {
   unsigned char o;
   asm volatile ("btr %2, (%1)" : 
       "=@ccc" (o)
@@ -78,7 +83,7 @@ static inline unsigned char bitclear(void *src, unsigned int bit) {
   return o;
 }
 
-static inline unsigned char bitset(void *src, unsigned int bit) {
+extern inline unsigned char bitset(void *src, unsigned int bit) {
   unsigned char o;
   asm volatile ("bts %2, (%1)" : 
       "=@ccc" (o)
@@ -92,7 +97,7 @@ unsigned char strcmp(char *src, char *dest) {
   return memcmp(src, dest, strlen(src)) && strlen(src) == strlen(dest);
 }
 
-static inline void memset(void *dest, unsigned int amount, unsigned char val) {
+extern inline void memset(void *dest, unsigned int amount, unsigned char val) {
   asm volatile ("cld\n"
                 "rep stosb\n":
     : "a" (val),
@@ -101,7 +106,7 @@ static inline void memset(void *dest, unsigned int amount, unsigned char val) {
     : "memory", "cc" );
 }
 
-static inline void memzero(void *dest, unsigned int amount) {
+extern inline void memzero(void *dest, unsigned int amount) {
   memset(dest, amount, 0);
 }
 
@@ -169,7 +174,7 @@ unsigned int to_uint(char *input) {
   return f;
 }
 
-static inline char *strcat(char *out, char *in) {
+extern inline char *strcat(char *out, char *in) {
   strcpy(in, endof(out));
   return out;
 }
