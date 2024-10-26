@@ -12,12 +12,6 @@
 
 extern int prog(int arg);
 
-struct inp_strbuf {
-  char *buf;
-  unsigned int len;
-  unsigned int ix;
-};
-
 #define IS_COM actv == &comd
 #define IS_USR actv == &usrd
 
@@ -339,7 +333,10 @@ void usr_ctrl_s() {
   comupd();
 }
 
+extern void *mk_shell();
 void shell() {
+  void *mg = mk_shell();
+  free(mg);
   comd.buf = malloc(comd.len);
 //  set_cur(POS(0, 1)); // new line
   memzero(hist_combuf, comd.len);

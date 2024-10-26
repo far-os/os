@@ -29,6 +29,26 @@
 #define VRAM_CTRL_PORT 0x3d4
 #define VRAM_DATA_PORT 0x3d5
 
+struct inp_strbuf {
+  char *buf;
+  unsigned int len;
+  unsigned int ix;
+};
+
+#define CTRL_BASE 0
+#define FN_BASE 0x20
+#define SHIFT_FN_BASE 0x2c
+enum ctrl_char {
+  NO_CTRL = 0,
+  // ^A = 1 ... ^Z = 26
+  CTRL_C = 3, // ctrl_c
+  CTRL_S = 19, // etc.
+  BACKSPACE = 30, // backspace, it's not a real character (i know it doesnt map to ascii)
+  // F1 -> F12 take up 0x21-2c (0x20 + n)
+  // _F1 -> _F12 take up 0x2d-38 (0x2c + n)
+  SHIFT_F10 = 0x36,
+};
+
 #define PAGE_COUNT 8
 extern char *vram;
 extern unsigned char page;
