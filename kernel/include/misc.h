@@ -1,7 +1,8 @@
 #pragma once
 
-#define adj(x) (x) + 0x100000
-#define badj(x) (x) - 0x100000
+#define PROG_LOC 0x100000
+#define adj(x) (x) + PROG_LOC
+#define badj(x) (x) - PROG_LOC
 // adjusting pointers
 
 #define NULL (void *) 0

@@ -1,6 +1,7 @@
 #include "include/memring.h"
 #include "include/text.h"
 #include "include/util.h"
+#include "include/err.h"
 
 void mem_init() {
   memzero(MEMRING_LOC, MEMRING_LEN * MEMBLK_SIZE);

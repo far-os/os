@@ -1,6 +1,10 @@
 #include "include/fs.h"
 #include "include/ata.h"
+#include "include/cmos.h"
 #include "include/config.h"
+#include "include/err.h"
+#include "include/hwinf.h"
+#include "include/misc.h"
 
 void fs_init() {
   file_table[0].name = "kernel.bin";

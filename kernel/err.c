@@ -1,8 +1,7 @@
-#include "include/err.c"
+#include "include/err.h"
 #include "include/text.h"
 
-void msg(enum MSG_TYPE type, enum ERRSIG sig, char* supp);
-{
+void msg(enum MSG_TYPE type, enum ERRSIG sig, char* supp) {
   unsigned char msg_style;
   if (type == INFO) {
     msg_style = COLOUR(BLACK, B_CYAN);

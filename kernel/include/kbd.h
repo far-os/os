@@ -1,5 +1,8 @@
 #pragma once
 
+#define K_PORT 0x60
+#define K_PORT_COM 0x64
+
 struct keystates { /* a 104-bit struct containing data */
   /*
     bit 0 set: scroll lock

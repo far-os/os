@@ -1,4 +1,5 @@
 #include "include/ata.h"
+#include "include/fs.h"
 #include "include/port.h"
 
 static inline void ata_cache_flush() {

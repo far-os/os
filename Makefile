@@ -12,10 +12,9 @@ entry.o: kernel/entry.asm
 	nasm $^ -f elf -o $@
 
 kernel.a: $(wildcard kernel/*.c) $(wildcard kernel/include/*.h) $(wildcard kernel/syscall/*.h) $(wildcard kernel/kapps/*.h)
-	mkdir -p build
-	cd build
-	gcc -falign-functions=1 -fno-stack-protector -ffreestanding -m32 -march=i686 -Wall -fpermissive -D"KERN_LEN=$(KERN_SIZE)" -c kernel/*.c
-	touch $@
+	mkdir -p obj
+	cd obj && gcc -w -falign-functions=1 -fno-stack-protector -ffreestanding -m32 -march=i686 -Wall -fpermissive -D"KERN_LEN=$(KERN_SIZE)" -c ../kernel/*.c
+	ar rv $@ obj/*.o
 
 kernel.entry.o: link.ld entry.o kernel.a
 	ld -o $@ -melf_i386 -T $+
@@ -54,5 +53,5 @@ bochs: os.img .bochsrc
 
 clean:
 	cargo clean --manifest-path=./util/qic/Cargo.toml
-	rm -rf ./util/bin
+	rm -rf ./util/bin ./obj
 	rm -f *.qi *.bin *.o *.img

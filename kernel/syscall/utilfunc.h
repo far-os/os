@@ -1,4 +1,4 @@
-#include "../util.h"
+#include "../include/util.h"
 
 #ifndef SYS_UTILFUNC_H
 #define SYS_UTILFUNC_H

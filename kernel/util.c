@@ -1,3 +1,6 @@
+#include "include/util.h"
+#include "include/err.h"
+#include "include/misc.h"
 #include "include/text.h"
 #include "include/memring.h"
 

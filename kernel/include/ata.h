@@ -1,3 +1,5 @@
+#include "fs.h"
+
 #pragma once
 
 #define READ_SECTORS 0x20

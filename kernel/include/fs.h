@@ -1,3 +1,5 @@
+#include "cmos.h"
+
 #pragma once
 
 #define SECTOR_LEN 512

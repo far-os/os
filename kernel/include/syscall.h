@@ -1,9 +1,8 @@
-#pragma once
+#include "../syscall/string.h"
+#include "../syscall/memory.h"
+#include "../syscall/utilfunc.h"
 
-#include "ih.h"
-#include "syscall/string.h"
-#include "syscall/memory.h"
-#include "syscall/utilfunc.h"
+#pragma once
 
 #define SYSCALL_AMOUNT 3
 
@@ -13,10 +12,4 @@ void (*sys_table[SYSCALL_AMOUNT])(struct cpu_state *c, unsigned char rout) = {
   sys_2,
 };
 
-void syscall(struct cpu_state *c) {
-  unsigned char serv, rout;
-  asm volatile ("movb %%ch, %%dl" : "=d" (serv), "=c" (rout) : "c" (c -> eax));
-
-  (*sys_table[serv])(c, rout);
-
-}
+void syscall(struct cpu_state *c);

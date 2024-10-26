@@ -22,6 +22,7 @@ struct stack_state {
   unsigned int eflags;
 } __attribute__((packed)); // stack
 
+unsigned char quitting_prog = 0;
 static inline void retto_progeh(struct stack_state *s); 
 
 void eh_c(struct cpu_state c, unsigned int i, struct stack_state s);

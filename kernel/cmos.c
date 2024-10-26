@@ -74,11 +74,7 @@ void time(void *tbuf) {
   free(next);
 }
 
-// AARGH
-unsigned char days_per_mo[13] = {29, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
-
-#define IS_LEAP_YR(yr) (!(yr % 4) && (!(yr % 400) || (yr % 100)))
-
+// using dumb almightily horrid macro, see header file
 void adv_time(struct timestamp *ts) {
   // unholy horrors
   if (++ts -> second >= 60) {

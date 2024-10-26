@@ -7,11 +7,8 @@
 #include "../include/memring.h"
 #include "../include/cmos.h"
 #include "../include/err.h"
-// #include "kbd.h"
-// because of cyclic include, we declare what we want
-
-struct keystates *keys;
-void cpu_reset();
+#include "../include/misc.h"
+#include "../include/kbd.h"
 
 extern int prog(int arg);
 

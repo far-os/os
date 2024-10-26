@@ -1,3 +1,5 @@
+#include "misc.h"
+
 #pragma once
 
 int strlen(char *str);

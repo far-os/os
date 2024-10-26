@@ -1,6 +1,6 @@
-#include "../text.h"
-#include "../util.h"
-#include "../defs.h"
+#include "../include/text.h"
+#include "../include/util.h"
+#include "../include/misc.h"
 
 #ifndef SYS_STRING_H
 #define SYS_STRING_H
