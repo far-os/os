@@ -1,5 +1,6 @@
 #include "include/text.h"
 #include "include/port.h"
+#include "include/util.h"
 
 char *vram = (char *) 0xb8000;
 unsigned char page = 0;

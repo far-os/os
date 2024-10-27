@@ -25,4 +25,7 @@ struct farb_header {
   int eh_ptr; // error handler pointer
 } __attribute__((packed));
 
+// c++ seems to hate __seg_fs
+#ifndef __cplusplus
 extern struct farb_header __seg_fs *prog_head;
+#endif

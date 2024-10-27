@@ -5,6 +5,8 @@
 #include "include/err.h"
 #include "include/hwinf.h"
 #include "include/misc.h"
+#include "include/util.h"
+#include "include/text.h"
 
 struct csdfs_superblock *csdfs = (struct csdfs_superblock *) 0x19fc0;
 struct inode *file_table = (void *) 0x30000;

@@ -8,7 +8,7 @@
 // not really using standard library - stdarg just provides platform-dependent defines 
 #include <stdarg.h>
 
-extern inline void idle() {
+void idle() {
   pbyte_out(0x80, 0x0); // just passing the time (1-4 microseconds)
 }
 
@@ -53,61 +53,8 @@ unsigned char memcmp(void *src, void *dest, unsigned int amount) {
   return o;
 }
 
-extern inline unsigned char bittest(void *src, unsigned int bit) {
-  unsigned char o;
-  asm volatile ("bt %2, (%1)" : 
-      "=@ccc" (o)
-      : "r" (src),
-        "ir" (bit)
-      : "cc" );
-  return o;
-}
-
-extern inline unsigned char bitinv(void *src, unsigned int bit) {
-  unsigned char o;
-  asm volatile ("btc %2, (%1)" : 
-      "=@ccc" (o)
-      : "r" (src),
-        "ir" (bit)
-      : "cc" );
-  return o;
-}
-
-extern inline unsigned char bitclear(void *src, unsigned int bit) {
-  unsigned char o;
-  asm volatile ("btr %2, (%1)" : 
-      "=@ccc" (o)
-      : "r" (src),
-        "ir" (bit)
-      : "cc" );
-  return o;
-}
-
-extern inline unsigned char bitset(void *src, unsigned int bit) {
-  unsigned char o;
-  asm volatile ("bts %2, (%1)" : 
-      "=@ccc" (o)
-      : "r" (src),
-        "ir" (bit)
-      : "cc" );
-  return o;
-}
-
 unsigned char strcmp(char *src, char *dest) {
   return memcmp(src, dest, strlen(src)) && strlen(src) == strlen(dest);
-}
-
-extern inline void memset(void *dest, unsigned int amount, unsigned char val) {
-  asm volatile ("cld\n"
-                "rep stosb\n":
-    : "a" (val),
-      "c" (amount),
-      "D" (dest)
-    : "memory", "cc" );
-}
-
-extern inline void memzero(void *dest, unsigned int amount) {
-  memset(dest, amount, 0);
 }
 
 void memrev(char *src, int len, char *dest) {
@@ -172,11 +119,6 @@ unsigned int to_uint(char *input) {
     f += (unsigned int) x;
   }
   return f;
-}
-
-extern inline char *strcat(char *out, char *in) {
-  strcpy(in, endof(out));
-  return out;
 }
 
 void sprintf(char *dest, const char *fmt, ...) {

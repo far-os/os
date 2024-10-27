@@ -29,6 +29,7 @@
 #define VRAM_CTRL_PORT 0x3d4
 #define VRAM_DATA_PORT 0x3d5
 
+#define QUEUE_LEN 8
 struct inp_strbuf {
   char *buf;
   unsigned int len;
@@ -44,9 +45,18 @@ enum ctrl_char {
   CTRL_C = 3, // ctrl_c
   CTRL_S = 19, // etc.
   BACKSPACE = 30, // backspace, it's not a real character (i know it doesnt map to ascii)
+  DEL = 31,
   // F1 -> F12 take up 0x21-2c (0x20 + n)
   // _F1 -> _F12 take up 0x2d-38 (0x2c + n)
   SHIFT_F10 = 0x36,
+  UP = 0x37,
+  DOWN = 0x38,
+  LEFT = 0x39,
+  RIGHT = 0x3a,
+  PGUP = 0x3b,
+  PGDOWN = 0x3c,
+  HOME = 0x3d,
+  END = 0x3e
 };
 
 #define PAGE_COUNT 8

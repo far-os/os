@@ -1,5 +1,6 @@
 #include "include/cmos.h"
 #include "include/err.h"
+#include "include/text.h"
 #include "include/util.h"
 #include "include/port.h"
 #include "include/memring.h"

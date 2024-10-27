@@ -31,7 +31,6 @@ extern struct timestamp *curr_time;
 extern unsigned int countx;
 extern char *weekmap[7];
 
-extern inline unsigned char get_cmos_reg(unsigned char reg);
 void read_rtc(struct timestamp *ts);
 void time(void *tbuf);
 

@@ -4,13 +4,12 @@
 #include "include/util.h"
 #include "include/pic.h"
 #include "include/ih.h"
-// hold on
-// #include "kapps/kshell.h"
 #include "include/fs.h"
 #include "include/hwinf.h"
 #include "include/timer.h"
 #include "include/memring.h"
 #include "include/err.h"
+#include "include/kappldr.h"
 
 struct idt_entry {
   unsigned short offset_low; // low 16 bits of offset
@@ -98,7 +97,14 @@ void main() {
     line_feed();
   }
 
-  shell();
+  app_db[0] = mk_shell(28);
+  curr_kapp = 0;
+//  (**shell->invoke)();
+
+  // stop. just stop.
+  for (;;) {
+    asm volatile ("hlt");
+  }
 
 //  eh_c(0xaa);
 }

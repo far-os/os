@@ -1,5 +1,7 @@
 #include "include/err.h"
 #include "include/text.h"
+#include "include/memring.h"
+#include "include/util.h"
 
 char msg_symbs[5] = {
   0x1a, // -> symbol

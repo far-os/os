@@ -3,193 +3,46 @@
 #include "include/text.h"
 #include "include/util.h"
 #include "include/ih.h"
-#include "kapps/kshell.h" //cyclic include
+#include "include/kappldr.h"
 
 struct keystates *keys = &((struct keystates) { .states_high = 0x0, .states_low = 0x0, .modifs = 0b00000000 });
 
 char scan_map_en_UK[96] = { // scancode map for UK keyboard.
-  '\0',
-  '\x1b', // ESC
-  '1',
-  '2',
-  '3',
-  '4',
-  '5',
-  '6',
-  '7',
-  '8',
-  '9',
-  '0',
-  '-',
-  '=',
-  '\b', // BACK
-  '\t', // TAB
-  'q',
-  'w',
-  'e',
-  'r',
-  't',
-  'y',
-  'u',
-  'i',
-  'o',
-  'p',
-  '[',
-  ']',
-  '\n', // ENTER
-  '\0', // LCTRL
-  'a',
-  's',
-  'd',
-  'f',
-  'g',
-  'h',
-  'j',
-  'k',
-  'l',
-  ';',
-  '\'',
-  '`',
-  '\0', // LSHIFT
-  '#',
-  'z',
-  'x',
-  'c',
-  'v',
-  'b',
-  'n',
-  'm',
-  ',',
-  '.',
-  '/',
-  '\0', // RSHIFT
-  '*', // KEYPAD
-  '\0', // LALT
-  ' ',
-  '\0',
-  '\0', // TODO: F1
-  '\0', // TODO: F2
-  '\0', // TODO: F3
-  '\0', // TODO: F4
-  '\0', // TODO: F5
-  '\0', // TODO: F6
-  '\0', // TODO: F7
-  '\0', // TODO: F8
-  '\0', // TODO: F9
-  '\0', // shift+f10 => clrscr
-  '\0', // NUMLCK
-  '\0', // SCRLLCK
-  '7', // KEYPAD
-  '8', // KEYPAD
-  '9', // KEYPAD
-  '-', // KEYPAD
-  '4', // KEYPAD
-  '5', // KEYPAD
-  '6', // KEYPAD
-  '+', // KEYPAD
-  '1', // KEYPAD
-  '2', // KEYPAD
-  '3', // KEYPAD
-  '0', // KEYPAD
-  '.', // KEYPAD
-  '\0', // 0x54
-  '\0', // 0x55
+  0, '\x1b' /* esc */, '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '=', '\b' /* backspace */,
+  '\t' /* tab */, 'q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p', '[', ']', '\n' /* enter */,
+  '\0' /* lctrl */, 'a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l', ';', '\'', '`',
+  '\0' /* lshift */, '#', 'z', 'x', 'c', 'v', 'b', 'n', 'm', ',', '.', '/', '\0' /* rshift */,
+  '*' /* keypad times */,
+  '\0' /* lalt */, ' ', 0, '\0' /* f1 */, '\0' /* f2 */, '\0' /* f3 */, '\0' /* f4 */, '\0' /* f5 */, '\0' /* f6 */, '\0' /* f7 */, '\0' /* f8 */, '\0' /* f9 */, '\0' /* f10 */,
+  '\0' /* numlck */, '\0' /* scrlck */,
+  // keypad
+  '7', '8', '9', '-', 
+  '4', '5', '6', '+', 
+  '1', '2', '3', 
+  '0', '.', 
+  0 /* 0x54 */, 0 /* 0x55 */,
   '\\',
-  '\0', // TODO: F11
-  '\0' // TODO: F12
+  '\0' /* f11 */, '\0' /* f12 */
 };
 
 char scan_map_en_UK_shift[96] = { // scancode map for UK keyboard.
-  '\0',
-  '\x1b',
-  '!',
-  '"',
-  0x9c, // £ in cp437
-  '$',
-  '%',
-  '^',
-  '&',
-  '*',
-  '(',
-  ')',
-  '_',
-  '+',
-  '\b', // BACK
-  '\t', // TAB
-  'Q',
-  'W',
-  'E',
-  'R',
-  'T',
-  'Y',
-  'U',
-  'I',
-  'O',
-  'P',
-  '{',
-  '}',
-  '\n', // ENTER
-  '\0', // LCTRL
-  'A',
-  'S',
-  'D',
-  'F',
-  'G',
-  'H',
-  'J',
-  'K',
-  'L',
-  ':',
-  '@',
-  0xaa, // ¬ in cp437
-  '\0', // LSHIFT
-  '~',
-  'Z',
-  'X',
-  'C',
-  'V',
-  'B',
-  'N',
-  'M',
-  '<',
-  '>',
-  '?',
-  '\0', // RSHIFT
-  '*', // KEYPAD
-  '\0', // LALT
-  ' ',
-  '\0',
-  '\0', // TODO: F1
-  '\0', // TODO: F2
-  '\0', // TODO: F3
-  '\0', // TODO: F4
-  '\0', // TODO: F5
-  '\0', // TODO: F6
-  '\0', // TODO: F7
-  '\0', // TODO: F8
-  '\0', // TODO: F9
-  '\0', // F10: shift+f10 to clear screen
-  '\0', // NUMLCK
-  '\0', // SCRLLCK
-  '7', // KEYPAD
-  '8', // KEYPAD
-  '9', // KEYPAD
-  '-', // KEYPAD
-  '4', // KEYPAD
-  '5', // KEYPAD
-  '6', // KEYPAD
-  '+', // KEYPAD
-  '1', // KEYPAD
-  '2', // KEYPAD
-  '3', // KEYPAD
-  '0', // KEYPAD
-  '.', // KEYPAD
-  '\0', // 0x54
-  '\0', // 0x55
+  0, '\x1b' /* esc */, '!', '"', 0x9c /* £ in cp437 */, '$', '%', '^', '&', '*', '(', ')', '_', '+', '\b' /* backspace */,
+  '\t' /* tab */, 'Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P', '{', '}', '\n' /* enter */,
+  '\0' /* lctrl */, 'A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L', ':', '@', 0xaa /* ¬ in cp437 */,
+  '\0' /* lshift */, '~', 'Z', 'X', 'C', 'V', 'B', 'N', 'M', '<', '>', '?', '\0' /* rshift */,
+  '*' /* keypad times */,
+  '\0' /* lalt */, ' ', 0, '\0' /* f1 */, '\0' /* f2 */, '\0' /* f3 */, '\0' /* f4 */, '\0' /* f5 */, '\0' /* f6 */, '\0' /* f7 */, '\0' /* f8 */, '\0' /* f9 */, '\0' /* f10 */,
+  '\0' /* numlck */, '\0' /* scrlck */,
+  // keypad
+  '7', '8', '9', '-', 
+  '4', '5', '6', '+', 
+  '1', '2', '3', 
+  '0', '.', 
+  0 /* 0x54 */, 0 /* 0x55 */,
   '\\',
-  '\0', // TODO: F11
-  '\0' // TODO: F12
+  '\0' /* f11 */, '\0' /* f12 */
 };
+
 static inline void charinv(unsigned char sc) {
   /*if (sc < 0x40) {
     keys -> states_low ^= (1 << sc);
@@ -215,12 +68,14 @@ void indic_light_upd() { // update indicator lights
 char alt_code_buf[4];
 int xgg = 0;
 
-static inline void putch(char vf) {
-  if (actv->ix >= (actv -> len)) return;
-  backmemcpy(actv->buf + actv->len - 2, actv->buf + actv->len - 1, actv->len - (actv->ix + 1));
-  actv -> buf[actv -> ix] = vf;
-  actv -> ix++;
-  comupd();
+// put chatacter
+void putch(char vf) {
+  int len = strlen(app_db[curr_kapp]->key_q);
+  if (len + 1 >= QUEUE_LEN) {
+    return; // key dropped
+  }
+  app_db[curr_kapp]->key_q[len] = vf;
+  (**app_db[curr_kapp]->invoke)(app_db[curr_kapp]);
 }
 
 void read_kbd() {
@@ -261,9 +116,9 @@ void read_kbd() {
 
     case 0x44: // shift-f10
       if (keys -> modifs & (1 << 3)) {
-        clear_scr();
+        clear_scr(); // FIXME: move handling to program itself
         set_cur(0);
-        comupd();
+//        comupd();
       }
       break;
 
@@ -295,41 +150,41 @@ void read_kbd() {
         break;
       }
       if (!(keys -> modifs & (1 << 1)) || keys -> modifs & (1 << 7)) {
-        if (scan == 0x48 && IS_COM) {
+        if (scan == 0x48) { // && IS_COM) {
           // up_key
-          sh_hist_restore();
+//          sh_hist_restore(); // FIXME: give control
         } else if (scan == 0x4b) {
           // left_key
-          actv -> ix--;
-          curupd();
+//          actv -> ix--;
+//          curupd(); // FIXME
         } else if (scan == 0x4d) {
           // right_key
-          actv -> ix++;
-          curupd();
+//          actv -> ix++;
+//          curupd(); // FIXME
         } else if (scan == 0x53) {
           // del_key
-          if (actv->ix >= (actv -> len)) break;
-          memcpy(actv -> buf + actv -> ix + 1, actv -> buf + actv -> ix, actv -> len - (actv -> ix + 1));
-          clear_ln(ln_nr());
-          comupd();
+//          if (actv->ix >= (actv -> len)) break;
+//          memcpy(actv -> buf + actv -> ix + 1, actv -> buf + actv -> ix, actv -> len - (actv -> ix + 1));
+//          clear_ln(ln_nr());
+//          comupd(); // FIXME
         } else if (scan == 0x47) {
           // home_key
-          actv -> ix = 0;
-          comupd();
+//          actv -> ix = 0;
+//          comupd(); // FIXME
         } else if (scan == 0x4f) {
-          actv -> ix = strlen(actv -> buf);
-          comupd();
+//          actv -> ix = strlen(actv -> buf);
+//          comupd(); // FIXME
         } 
         break; // TODO: down cursor key
       }
     default:
-      if (scan == 0x2e && keys -> modifs & (1 << 4) && IS_COM) { // ctrl-c
-        sh_ctrl_c();
+      if (scan == 0x2e && keys -> modifs & (1 << 4)) { // && IS_COM) { // ctrl-c
+ //       sh_ctrl_c(); // FIXME: pass control character
         break;
       }
 
-      if (scan == 0x1f && keys -> modifs & (1 << 4) && IS_USR) { // ctrl-s
-        usr_ctrl_s();
+      if (scan == 0x1f && keys -> modifs & (1 << 4)) {// && IS_USR) { // ctrl-s
+//        usr_ctrl_s(); // FIXME: ditto
         break;
       }
       char ascii;
@@ -340,10 +195,10 @@ void read_kbd() {
         ascii = scan_map_en_UK[scan];
       }
 
-      putch(ascii);
+      putch(ascii); // FIXME
       break;
     }
-    keys -> modifs &= ~(1 << 7); // TODO: fix
+    keys -> modifs &= ~(1 << 7); // TODO: fix | thanks past me, what needs fixing?
   } else {
     switch (scan) {
     case 0xaa:
@@ -360,7 +215,7 @@ void read_kbd() {
         if (xgg) {
           unsigned int fl = to_uint(alt_code_buf);
           if (!fl || fl >= 256) break;
-          putch(fl);
+          putch(fl); // FIXME
           memzero(alt_code_buf, 4);
         }
 
@@ -370,7 +225,7 @@ void read_kbd() {
       keys -> modifs |= (1 << 7); // extend
       break;
     }
-    // TODO: release values
+    // TODO: release values | laziness
   }
 
   //write_cell(scan_map_en_UK[scan], get_cur(), COLOUR(BLACK, WHITE));

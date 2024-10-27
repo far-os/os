@@ -16,7 +16,6 @@
 extern unsigned char * memring;
 
 void mem_init();
-static inline char is_memring(void *ptr);
 void * malloc(unsigned int len);
 void free(void * ptr);
 void * realloc(void *ptr, unsigned int len);

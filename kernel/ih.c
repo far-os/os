@@ -4,6 +4,7 @@
 #include "include/syscall.h"
 #include "include/cmos.h"
 #include "include/misc.h"
+#include "include/pic.h"
 
 unsigned char quitting_prog = 0;
 
