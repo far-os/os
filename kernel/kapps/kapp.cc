@@ -10,6 +10,14 @@ extern "C" {
 #include "../include/util.h"
 }
 
+// already declared in an ifdef
+void inp_strbuf::delchar_at(int at) {
+  if (at < 0 || at >= strlen(this->buf)) return; // if trying to delete out of bounds
+
+  memcpy(this->buf + at + 1, this->buf + at, this->len - at - 1);
+  if (this->ix > at) { this->ix--; }
+}
+
 // stops `new' and `delete' operators from shitting themselves
 inline void* operator new(unsigned int, void* p) { return p; }
 inline void* operator new[](unsigned int, void* p) { return p; }
@@ -35,6 +43,25 @@ extern "C" struct KApp { // struct != class, class is everything's private by de
     memzero(&ctrl_q, QUEUE_LEN);
   }
   /* we can ofc add more app-specific methods here in child classes */
+
+  // it's a very common thing to need to do, write input keys to buffer, so we make a function to do it avoid repetition
+  void write_keys_to_buf(struct inp_strbuf *to) {
+    // if we'll be past the end of the buffer's allocation (comlen)
+    // it'll error anyway, no point in putting characters
+    char n_to_put = strlen(this->key_q);
+    if (!n_to_put) return; // nothing to do beyond this point
+
+    if (to->ix + n_to_put > to->len) return;
+
+    backmemcpy(
+      to->buf + to->len - (n_to_put + 1), // end of src
+      to->buf + to->len - 1, // end of dest
+      to->len - (to->ix + n_to_put) // length of memory to copy
+    );
+    strcpy(this->key_q, to->buf + to->ix);
+    memzero(this->key_q, QUEUE_LEN);
+    to->ix++;
+  }
 };
 
 // all the app files

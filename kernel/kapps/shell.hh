@@ -1,29 +1,50 @@
 // shell applet
 #define SHELL_PROMPT_WIDTH 4
 struct KShell : KApp {
-  void invoke() { // here, is effectively equivalent to curupd and comupd
-    // TODO: read from ctrl_q
+  void invoke() { // here, is effectively equivalent to comupd and curupd
+    // write queued keys to the buffer, its a parent class function as it's quite common
+    this->write_keys_to_buf(&this->work);
 
-    // curupd
-
-    // if we'll be past the end of the buffer's allocation (comlen)
-    // it'll error anyway, no point in putting characters
-    char n_to_put = strlen(this->key_q);
-    if (!n_to_put) return; // nothing to do beyond this point
-
-    if (this->work.ix + n_to_put > this->work.len) return;
-
-    backmemcpy(
-      this->work.buf + this->work.len - (n_to_put + 1), // end of src
-      this->work.buf + this->work.len - 1, // end of dest
-      this->work.len - (this->work.ix + n_to_put) // length of memory to copy
-    );
-    strcpy(this->key_q, this->work.buf + this->work.ix);
-    memzero(this->key_q, QUEUE_LEN);
-    this->work.ix++;
+    // control key processing
+    for (int i = 0; i < QUEUE_LEN && !!this->ctrl_q[i]; ++i) { // loop over each arrow key
+      switch (this -> ctrl_q[i]) {
+        case NO_CTRL: break; // already dealt with, should never happen
+        case CTRL_C: {
+          write_str("^C\n", COLOUR(BLACK, B_BLACK));
+          memzero(this->work.buf, this->work.len);
+          break;
+        }
+        case BACKSPACE:
+        case DEL: {
+          int offset = this->ctrl_q[i] - BACKSPACE; // 0 if backspace, 1 if delete (naive)
+          this->work.delchar_at(this->work.ix + offset - 1);
+          break;
+        }
+        case SHIFT_F10: {
+          clear_scr();
+          set_cur(0); // set cursor to top left
+          break;
+        }
+        case UP: { /* TODO: hist restore */ break; }
+        case LEFT: {
+          if (this->work.ix != 0) this->work.ix--;
+          break;
+        }
+        case RIGHT: {
+          if (this->work.ix >= strlen(this->work.buf)) this->work.ix++;
+          break;
+        }
+        default: break;
+      }
+    }
+    memzero(this->ctrl_q, QUEUE_LEN);
 
   comupd: 
+    clear_ln(ln_nr());
     write_str(this->work.buf - SHELL_PROMPT_WIDTH, COLOUR(BLACK, WHITE));
+
+  curupd:
+    set_cur(POS(trace_ch_until_with(this->work.buf, this->work.ix, SHELL_PROMPT_WIDTH - 1), ln_nr()));
   }
  
 private: // hidden fields (only for internal use)
@@ -48,6 +69,9 @@ public:
     write_cell_cur('r', 0x0e);
     write_str("os ", 0x07); */
     write_str("Kernel Executive Shell. (c) 2022-4.\n", COLOUR(BLUE, B_RED));
+
+    // print out prompt
+    write_str(work.buf - SHELL_PROMPT_WIDTH, COLOUR(BLACK, WHITE));
   }
 
   // destructor

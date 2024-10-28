@@ -8,7 +8,7 @@
 struct keystates *keys = &((struct keystates) { .states_high = 0x0, .states_low = 0x0, .modifs = 0b00000000 });
 
 char scan_map_en_UK[96] = { // scancode map for UK keyboard.
-  0, '\x1b' /* esc */, '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '=', '\b' /* backspace */,
+  0, '\x1b' /* esc */, '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '=', '\0' /* backspace */,
   '\t' /* tab */, 'q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p', '[', ']', '\n' /* enter */,
   '\0' /* lctrl */, 'a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l', ';', '\'', '`',
   '\0' /* lshift */, '#', 'z', 'x', 'c', 'v', 'b', 'n', 'm', ',', '.', '/', '\0' /* rshift */,
@@ -68,13 +68,18 @@ void indic_light_upd() { // update indicator lights
 char alt_code_buf[4];
 int xgg = 0;
 
+#define KEY 0
+#define CTRL 1
 // put chatacter
-void putch(char vf) {
-  int len = strlen(app_db[curr_kapp]->key_q);
+void putch(char vf, unsigned char where) {
+  // where = 1 => ctrl; = 0 => key
+  char *curr_buf = where ? app_db[curr_kapp]->ctrl_q : app_db[curr_kapp]->key_q;
+
+  int len = strlen(curr_buf);
   if (len + 1 >= QUEUE_LEN) {
     return; // key dropped
   }
-  app_db[curr_kapp]->key_q[len] = vf;
+  curr_buf[len] = vf;
   (**app_db[curr_kapp]->invoke)(app_db[curr_kapp]);
 }
 
@@ -85,10 +90,12 @@ void read_kbd() {
     if (keys -> modifs & 0b10000000) { // extended keys
       switch (scan) {
       default:
-        break; // TODO: Cursor keys
+        break; // Cursor keys
       }
     }
     switch (scan) {
+    case 0x0e:
+      putch(BACKSPACE, CTRL);
     case 0x46:
       keys -> modifs ^= (1 << 0); // scrollock
       indic_light_upd();
@@ -116,9 +123,7 @@ void read_kbd() {
 
     case 0x44: // shift-f10
       if (keys -> modifs & (1 << 3)) {
-        clear_scr(); // FIXME: move handling to program itself
-        set_cur(0);
-//        comupd();
+        putch(SHIFT_F10, CTRL); // TODO: jank, needs improving
       }
       break;
 
@@ -150,55 +155,46 @@ void read_kbd() {
         break;
       }
       if (!(keys -> modifs & (1 << 1)) || keys -> modifs & (1 << 7)) {
-        if (scan == 0x48) { // && IS_COM) {
-          // up_key
-//          sh_hist_restore(); // FIXME: give control
+        if (scan == 0x48) {
+          // up
+          putch(UP, CTRL);
         } else if (scan == 0x4b) {
-          // left_key
-//          actv -> ix--;
-//          curupd(); // FIXME
+          // left
+          putch(LEFT, CTRL);
+        } else if (scan == 0x50) {
+          // down
+          putch(RIGHT, CTRL);
         } else if (scan == 0x4d) {
-          // right_key
-//          actv -> ix++;
-//          curupd(); // FIXME
+          // right
+          putch(RIGHT, CTRL);
         } else if (scan == 0x53) {
-          // del_key
-//          if (actv->ix >= (actv -> len)) break;
-//          memcpy(actv -> buf + actv -> ix + 1, actv -> buf + actv -> ix, actv -> len - (actv -> ix + 1));
-//          clear_ln(ln_nr());
-//          comupd(); // FIXME
+          // del
+          putch(DEL, CTRL);
         } else if (scan == 0x47) {
-          // home_key
-//          actv -> ix = 0;
-//          comupd(); // FIXME
+          // home
+          putch(HOME, CTRL);
         } else if (scan == 0x4f) {
-//          actv -> ix = strlen(actv -> buf);
-//          comupd(); // FIXME
+          // end
+          putch(END, CTRL);
         } 
-        break; // TODO: down cursor key
+        break;
       }
     default:
-      if (scan == 0x2e && keys -> modifs & (1 << 4)) { // && IS_COM) { // ctrl-c
- //       sh_ctrl_c(); // FIXME: pass control character
-        break;
-      }
-
-      if (scan == 0x1f && keys -> modifs & (1 << 4)) {// && IS_USR) { // ctrl-s
-//        usr_ctrl_s(); // FIXME: ditto
-        break;
-      }
       char ascii;
       char is_letter = scan_map_en_UK[scan] >= 'a' && scan_map_en_UK[scan] <= 'z';
+      if (keys -> modifs & (1 << 4) && is_letter) { // ctrl key sequence (^A, ^B, etc)
+        putch(scan_map_en_UK[scan] - 0x60 + CTRL_BASE, CTRL);
+      }
       if (!!(keys -> modifs & 0b00001000) != ((keys -> modifs & 0b00000100) && is_letter)) {
         ascii = scan_map_en_UK_shift[scan];
       } else {
         ascii = scan_map_en_UK[scan];
       }
 
-      putch(ascii); // FIXME
+      putch(ascii, KEY);
       break;
     }
-    keys -> modifs &= ~(1 << 7); // TODO: fix | thanks past me, what needs fixing?
+    keys -> modifs &= ~(1 << 7); // fix | thanks past me, what needs fixing?
   } else {
     switch (scan) {
     case 0xaa:
@@ -215,7 +211,7 @@ void read_kbd() {
         if (xgg) {
           unsigned int fl = to_uint(alt_code_buf);
           if (!fl || fl >= 256) break;
-          putch(fl); // FIXME
+          putch(fl, KEY);
           memzero(alt_code_buf, 4);
         }
 
@@ -225,7 +221,7 @@ void read_kbd() {
       keys -> modifs |= (1 << 7); // extend
       break;
     }
-    // TODO: release values | laziness
+    // release values | laziness
   }
 
   //write_cell(scan_map_en_UK[scan], get_cur(), COLOUR(BLACK, WHITE));

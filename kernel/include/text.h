@@ -34,6 +34,11 @@ struct inp_strbuf {
   char *buf;
   unsigned int len;
   unsigned int ix;
+
+  // methods used with c++ interfacing (im too lazy to create a new definition)
+  #ifdef __cplusplus
+    void delchar_at(int at);
+  #endif
 };
 
 #define CTRL_BASE 0

@@ -12,8 +12,8 @@ boot.bin: boot.asm
 entry.o: kernel/entry.asm
 	nasm $^ -f elf -o $@
 
-kapps.o: kernel/kapps/kapp.cc
-	g++ -fno-exceptions -fno-rtti -nostdinc++ $(CFLAGS) -c $^ -o $@
+kapps.o: kernel/kapps/kapp.cc $(wildcard kernel/kapps/*.hh)
+	g++ -fno-exceptions -fno-rtti -nostdinc++ $(CFLAGS) -c $< -o $@
 
 kernel.a: $(wildcard kernel/*.c) $(wildcard kernel/include/*.h) $(wildcard kernel/syscall/*.h) $(wildcard kernel/kapps/*.h)
 	mkdir -p obj
