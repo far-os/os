@@ -11,6 +11,7 @@ struct k_app {
   void (**invoke)(struct k_app *);
   char key_q[QUEUE_LEN];
   enum ctrl_char ctrl_q[QUEUE_LEN];
+  unsigned char config_flags;
 };
 
 #define AVAILABLE_KAPPS 8

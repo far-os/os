@@ -29,6 +29,9 @@
 #define VRAM_CTRL_PORT 0x3d4
 #define VRAM_DATA_PORT 0x3d5
 
+// control flags for k_apps
+#define NEEDS_ENTER_CTRLCODE 0x01
+
 #define QUEUE_LEN 8
 struct inp_strbuf {
   char *buf;
@@ -38,6 +41,7 @@ struct inp_strbuf {
   // methods used with c++ interfacing (im too lazy to create a new definition)
   #ifdef __cplusplus
     void delchar_at(int at);
+    void clear();
   #endif
 };
 
@@ -49,6 +53,7 @@ enum ctrl_char {
   // ^A = 1 ... ^Z = 26
   CTRL_C = 3, // ctrl_c
   CTRL_S = 19, // etc.
+  ENTER = 29, // a slot for enter, can either be used like this or have a new line sent
   BACKSPACE = 30, // backspace, it's not a real character (i know it doesnt map to ascii)
   DEL = 31,
   // F1 -> F12 take up 0x21-2c (0x20 + n)

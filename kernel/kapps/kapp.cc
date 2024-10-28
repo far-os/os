@@ -4,9 +4,16 @@
 
 // all the function definitions, we just wrap them in `extern "C"' to stop the dreaded name mangling
 extern "C" {
-#include "../include/text.h"
+#include "../include/ata.h"
+#include "../include/cmos.h"
+#include "../include/config.h"
+#include "../include/err.h"
+#include "../include/fs.h"
+#include "../include/hwinf.h"
+#include "../include/kbd.h"
 #include "../include/memring.h"
 #include "../include/misc.h"
+#include "../include/text.h"
 #include "../include/util.h"
 }
 
@@ -16,6 +23,11 @@ void inp_strbuf::delchar_at(int at) {
 
   memcpy(this->buf + at + 1, this->buf + at, this->len - at - 1);
   if (this->ix > at) { this->ix--; }
+}
+
+void inp_strbuf::clear() {
+  memzero(this->buf, this->len);
+  this->ix = 0;
 }
 
 // stops `new' and `delete' operators from shitting themselves
@@ -38,6 +50,9 @@ extern "C" struct KApp { // struct != class, class is everything's private by de
   char key_q[QUEUE_LEN]; // normal keypress queue
   enum ctrl_char ctrl_q[QUEUE_LEN]; // control code queue (e.g. ^C, ^S, _F10, etc)
 
+  unsigned char config_flags; // configuration
+  // bit 0: clear = accepts '\n' characters | set = accepts enter key
+
   KApp() {
     memzero(&key_q, QUEUE_LEN);
     memzero(&ctrl_q, QUEUE_LEN);
@@ -51,7 +66,7 @@ extern "C" struct KApp { // struct != class, class is everything's private by de
     char n_to_put = strlen(this->key_q);
     if (!n_to_put) return; // nothing to do beyond this point
 
-    if (to->ix + n_to_put > to->len) return;
+    if (strlen(to->buf) + n_to_put >= to->len) return;
 
     backmemcpy(
       to->buf + to->len - (n_to_put + 1), // end of src

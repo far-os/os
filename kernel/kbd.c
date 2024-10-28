@@ -89,13 +89,18 @@ void read_kbd() {
   if (scan < 0x80) {
     if (keys -> modifs & 0b10000000) { // extended keys
       switch (scan) {
-      default:
-        break; // Cursor keys
+        default: break; // Cursor keys
       }
     }
     switch (scan) {
     case 0x0e:
       putch(BACKSPACE, CTRL);
+      break;
+    case 0x1c: // enter key
+      if (app_db[curr_kapp]->config_flags & NEEDS_ENTER_CTRLCODE) putch(ENTER, CTRL);
+      else putch('\n', KEY);
+
+      break;
     case 0x46:
       keys -> modifs ^= (1 << 0); // scrollock
       indic_light_upd();
@@ -184,6 +189,7 @@ void read_kbd() {
       char is_letter = scan_map_en_UK[scan] >= 'a' && scan_map_en_UK[scan] <= 'z';
       if (keys -> modifs & (1 << 4) && is_letter) { // ctrl key sequence (^A, ^B, etc)
         putch(scan_map_en_UK[scan] - 0x60 + CTRL_BASE, CTRL);
+        break;
       }
       if (!!(keys -> modifs & 0b00001000) != ((keys -> modifs & 0b00000100) && is_letter)) {
         ascii = scan_map_en_UK_shift[scan];
