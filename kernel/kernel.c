@@ -35,12 +35,16 @@ void main() {
    
   quitting_prog = 0;
 
+  write_cell_cur('f', 0x0a);
+  write_cell_cur('a', 0x0c);
+  write_cell_cur('r', 0x0e);
+
   char * vbf = malloc(32);
-  strcpy("Welcome to ", vbf);
-  to_ver_string(curr_ver, vbf + strlen(vbf));
-  vbf[strlen(vbf)] = '!';
-  write_str(vbf, COLOUR(MAGENTA, B_GREEN)); // welcome message
-  line_feed();
+  sprintf(vbf, "OS v%d.%d.%d", curr_ver -> major, curr_ver -> minor, curr_ver -> patch);
+  write_str(vbf, COLOUR(BLACK, B_WHITE)); // welcome message
+  int where = endof(vbf);
+  sprintf(where, ":%2x\n", &(curr_ver -> build));
+  write_str(where, COLOUR(BLACK, B_BLACK)); // welcome message
   free(vbf);
   
 //  cp437(); // codepage 437: for testing purposes
@@ -92,9 +96,7 @@ void main() {
   // magic check
   if (disk_config -> qi_magic != CONFIG_MAGIC) {
     msg(INFO, NONE, hardware -> boot_disk_p.itrf_type);
-    line_feed();
     msg(KERNERR, E_CONFIG, "Bad kernel config: invalid magic"); 
-    line_feed();
   }
 
   app_db[0] = mk_shell(28);

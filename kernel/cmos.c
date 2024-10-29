@@ -1,6 +1,5 @@
 #include "include/cmos.h"
 #include "include/err.h"
-#include "include/text.h"
 #include "include/util.h"
 #include "include/port.h"
 #include "include/memring.h"
@@ -40,7 +39,6 @@ void read_rtc(struct timestamp *ts) {
 
   if (!ts -> weekday || ts -> weekday > 7) {
     msg(INFO, E_TIME, "Invalid weekday");
-    line_feed();
     ts -> weekday = 0;
   }
   
@@ -62,7 +60,6 @@ void read_rtc(struct timestamp *ts) {
 
   if (century < 19) {
     msg(INFO, E_TIME, "Invalid century or before 1900 - assuming year 20xx");
-    line_feed();
     century = 20;
   }
 

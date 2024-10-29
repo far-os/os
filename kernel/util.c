@@ -129,7 +129,8 @@ void sprintf(char *dest, const char *fmt, ...) {
   char waiting = NOT_WAITING;
   unsigned int length_modif = 0;
 
-  for (int fi = 0, di = 0; fmt[fi];) { // fi = fmt offset, di = dest offset
+  int fi, di;
+  for (fi = 0, di = 0; fmt[fi];) { // fi = fmt offset, di = dest offset
     if (waiting == NOT_WAITING) {
       if (fmt[fi] == '%') {
         waiting = AFTER_PERCENT;
@@ -209,10 +210,6 @@ void sprintf(char *dest, const char *fmt, ...) {
   }
 }
 
-void to_ver_string(struct far_ver * ver, char * vbuf) {
-  sprintf(vbuf, "FarOS v%d.%d.%d", ver -> major, ver -> minor, ver -> patch);
-}
-
 unsigned short trace_ch_until_with(char *str, int until, int start) {
   unsigned short int runx = start;
   for (int ii = 0; ii < until; ii++) {
@@ -235,4 +232,8 @@ unsigned short trace_ch_until_with(char *str, int until, int start) {
     }
   }
   return runx;
+}
+
+unsigned char is_whitespace(char x) {
+  return (x == '\0' || x == ' ' || x == '\xff');
 }

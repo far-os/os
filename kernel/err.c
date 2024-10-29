@@ -33,4 +33,6 @@ void msg(enum MSG_TYPE type, enum ERRSIG sig, char* supp) {
     write_str_at(sigbuf, pos, msg_style);
     free(sigbuf);
   }
+
+  line_feed();
 }

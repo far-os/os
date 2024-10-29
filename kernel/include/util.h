@@ -83,7 +83,7 @@ static inline char *strcat(char *out, char *in) {
 #define AFTER_PERCENT -1
 void sprintf(char *dest, const char *fmt, ...);
 
-void to_ver_string(struct far_ver * ver, char * vbuf);
-
 #define trace_ch_until(a,b) trace_ch_until_with(a,b,0)
 unsigned short trace_ch_until_with(char *str, int until, int start);
+
+unsigned char is_whitespace(char x);

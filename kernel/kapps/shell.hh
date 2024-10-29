@@ -1,25 +1,4 @@
-// execute program
-extern "C" int prog(int arg);
-
-static const char *comnames[] = { // starting with 0xff, means arg for previous
-  "clear",
-  "cpu",
-  "exec",
-  "\xff<u32>",
-  "file",
-  "\xff<r|ed>",
-  "help",
-  "indic",
-  "info",
-  "ls",
-  "rconfig",
-  "reset",
-  "stat",
-  "\xff<inode|filename>",
-  "time",
-  "ver",
-  NULL, // nullptr
-};
+#include "sh_builtins.hh"
 
 // shell applet
 #define SHELL_PROMPT_WIDTH 4
@@ -106,154 +85,35 @@ private: // hidden fields (only for internal use)
   char *outbuf; // buffer which is where data is dumped
 
   void shexec() {
-    unsigned char fmt = COLOUR(BLACK, WHITE);
-    char *outbuf = malloc(OUTBUF_LEN);
-    if (strlen(this->work.buf) == 0) {
-      goto shell_clean;
-    } else if (strcmp(this->work.buf, "clear")) {
-      clear_scr();
-      set_cur(POS(0, 0));
-      goto shell_clean;
-    } else if (strcmp(this->work.buf, "cpu")) {
-      fmt = COLOUR(YELLOW, B_GREEN); // fmt
-      sprintf(outbuf, "CPUID.\n\t\x10 %12s\n\tFamily %2xh, Model %2xh, Stepping %1xh\n\tBrand \"%s\"",
-        &(hardware -> vendor),
-        &(hardware -> c_family), // family
-        &(hardware -> c_model), // model
-        &(hardware -> c_stepping), // stepping
-        hardware -> cpuid_ext_leaves >= 0x80000004 ? &(hardware -> brand) : NULL // brand string
-      );
-    } else if (memcmp(this->work.buf, "exec", 4)) {
-      if (disk_config -> qi_magic != CONFIG_MAGIC) {
-        msg(KERNERR, E_NOSTORAGE, "Disk is unavailable");
-        line_feed();
-        goto shell_clean;
-      }
+    if (strlen(this->work.buf) == 0) return;
 
-      read_inode(
-        name2inode("prog.bin"),
-        0x100000
-      ); // reads disk, has to get master or slave
-
-      int ar = -1;
-      if (strlen(this->work.buf) > 5) {
-        ar = to_uint(this->work.buf + 5);
+    char found = -1; // have we found a command yet
+    for (int cm = 0; cmdlist[cm].name; ++cm) {
+      int checked_len = strlen(cmdlist[cm].name);
+      if (memcmp(this->work.buf, cmdlist[cm].name, checked_len) && is_whitespace(this->work.buf[checked_len])) { // memcmp, because of arguments, and check that command doesnt go on
+        found = cm;
+        break;
       }
-
-      enum ERRSIG ret = prog(ar);
-      if (ret == E_BOUND) {
-        msg(PROGERR, ret, "Program not found");
-      } else if (ret == E_ILLEGAL) {
-        msg(KERNERR, ret, "Program executed illegal instruction");
-      }
-    } else if (strcmp(this->work.buf, "file r")) {
-      char *datablk = malloc(disk_config -> wdata.len << 9);
-      read_inode(
-        name2inode("data.txt"),
-        datablk
-      ); // reads disk, has to get master or slave
-      write_str(datablk, COLOUR(BLACK, WHITE));
-
-      free(datablk);
-      line_feed();
-      goto shell_clean;
-    } else if (strcmp(this->work.buf, "help")) {
-      fmt = COLOUR(BLUE, B_MAGENTA);
-      for (int cm = 0; comnames[cm]; ++cm) {
-        if (comnames[cm][0] == -1) {
-          sprintf(endof(outbuf), " %s", comnames[cm] + 1);
-        } else {
-          sprintf(endof(outbuf), "%c\t%s", cm ? '\n' : 0, comnames[cm]);
-        }
-      }
-    } else if (strcmp(this->work.buf, "indic")) {
-      fmt = COLOUR(GREEN, RED);
-      // indicators
-      sprintf(outbuf, "scroll: %d\nnum: %d\ncaps: %d",
-        bittest(&(keys -> modifs), 0),
-        bittest(&(keys -> modifs), 1),
-        bittest(&(keys -> modifs), 2)
-      );
-    } else if (strcmp(this->work.buf, "info")) {
-      fmt = COLOUR(RED, B_YELLOW); // fmt
-      sprintf(outbuf, "FarOS Kernel:\n\tVol. label \"%16s\"\n\tVol. ID %16X\n\tDisk %2xh\n\tVolume size %d",
-        &(csdfs -> label),
-        &(csdfs -> vol_id),
-        &(hardware -> bios_disk),
-        csdfs -> fs_size * SECTOR_LEN
-      );
-    } else if (strcmp(this->work.buf, "ls")) {
-      fmt = COLOUR(BLACK, B_WHITE);
-      for (int filek = 0; file_table[filek].name; filek++) {
-        strcat(outbuf, file_table[filek].name);
-        *endof(outbuf) = '\t';
-      }
-    } else if (strcmp(this->work.buf, "rconfig")) {
-      fmt = COLOUR(BLUE, B_YELLOW); // fmt
-      sprintf(outbuf, "config.qi\n\tProgram at lba sector %2X, %d sector(s)\n\t\x10\t%s\n\tWritable data at lba sector %2X, %d sector(s)",
-        &(disk_config -> exec.lba),
-        disk_config -> exec.len,
-        hardware -> boot_disk_p.itrf_type,
-        &(disk_config -> wdata.lba),
-        disk_config -> wdata.len
-      );
-    } else if (strcmp(this->work.buf, "reset")) {
-      cpu_reset();
-    } else if (memcmp(this->work.buf, "stat", 4)) {
-      int ar = -1;
-      if (strlen(this->work.buf) > 5) {
-        ar = to_uint(this->work.buf + 5);
-        if (ar < 0) {
-          ar = name2inode(this->work.buf + 5);
-          if (ar < 0) goto shell_clean;
-        }
-      }
-      
-      if (ar < 0 || !(file_table[ar].name)) {
-        msg(PROGERR, E_NOFILE, "Invalid inode");
-        line_feed();
-        goto shell_clean;
-      }
-
-      sprintf(outbuf, "%s <%d>\n\t%d bytes, sector %2X\n\tModified %4d-%2d-%2d %2d:%2d:%2d",
-        file_table[ar].name,
-        ar,
-        file_table[ar].loc.len << 9,
-        &(file_table[ar].loc.lba),
-        file_table[ar].modified.year,
-        file_table[ar].modified.month,
-        file_table[ar].modified.date,
-        file_table[ar].modified.hour,
-        file_table[ar].modified.minute,
-        file_table[ar].modified.second
-      );
-
-      fmt = COLOUR(GREEN, RED);
-    } else if (strcmp(this->work.buf, "time")) {
-      fmt = COLOUR(RED, B_CYAN);
-      sprintf(outbuf, "Time since kernel load: %d.%2ds\n%s%c%4d-%2d-%2d %2d:%2d:%2d",
-        countx / 100,
-        countx % 100,
-        curr_time -> weekday ? weekmap[curr_time -> weekday - 1] : NULL,
-        curr_time -> weekday ? ' ' : 0,
-        curr_time -> year,
-        curr_time -> month,
-        curr_time -> date,
-        curr_time -> hour,
-        curr_time -> minute,
-        curr_time -> second
-      );
-    } else if (strcmp(this->work.buf, "ver")) {
-      fmt = COLOUR(CYAN, B_YELLOW);
-      to_ver_string(curr_ver, outbuf);
-      sprintf(endof(outbuf), " build %d", curr_ver -> build);
-    } else {
-      msg(WARN, E_UNKENTITY, "Unknown command");
     }
-    write_str(outbuf, fmt);
-    line_feed();
 
-  shell_clean: // clean up before leaving
+    if (found == -1) {
+      msg(WARN, E_UNKENTITY, "Unknown command");
+      return;
+    }
+
+    char *outbuf = malloc(OUTBUF_LEN);
+
+    // we pass the out buffer, and the arguments
+    unsigned char result = (*cmdlist[found].func)(
+      outbuf,
+      this->work.buf + strlen(cmdlist[found].name) + 1
+    );
+
+    if (result) {
+      write_str(outbuf, result);
+      line_feed();
+    }
+
     free(outbuf);
   }
 
@@ -273,9 +133,6 @@ public:
     histbuf = malloc(comlen);
 
     /*
-    write_cell_cur('f', 0x0a);
-    write_cell_cur('a', 0x0c);
-    write_cell_cur('r', 0x0e);
     write_str("os ", 0x07); */
     write_str("Kernel Executive Shell. (c) 2022-4.\n", COLOUR(BLUE, B_RED));
 
