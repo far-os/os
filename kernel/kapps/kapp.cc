@@ -35,10 +35,9 @@ inline void* operator new(unsigned int, void* p) { return p; }
 inline void* operator new[](unsigned int, void* p) { return p; }
 inline void* operator new(unsigned int size) { return malloc(size); }
 
-/* // hmmm
+// hmmm
 inline void operator delete(void* p) { free(p); }
 inline void operator delete(void* p, unsigned int) { free(p); }
-*/
 
 // with virtual methods, the *first* property of the struct (invisible to c++) is a `code**' type,
 // pointing to a list of all that instance's virtual functions
@@ -50,6 +49,8 @@ extern "C" struct KApp { // struct != class, class is everything's private by de
   char key_q[QUEUE_LEN]; // normal keypress queue
   enum ctrl_char ctrl_q[QUEUE_LEN]; // control code queue (e.g. ^C, ^S, _F10, etc)
 
+  unsigned char app_id; // app identity: low nybble is current handle, high nybble is parent handle
+
   unsigned char config_flags; // configuration
   // bit 0: clear = accepts '\n' characters | set = accepts enter key
 
@@ -57,6 +58,10 @@ extern "C" struct KApp { // struct != class, class is everything's private by de
     memzero(&key_q, QUEUE_LEN);
     memzero(&ctrl_q, QUEUE_LEN);
   }
+
+  // we dont technically need to destruct anything, but out children might (but if we don't know they're a child we need virtuality)
+  virtual ~KApp() {};
+
   /* we can ofc add more app-specific methods here in child classes */
 
   // it's a very common thing to need to do, write input keys to buffer, so we make a function to do it avoid repetition

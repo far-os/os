@@ -22,7 +22,8 @@ enum ERRSIG {
   E_TIME = 12,
   E_BINLOAD = 15,
   E_CONFIG = 18,
-  E_BUFOVERFLOW = 23
+  E_BUFOVERFLOW = 23,
+  E_HANDLEALLOC = 28
 };
 
 extern char msg_symbs[5];
