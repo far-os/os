@@ -1,26 +1,12 @@
-#include "text.h"
-#include "util.h"
-
-#ifndef MEMRING_H
-#define MEMRING_H
-
-#define MEMBLK_SIZE 16
-#define MEMRING_LOC 0x12000
-#define MEM_LOC (MEMRING_LOC * MEMBLK_SIZE)
-#define MEMRING_LEN 1024 // 16k of mem free. don't try and increase this, youll prob wind up overwriting the os itself
-
-#define FREE 0x00
-#define BLK_START 0x01 // 0b01
-#define IN_USE 0x02 // 0b10
-#define BLK_END 0x04 // 0b100
-
-// the memring sits at 0x12_000 whereas the memory it points to sits at 0x120_000 (<< 4)
-// each byte in the memring points to a 16 byte block
+#include "include/memring.h"
+#include "include/text.h"
+#include "include/util.h"
+#include "include/err.h"
 
 unsigned char * memring = (unsigned char *) MEMRING_LOC;
 
 void mem_init() {
-  memzero(MEMRING_LOC, MEMRING_LEN * MEMBLK_SIZE);
+  memzero(MEMRING_LOC, MEMRING_LEN);
 }
 
 // checks if an address is a valid memring address (i.e. not out of bounds)
@@ -49,6 +35,11 @@ void * malloc(unsigned int len) {
   memring[run + blocks - 1] |= BLK_END;
   
   void * ptr = (void *) MEM_LOC + (run * MEMBLK_SIZE);
+
+  if (!is_memring(ptr)) {
+    msg(PANIC, E_BOUND, "Out of memory");
+  }
+
   memzero(ptr, blocks * MEMBLK_SIZE);
   return ptr;
 }
@@ -103,5 +94,3 @@ void * realloc(void *ptr, unsigned int len) {
     }
   }
 }
-
-#endif

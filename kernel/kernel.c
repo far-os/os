@@ -1,16 +1,15 @@
-#include "text.h"
-#include "ata.h"
-#include "config.h"
-#include "defs.h"
-#include "util.h"
-#include "pic.h"
-#include "ih.h"
-#include "kapps/kshell.h"
-#include "fs.h"
-#include "hwinf.h"
-#include "timer.h"
-#include "memring.h"
-#include "err.h"
+#include "include/text.h"
+#include "include/ata.h"
+#include "include/config.h"
+#include "include/util.h"
+#include "include/pic.h"
+#include "include/ih.h"
+#include "include/fs.h"
+#include "include/hwinf.h"
+#include "include/timer.h"
+#include "include/memring.h"
+#include "include/err.h"
+#include "include/kappldr.h"
 
 struct idt_entry {
   unsigned short offset_low; // low 16 bits of offset
@@ -36,12 +35,16 @@ void main() {
    
   quitting_prog = 0;
 
+  write_cell_cur('f', 0x0a);
+  write_cell_cur('a', 0x0c);
+  write_cell_cur('r', 0x0e);
+
   char * vbf = malloc(32);
-  strcpy("Welcome to ", vbf);
-  to_ver_string(curr_ver, vbf + strlen(vbf));
-  vbf[strlen(vbf)] = '!';
-  write_str(vbf, COLOUR(MAGENTA, B_GREEN)); // welcome message
-  line_feed();
+  sprintf(vbf, "OS v%d.%d.%d", curr_ver -> major, curr_ver -> minor, curr_ver -> patch);
+  write_str(vbf, COLOUR(BLACK, B_WHITE)); // welcome message
+  int where = endof(vbf);
+  sprintf(where, ":%2x\n", &(curr_ver -> build));
+  write_str(where, COLOUR(BLACK, B_BLACK)); // welcome message
   free(vbf);
   
 //  cp437(); // codepage 437: for testing purposes
@@ -93,12 +96,14 @@ void main() {
   // magic check
   if (disk_config -> qi_magic != CONFIG_MAGIC) {
     msg(INFO, NONE, hardware -> boot_disk_p.itrf_type);
-    line_feed();
     msg(KERNERR, E_CONFIG, "Bad kernel config: invalid magic"); 
-    line_feed();
   }
 
-  shell();
+  app_handle shell = instantiate(mk_shell(32), -1, 1);
 
-//  eh_c(0xaa);
+  // stop. just stop.
+  for (;;) {
+    asm volatile ("");
+    asm volatile ("hlt");
+  }
 }

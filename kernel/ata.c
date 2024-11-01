@@ -1,12 +1,6 @@
-#include "port.h"
-#include "defs.h"
-
-#ifndef ATA_H
-#define ATA_H
-
-#define READ_SECTORS 0x20
-#define WRITE_SECTORS 0x30
-#define CACHE_FLUSH 0xe7
+#include "include/ata.h"
+#include "include/fs.h"
+#include "include/port.h"
 
 static inline void ata_cache_flush() {
   pbyte_out(0x1f7, CACHE_FLUSH);
@@ -56,5 +50,3 @@ void write_pio28(void *data, struct sector_box where, unsigned char drv) {
 
   ata_cache_flush();
 }
-
-#endif

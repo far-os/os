@@ -2,4 +2,5 @@
 *.qi
 *.img
 *.o
+*.a
 util/bin

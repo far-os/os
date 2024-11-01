@@ -1,11 +1,12 @@
-#include "text.h"
-#include "kbd.h"
-#include "defs.h"
-#include "syscall.h"
-#include "cmos.h"
+#include "include/ih.h"
+#include "include/text.h"
+#include "include/kbd.h"
+#include "include/syscall.h"
+#include "include/cmos.h"
+#include "include/misc.h"
+#include "include/pic.h"
 
-#ifndef IH_H
-#define IH_H
+unsigned char quitting_prog = 0;
 
 static inline void retto_progeh(struct stack_state *s) {
   if (s -> cs != 0x08) { // if not called by kernel
@@ -44,5 +45,3 @@ void eh_c(struct cpu_state c, unsigned int i, struct stack_state s) {
 
   pic_ack(i);
 }
-
-#endif

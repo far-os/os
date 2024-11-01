@@ -1,5 +1,5 @@
-#include "../memring.h"
-#include "../defs.h"
+#include "../include/memring.h"
+#include "../include/misc.h"
 
 #ifndef SYS_MEMORY_H
 #define SYS_MEMORY_H

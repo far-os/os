@@ -1,10 +1,18 @@
-#include "text.h"
-#include "defs.h"
+#include "include/err.h"
+#include "include/text.h"
+#include "include/memring.h"
+#include "include/util.h"
 
-#ifndef ERR_H
-#define ERR_H
+char msg_symbs[5] = {
+  0x1a, // -> symbol
+  '+',
+  '!',
+  0x13, // !! symbol
+  0xad, // ¡ symbol
+};
 
 void msg(enum MSG_TYPE type, enum ERRSIG sig, char* supp) {
+  if (get_cur() % VGA_WIDTH) { line_feed(); }; // start on a new line
   unsigned char msg_style;
   if (type == INFO) {
     msg_style = COLOUR(BLACK, B_CYAN);
@@ -26,6 +34,10 @@ void msg(enum MSG_TYPE type, enum ERRSIG sig, char* supp) {
     write_str_at(sigbuf, pos, msg_style);
     free(sigbuf);
   }
-}
 
-#endif
+  line_feed();
+
+  if (type == PANIC) {
+    asm volatile("cli; hlt"); // STOP NOW
+  }
+}

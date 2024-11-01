@@ -3,7 +3,8 @@
 
 # Disk size in units of 512KiB (Half MiB)
 export DISK_SIZE_HM := 1
-export KERN_SIZE := 48
+export KERN_SIZE := 64
+CFLAGS := -falign-functions=1 -fno-stack-protector -ffreestanding -m32 -march=i686 -Wall -fpermissive -D"KERN_LEN=$(KERN_SIZE)"
 
 boot.bin: boot.asm
 	nasm $^ -f bin -o $@
@@ -11,10 +12,15 @@ boot.bin: boot.asm
 entry.o: kernel/entry.asm
 	nasm $^ -f elf -o $@
 
-kernel.o: kernel/kernel.c $(wildcard kernel/*.h) $(wildcard kernel/syscall/*.h)
-	gcc -falign-functions=1 -fno-stack-protector -ffreestanding -m32 -march=i686 -Wall -Wno-error=int-conversion -Wno-error=incompatible-pointer-types -D"KERN_LEN=$(KERN_SIZE)" -c $< -o $@
+kapps.o: kernel/kapps/kapp.cc $(wildcard kernel/kapps/*.hh)
+	g++ -fno-exceptions -fno-rtti -nostdinc++ $(CFLAGS) -c $< -o $@
 
-kernel.entry.o: link.ld entry.o kernel.o
+kernel.a: $(wildcard kernel/*.c) $(wildcard kernel/include/*.h) $(wildcard kernel/syscall/*.h) $(wildcard kernel/kapps/*.h)
+	mkdir -p obj
+	cd obj && gcc $(CFLAGS) -c ../kernel/*.c
+	ar rv $@ obj/*.o
+
+kernel.entry.o: link.ld entry.o kernel.a kapps.o
 	ld -o $@ -melf_i386 -T $+
 
 kernel.bin: kernel.entry.o
@@ -51,5 +57,5 @@ bochs: os.img .bochsrc
 
 clean:
 	cargo clean --manifest-path=./util/qic/Cargo.toml
-	rm -rf ./util/bin
-	rm -f *.qi *.bin *.o *.img
+	rm -rf ./util/bin ./obj
+	rm -f *.qi *.bin *.o *.a *.img

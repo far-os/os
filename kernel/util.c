@@ -1,32 +1,16 @@
-#include "text.h"
-#include "defs.h"
-// #include "memring.h"
-// cyclic, declare what we want
-
-void *malloc(unsigned int);
-void free(void *);
-
-enum MSG_TYPE;
-void msg(enum MSG_TYPE, enum ERRSIG, char *);
+#include "include/util.h"
+#include "include/err.h"
+#include "include/misc.h"
+#include "include/text.h"
+#include "include/memring.h"
+#include "include/port.h"
 
 // not really using standard library - stdarg just provides platform-dependent defines 
 #include <stdarg.h>
 
-#ifndef UTIL_H
-#define UTIL_H
-
-/*void cp437() {
-  // prints cp437
-
-  write_str_at("  Codepage 437  ", POS((VGA_WIDTH - 16), (VGA_HEIGHT - 16 - 2)), COLOUR(MAGENTA, B_GREEN));
-  for (int cph = 0; cph < 16; ++cph) {
-    write_cell(nybble_to_hex(cph), POS((VGA_WIDTH - 16 - 1), (VGA_HEIGHT - (16 - cph))), COLOUR(RED, WHITE));
-    write_cell(nybble_to_hex(cph), POS((VGA_WIDTH - (16 - cph)), (VGA_HEIGHT - 16 - 1)), COLOUR(RED, WHITE));
-    for (int cpw = 0; cpw < 16; ++cpw) {
-      write_cell((cph * 16) + cpw, POS((VGA_WIDTH - (16 - cpw)), (VGA_HEIGHT - (16 - cph))), COLOUR(YELLOW, B_CYAN));
-    }
-  }
-}*/
+void idle() {
+  pbyte_out(0x80, 0x0); // just passing the time (1-4 microseconds)
+}
 
 int strlen(char *str) {
   int i = -1;
@@ -69,61 +53,8 @@ unsigned char memcmp(void *src, void *dest, unsigned int amount) {
   return o;
 }
 
-static inline unsigned char bittest(void *src, unsigned int bit) {
-  unsigned char o;
-  asm volatile ("bt %2, (%1)" : 
-      "=@ccc" (o)
-      : "r" (src),
-        "ir" (bit)
-      : "cc" );
-  return o;
-}
-
-static inline unsigned char bitinv(void *src, unsigned int bit) {
-  unsigned char o;
-  asm volatile ("btc %2, (%1)" : 
-      "=@ccc" (o)
-      : "r" (src),
-        "ir" (bit)
-      : "cc" );
-  return o;
-}
-
-static inline unsigned char bitclear(void *src, unsigned int bit) {
-  unsigned char o;
-  asm volatile ("btr %2, (%1)" : 
-      "=@ccc" (o)
-      : "r" (src),
-        "ir" (bit)
-      : "cc" );
-  return o;
-}
-
-static inline unsigned char bitset(void *src, unsigned int bit) {
-  unsigned char o;
-  asm volatile ("bts %2, (%1)" : 
-      "=@ccc" (o)
-      : "r" (src),
-        "ir" (bit)
-      : "cc" );
-  return o;
-}
-
 unsigned char strcmp(char *src, char *dest) {
   return memcmp(src, dest, strlen(src)) && strlen(src) == strlen(dest);
-}
-
-static inline void memset(void *dest, unsigned int amount, unsigned char val) {
-  asm volatile ("cld\n"
-                "rep stosb\n":
-    : "a" (val),
-      "c" (amount),
-      "D" (dest)
-    : "memory", "cc" );
-}
-
-static inline void memzero(void *dest, unsigned int amount) {
-  memset(dest, amount, 0);
 }
 
 void memrev(char *src, int len, char *dest) {
@@ -190,14 +121,6 @@ unsigned int to_uint(char *input) {
   return f;
 }
 
-static inline char *strcat(char *out, char *in) {
-  strcpy(in, endof(out));
-  return out;
-}
-
-#define NOT_WAITING 0x00
-#define HAS_INTEGER 0x10
-#define AFTER_PERCENT -1
 void sprintf(char *dest, const char *fmt, ...) {
   va_list args;
   va_start(args, fmt); // second parameter is the last arg before variadic
@@ -206,7 +129,8 @@ void sprintf(char *dest, const char *fmt, ...) {
   char waiting = NOT_WAITING;
   unsigned int length_modif = 0;
 
-  for (int fi = 0, di = 0; fmt[fi];) { // fi = fmt offset, di = dest offset
+  int fi, di;
+  for (fi = 0, di = 0; fmt[fi];) { // fi = fmt offset, di = dest offset
     if (waiting == NOT_WAITING) {
       if (fmt[fi] == '%') {
         waiting = AFTER_PERCENT;
@@ -286,11 +210,6 @@ void sprintf(char *dest, const char *fmt, ...) {
   }
 }
 
-void to_ver_string(struct far_ver * ver, char * vbuf) {
-  sprintf(vbuf, "FarOS v%d.%d.%d", ver -> major, ver -> minor, ver -> patch);
-}
-
-#define trace_ch_until(a,b) trace_ch_until_with(a,b,0)
 unsigned short trace_ch_until_with(char *str, int until, int start) {
   unsigned short int runx = start;
   for (int ii = 0; ii < until; ii++) {
@@ -315,4 +234,6 @@ unsigned short trace_ch_until_with(char *str, int until, int start) {
   return runx;
 }
 
-#endif
+unsigned char is_whitespace(char x) {
+  return (x == '\0' || x == ' ' || x == '\xff');
+}

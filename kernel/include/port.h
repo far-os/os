@@ -1,5 +1,4 @@
-#ifndef PORT_H
-#define PORT_H
+#pragma once
 
 static inline unsigned char pbyte_in(unsigned short port) {
   unsigned char result;
@@ -13,10 +12,6 @@ static inline void pbyte_out(unsigned short port, unsigned char data) {
   asm volatile ("out %%al, %%dx"
     : : "a" (data),
         "d" (port));
-}
-
-void idle() {
-  pbyte_out(0x80, 0x0); // just passing the time (1-4 microseconds)
 }
 
 static inline unsigned short pword_in(unsigned short port) {
@@ -52,5 +47,3 @@ static inline void rep_outsw(unsigned short port, unsigned int length, void *src
 }
 
 extern void fake_outsw(unsigned short, unsigned int, void *);
-
-#endif
