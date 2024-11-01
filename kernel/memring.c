@@ -6,7 +6,7 @@
 unsigned char * memring = (unsigned char *) MEMRING_LOC;
 
 void mem_init() {
-  memzero(MEMRING_LOC, MEMRING_LEN * MEMBLK_SIZE);
+  memzero(MEMRING_LOC, MEMRING_LEN);
 }
 
 // checks if an address is a valid memring address (i.e. not out of bounds)
@@ -35,6 +35,11 @@ void * malloc(unsigned int len) {
   memring[run + blocks - 1] |= BLK_END;
   
   void * ptr = (void *) MEM_LOC + (run * MEMBLK_SIZE);
+
+  if (!is_memring(ptr)) {
+    msg(PANIC, E_BOUND, "Out of memory");
+  }
+
   memzero(ptr, blocks * MEMBLK_SIZE);
   return ptr;
 }

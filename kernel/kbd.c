@@ -8,7 +8,7 @@
 struct keystates *keys = &((struct keystates) { .states_high = 0x0, .states_low = 0x0, .modifs = 0b00000000 });
 
 char scan_map_en_UK[96] = { // scancode map for UK keyboard.
-  0, '\x1b' /* esc */, '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '=', '\0' /* backspace */,
+  0, '\0' /* esc */, '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '=', '\0' /* backspace */,
   '\t' /* tab */, 'q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p', '[', ']', '\n' /* enter */,
   '\0' /* lctrl */, 'a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l', ';', '\'', '`',
   '\0' /* lshift */, '#', 'z', 'x', 'c', 'v', 'b', 'n', 'm', ',', '.', '/', '\0' /* rshift */,
@@ -22,11 +22,14 @@ char scan_map_en_UK[96] = { // scancode map for UK keyboard.
   '0', '.', 
   0 /* 0x54 */, 0 /* 0x55 */,
   '\\',
-  '\0' /* f11 */, '\0' /* f12 */
+  '\0' /* f11 */, '\0' /* f12 */,
+  0 /* 0x59 */, 0 /* 0x5a */,
+  '\0' /* lmeta (e0) */, '\0' /* rmeta (e0) */, '\0' /* context (e0) */,
+  0 /* 0x5e */, 0 /* 0x5f */,
 };
 
 char scan_map_en_UK_shift[96] = { // scancode map for UK keyboard.
-  0, '\x1b' /* esc */, '!', '"', 0x9c /* £ in cp437 */, '$', '%', '^', '&', '*', '(', ')', '_', '+', '\b' /* backspace */,
+  0, '\0' /* esc */, '!', '"', 0x9c /* £ in cp437 */, '$', '%', '^', '&', '*', '(', ')', '_', '+', '\b' /* backspace */,
   '\t' /* tab */, 'Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P', '{', '}', '\n' /* enter */,
   '\0' /* lctrl */, 'A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L', ':', '@', 0xaa /* ¬ in cp437 */,
   '\0' /* lshift */, '~', 'Z', 'X', 'C', 'V', 'B', 'N', 'M', '<', '>', '?', '\0' /* rshift */,
@@ -40,7 +43,9 @@ char scan_map_en_UK_shift[96] = { // scancode map for UK keyboard.
   '0', '.', 
   0 /* 0x54 */, 0 /* 0x55 */,
   '\\',
-  '\0' /* f11 */, '\0' /* f12 */
+  '\0' /* f11 */, '\0' /* f12 */,
+  '\0' /* lmeta (e0) */, '\0' /* rmeta (e0) */, '\0' /* context (e0) */,
+  0 /* 0x5e */, 0 /* 0x5f */,
 };
 
 static inline void charinv(unsigned char sc) {
@@ -80,7 +85,7 @@ void putch(char vf, unsigned char where) {
     return; // key dropped
   }
   curr_buf[len] = vf;
-  (**app_db[curr_kapp]->invoke)(app_db[curr_kapp]);
+  (*app_db[curr_kapp]->virts->invoke)(app_db[curr_kapp]);
 }
 
 void read_kbd() {
@@ -93,6 +98,9 @@ void read_kbd() {
       }
     }
     switch (scan) {
+    case 0x01:
+      putch(ESC, CTRL);
+      break;
     case 0x0e:
       putch(BACKSPACE, CTRL);
       break;
@@ -125,7 +133,12 @@ void read_kbd() {
       xgg = 0;
       memzero(alt_code_buf, 4);
       break;
-
+    case 0x5b: // lmeta
+    case 0x5c: // rmeta
+      if (keys -> modifs & (1 << 7)) { // if in extended
+        keys -> modifs |= (1 << 5); // meta
+      }
+      break;
     case 0x44: // shift-f10
       if (keys -> modifs & (1 << 3)) {
         putch(SHIFT_F10, CTRL); // TODO: jank, needs improving
@@ -181,12 +194,24 @@ void read_kbd() {
         } else if (scan == 0x4f) {
           // end
           putch(END, CTRL);
-        } 
+        } else if (scan == 0x49) {
+          // pgup
+          putch(PGUP, CTRL);
+        } else if (scan == 0x51) {
+          // pgdown
+          putch(PGDOWN, CTRL);
+        }
         break;
       }
     default:
       char ascii;
       char is_letter = scan_map_en_UK[scan] >= 'a' && scan_map_en_UK[scan] <= 'z';
+      char is_toprow_number = scan >= 0x2 && scan <= 0xb;
+      if (is_toprow_number && (keys->modifs & (1 << 5))) { // move to @0, @1, etc.
+        focus_app((scan - 1) % 10); // move
+        break;
+      }
+
       if (keys -> modifs & (1 << 4) && is_letter) { // ctrl key sequence (^A, ^B, etc)
         putch(scan_map_en_UK[scan] - 0x60 + CTRL_BASE, CTRL);
         break;
@@ -223,6 +248,11 @@ void read_kbd() {
 
 
       break;
+    case 0xdb: // lmeta
+    case 0xdc: // rmeta
+      if (keys -> modifs & (1 << 7)) { // if in extended
+        keys -> modifs &= ~(1 << 5); // meta
+      }
     case 0xe0:
       keys -> modifs |= (1 << 7); // extend
       break;

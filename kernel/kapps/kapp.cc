@@ -2,6 +2,7 @@
 // OOP works a bit better for this, so we are using c++
 // don't worry, c++ is surprisingly easy to shoehorn into existing c code
 
+#define k_app KApp
 // all the function definitions, we just wrap them in `extern "C"' to stop the dreaded name mangling
 extern "C" {
 #include "../include/ata.h"
@@ -10,6 +11,7 @@ extern "C" {
 #include "../include/err.h"
 #include "../include/fs.h"
 #include "../include/hwinf.h"
+#include "../include/kappldr.h"
 #include "../include/kbd.h"
 #include "../include/memring.h"
 #include "../include/misc.h"
@@ -30,6 +32,16 @@ void inp_strbuf::clear() {
   this->ix = 0;
 }
 
+inp_strbuf::inp_strbuf(unsigned int with): len(with) {
+  buf = malloc(len);
+  this->clear(); // just in case
+}
+
+inp_strbuf::~inp_strbuf() {
+  free(this->buf);
+  this->buf = NULL;
+}
+
 // stops `new' and `delete' operators from shitting themselves
 inline void* operator new(unsigned int, void* p) { return p; }
 inline void* operator new[](unsigned int, void* p) { return p; }
@@ -44,6 +56,7 @@ inline void operator delete(void* p, unsigned int) { free(p); }
 // alternatively, it's be easier to create and expose a wrapper function
 extern "C" struct KApp { // struct != class, class is everything's private by default (basically moronic)
   virtual void invoke() = 0; // = 0 is the jank syntax for saying that this class does not intend to define method (is "pure" virtual)
+  virtual void first_run() = 0; // the first time it's run, as we dont want any setup messages to be printed on the wrong buffer
 
   // queue_len is def'd in text.h
   char key_q[QUEUE_LEN]; // normal keypress queue
@@ -64,6 +77,7 @@ extern "C" struct KApp { // struct != class, class is everything's private by de
 
   /* we can ofc add more app-specific methods here in child classes */
 
+protected: // only visible to this and children
   // it's a very common thing to need to do, write input keys to buffer, so we make a function to do it avoid repetition
   void write_keys_to_buf(struct inp_strbuf *to) {
     // if we'll be past the end of the buffer's allocation (comlen)
@@ -71,7 +85,11 @@ extern "C" struct KApp { // struct != class, class is everything's private by de
     char n_to_put = strlen(this->key_q);
     if (!n_to_put) return; // nothing to do beyond this point
 
-    if (strlen(to->buf) + n_to_put >= to->len) return;
+    if (strlen(to->buf) + n_to_put >= to->len) {
+      to->clear();
+      msg(PROGERR, E_BUFOVERFLOW, "Buffer size exceeded");
+      return;
+    };
 
     backmemcpy(
       to->buf + to->len - (n_to_put + 1), // end of src
@@ -85,12 +103,17 @@ extern "C" struct KApp { // struct != class, class is everything's private by de
 };
 
 // all the app files
+#include "edit.hh"
 #include "shell.hh"
 
 // c-friendly wrapper
 extern "C" {
   // there are some private properties, that c's not supposed to ever know about (so it thinks it's smaller)
-  KShell *mk_shell(int comlen) {
+  KApp *mk_shell(int comlen) {
     return new KShell (comlen);
+  };
+
+  void kapp_destroy(KApp *a) {
+    delete a;
   }
 };

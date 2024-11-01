@@ -131,3 +131,15 @@ void write_str(char *str, unsigned char style) {
     }
   }
 }
+
+void write_cell_into(struct inp_strbuf *dest, char ch, unsigned char style) {
+  dest->buf[dest->ix * 2] = ch;
+  dest->buf[dest->ix * 2 + 1] = style;
+  dest->ix++;
+}
+
+void write_str_into(struct inp_strbuf *dest, char *str, unsigned char style) {
+  for (int i = 0; str[i] != 0; ++i) {
+    write_cell_into(dest, str[i], style);
+  }
+}

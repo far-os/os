@@ -8,10 +8,11 @@ char msg_symbs[5] = {
   '+',
   '!',
   0x13, // !! symbol
-  'x',
+  0xad, // ¡ symbol
 };
 
 void msg(enum MSG_TYPE type, enum ERRSIG sig, char* supp) {
+  if (get_cur() % VGA_WIDTH) { line_feed(); }; // start on a new line
   unsigned char msg_style;
   if (type == INFO) {
     msg_style = COLOUR(BLACK, B_CYAN);
@@ -35,4 +36,8 @@ void msg(enum MSG_TYPE type, enum ERRSIG sig, char* supp) {
   }
 
   line_feed();
+
+  if (type == PANIC) {
+    asm volatile("cli; hlt"); // STOP NOW
+  }
 }

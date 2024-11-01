@@ -6,6 +6,7 @@ const char* comnames[] = {
   "\xff\xf0 shift+f10",
   "exec",
   "\xff<u32>",
+  "fedit", 
   "fread", 
   "fstat",
   "\xff[inode|filename]",
@@ -19,7 +20,6 @@ const char* comnames[] = {
 };
 
 // shell applet
-#define SHELL_PROMPT_WIDTH 4
 #define OUTBUF_LEN 120
 struct KShell : KApp {
   void invoke() { // here, is effectively equivalent to comupd and curupd
@@ -81,39 +81,53 @@ struct KShell : KApp {
 
   comupd: 
     clear_ln(ln_nr());
-    write_str(this->work.buf - SHELL_PROMPT_WIDTH, COLOUR(BLACK, WHITE));
+    write_str(prompt, COLOUR(BLACK, WHITE));
+    write_str(this->work.buf, COLOUR(BLACK, WHITE));
 
   curupd:
-    set_cur(POS(trace_ch_until_with(this->work.buf, this->work.ix, SHELL_PROMPT_WIDTH - 1), ln_nr()));
+    set_cur(POS(trace_ch_until_with(this->work.buf, this->work.ix, strlen(prompt) - 1), ln_nr()));
 
     if (!to_exec) return;
 
     line_feed();
-    this->shexec();
+    bool exitting = this->shexec();
     memcpy(this->work.buf, histbuf, this->work.len);
     this->work.clear();
 
     to_exec = 0;
-    goto comupd; // get prompt to reappear
+    if (exitting) goto comupd; // get prompt to reappear
+  }
+
+  void first_run() {
+    /*
+    write_str("os ", 0x07); */
+    write_str("Kernel Executive Shell. (c) 2022-4.\n", COLOUR(BLUE, B_RED));
+
+    // print out prompt
+    write_str(prompt, COLOUR(BLACK, WHITE));
   }
  
 private: // hidden fields (only for internal use)
   struct inp_strbuf work; // the buffer in which we work
   char *histbuf; // copy of the history
   char *outbuf; // buffer which is where data is dumped
+  const char *prompt = "\r\x13> "; // prompt
 
-  void shexec() {
+  bool shexec() {
     if (strlen(this->work.buf) == 0) return;
     outbuf = malloc(OUTBUF_LEN);
 
     unsigned char fmt = 0;
 
+    // couldn't afford strtok
     int wher; // first whitespace character
     for (wher = 0; !is_whitespace(work.buf[wher]); ++wher);
 
     char *args = &(work.buf[wher + 1]);
     char safe_padding = work.buf[wher]; // keep the padding character, so that history works
     work.buf[wher] = '\0'; // make the command the only relevant word
+
+    bool exitting = true; // whether we exit normally
 
     if (strcmp(work.buf, "clr")) { // clear screen
       clear_scr();
@@ -142,8 +156,17 @@ private: // hidden fields (only for internal use)
       } else {
         line_feed();
       }
+    } else if (strcmp(work.buf, "fedit")) {
+      app_handle edt = instantiate(
+        new Editor(name2inode("data.txt")),
+        this->app_id & 0xf,
+        true
+      );
+      focus_app(edt);
+      exitting = false;
+      goto shell_clean;
     } else if (strcmp(work.buf, "fread")) {
-      char *datablk = malloc(disk_config -> wdata.len << 9);
+      char *datablk = malloc(file_table[name2inode("data.txt")].loc.len << 9);
       read_inode(
         name2inode("data.txt"),
         datablk
@@ -269,37 +292,21 @@ private: // hidden fields (only for internal use)
   shell_clean:
     free(outbuf);
     work.buf[wher] = safe_padding; // ok so jank way of keeping history intact
+    return exitting; // exit normally
   }
 
 public:
   // constructor
-  KShell(int comlen = 28): KApp() {
+  KShell(int comlen = 32): KApp(), work(comlen) {
     // bitflags, or as many together as need be
     config_flags = NEEDS_ENTER_CTRLCODE;
 
-    work = inp_strbuf {
-      .buf = malloc(comlen + SHELL_PROMPT_WIDTH) + SHELL_PROMPT_WIDTH, // this is to hide the prompt
-      .len = comlen,
-      .ix = 0
-    };
-    strcpy("\r\x13> ", work.buf - SHELL_PROMPT_WIDTH); // very naive way of hiding the prompt
-
     histbuf = malloc(comlen);
-
-    /*
-    write_str("os ", 0x07); */
-    write_str("Kernel Executive Shell. (c) 2022-4.\n", COLOUR(BLUE, B_RED));
-
-    // print out prompt
-    write_str(work.buf - SHELL_PROMPT_WIDTH, COLOUR(BLACK, WHITE));
   }
 
   // destructor
   ~KShell() { // madatory cleanup
-    free(work.buf - SHELL_PROMPT_WIDTH);
-    work.buf = NULL;
-
-    free(histbuf);
-    histbuf = NULL;
+    delete &work;
+    delete histbuf;
   }
 };

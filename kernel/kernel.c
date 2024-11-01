@@ -99,11 +99,11 @@ void main() {
     msg(KERNERR, E_CONFIG, "Bad kernel config: invalid magic"); 
   }
 
-  app_handle shell = instantiate(mk_shell(28), -1);
-  focus_app(shell);
+  app_handle shell = instantiate(mk_shell(32), -1, 1);
 
   // stop. just stop.
   for (;;) {
+    asm volatile ("");
     asm volatile ("hlt");
   }
 }

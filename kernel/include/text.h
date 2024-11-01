@@ -24,7 +24,7 @@
 #define VGA_HEIGHT 25
 
 #define COLOUR(back, fore) (unsigned char) ((back << 4) + fore)
-#define POS(x, y) (short) (y) * VGA_WIDTH + (x)
+#define POS(x, y) ((short) (y) * VGA_WIDTH + (x))
 
 #define VRAM_CTRL_PORT 0x3d4
 #define VRAM_DATA_PORT 0x3d5
@@ -42,6 +42,9 @@ struct inp_strbuf {
   #ifdef __cplusplus
     void delchar_at(int at);
     void clear();
+
+    inp_strbuf(unsigned int with);
+    ~inp_strbuf();
   #endif
 };
 
@@ -56,6 +59,7 @@ enum ctrl_char {
   ENTER = 29, // a slot for enter, can either be used like this or have a new line sent
   BACKSPACE = 30, // backspace, it's not a real character (i know it doesnt map to ascii)
   DEL = 31,
+  ESC = 32,
   // F1 -> F12 take up 0x21-2c (0x20 + n)
   // _F1 -> _F12 take up 0x2d-38 (0x2c + n)
   SHIFT_F10 = 0x36,
@@ -76,6 +80,7 @@ extern short page_curloc_cache[PAGE_COUNT];
 
 #define PAGE(p) (vram + (p << 12))
 #define CPAGE PAGE(page)
+#define addr_of_loc(pos) CPAGE + (pos * 2)
 
 extern void clear_pag(unsigned char p);
 extern void clear_pag_ln(unsigned char p, int lnr);
@@ -99,3 +104,5 @@ void write_cell(char ch, short pos, unsigned char style);
 void write_cell_cur(char ch, unsigned char style);
 void write_str_at(char *str, short pos, unsigned char style);
 void write_str(char *str, unsigned char style);
+void write_str_into(struct inp_strbuf *dest, char *str, unsigned char style);
+void write_cell_into(struct inp_strbuf *dest, char ch, unsigned char style);
