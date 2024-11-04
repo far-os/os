@@ -14,7 +14,7 @@ const char* comnames[] = {
   "ls",
   "reset",
   "sys"
-  ":[conf|cpu|disk|indic]",
+  ":[conf|cpu|disk|indic|mem]",
   "time",
   NULL
 };
@@ -162,7 +162,7 @@ private: // hidden fields (only for internal use)
         this->app_id & 0xf,
         true
       );
-      focus_app(edt);
+
       exitting = false;
       goto shell_clean;
     } else if (strcmp(work.buf, "fread")) {
@@ -264,6 +264,11 @@ private: // hidden fields (only for internal use)
       );
 
       fmt = COLOUR(GREEN, RED);
+    } else if (strcmp(work.buf, "sys:mem")) {
+      void *addr = malloc(1);
+      sprintf(outbuf, "First free memory addr: %p\n\t\tout of: %p", addr, MEM_END);
+
+      fmt = COLOUR(MAGENTA, B_YELLOW); // fmt
     } else if (strcmp(work.buf, "time")) {
       sprintf(outbuf, "Time since kernel load: %d.%2ds\n%s%c%4d-%2d-%2d %2d:%2d:%2d",
         countx / 100,

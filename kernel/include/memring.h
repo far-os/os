@@ -3,7 +3,10 @@
 #define MEMBLK_SIZE 16
 #define MEMRING_LOC 0x12000
 #define MEM_LOC (MEMRING_LOC * MEMBLK_SIZE)
-#define MEMRING_LEN 4096 // 64k of mem free. don't try and increase this, youll prob wind up overwriting the os itself
+// 64k of mem free. don't try and increase this, youll prob wind up overwriting the os itself
+#define MEMRING_LEN 4096
+#define MEMRING_END (MEMRING_LOC + MEMRING_LEN)
+#define MEM_END (MEMRING_END * MEMBLK_SIZE)
 
 #define FREE 0x00
 #define BLK_START 0x01 // 0b01

@@ -177,6 +177,11 @@ void sprintf(char *dest, const char *fmt, ...) {
           to_hex(va_arg(args, unsigned int), length_modif ? length_modif : 8, dest + di);
           di = strlen(dest);
           goto stop_waiting;
+        case 'p':
+          int val = va_arg(args, unsigned int);
+          to_hex(&val, 8, dest + di);
+          di = strlen(dest);
+          goto stop_waiting;
         case 's':
           char *ptr = va_arg(args, char *);
           if (ptr) { // ie, not null

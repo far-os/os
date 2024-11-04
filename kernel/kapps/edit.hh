@@ -72,7 +72,7 @@ private:
 
 public:
   // constructor
-  Editor(inode_n which) : KApp(), file(which), contents(file_table[file].loc.len << 9), header(VGA_WIDTH * 2) {
+  Editor(inode_n which) : KApp(), file(which), contents(file_table[which].loc.len << 9), header(VGA_WIDTH * 2) {
     config_flags = 0; // no flags - we want enter to appear as a real key
 
     // get file, has already been initted above
