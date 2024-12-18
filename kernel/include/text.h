@@ -23,6 +23,9 @@
 #define VGA_WIDTH 80
 #define VGA_HEIGHT 25
 
+// viewport
+#define VP_HEIGHT (is_split ? 12 : VGA_HEIGHT)
+
 #define COLOUR(back, fore) (unsigned char) ((back << 4) + fore)
 #define POS(x, y) ((short) (y) * VGA_WIDTH + (x))
 
@@ -78,6 +81,7 @@ extern char *vram;
 extern unsigned char page;
 extern short page_curloc_cache[PAGE_COUNT]; 
 
+
 #define PAGE(p) (vram + (p << 12))
 #define CPAGE PAGE(page)
 #define addr_of_loc(pos) CPAGE + (pos * 2)
@@ -93,6 +97,9 @@ extern void scroll_pag(unsigned char p);
 void set_cur(short pos);
 short get_cur();
 void set_page(unsigned char pg);
+
+extern unsigned char is_split;
+void split_scr(int);
 
 short ln_nr();
 void line_feed();

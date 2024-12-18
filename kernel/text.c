@@ -1,16 +1,18 @@
 #include "include/text.h"
+#include "include/kappldr.h"
 #include "include/port.h"
 #include "include/util.h"
 
 char *vram = (char *) 0xb8000;
 unsigned char page = 0;
 short page_curloc_cache[PAGE_COUNT]; 
+unsigned char is_split = 0;
 
 #pragma GCC push_options
 #pragma GCC optimize "O3"
 
 void set_cur(short pos) {
-  if (pos >= (VGA_WIDTH * VGA_HEIGHT)) {
+  if (pos >= (VGA_WIDTH * VP_HEIGHT)) {
     pos -= VGA_WIDTH;
     scroll_scr();
   }
@@ -34,7 +36,9 @@ short get_cur() {
 void set_page(unsigned char pg) {
   page_curloc_cache[page] = get_cur();
   page = pg;
-  set_cur(page_curloc_cache[page]);
+  set_cur(page_curloc_cache[pg]);
+
+  if (pg == 0 && is_split) { return; }
 
   pbyte_out(VRAM_CTRL_PORT, 0xc); // we are sending the high 8 bits of position
   pbyte_out(VRAM_DATA_PORT, ((pg << 3) & 0x00ff)); // the high eight bits
@@ -42,6 +46,30 @@ void set_page(unsigned char pg) {
   //pbyte_out(VRAM_CTRL_PORT, 0xd); // we are sending the low 8 bits of position
   //pbyte_out(VRAM_DATA_PORT, ((pos << 11) & 0x00ff)); // the low eight bits
   idle();
+}
+
+void split_scr(app_handle app) {
+  // ok so the line compare register is quite compicated
+  // bits 7:0 => r18h[7:0], bit 8 => r07h[4], bit 9 => r09h[6]
+  // this shows the scanline (pixel vertically) at which to reset to offset 0 of memory
+
+  // scanline 0 is used to unsplit, we want 0 if 0, 1 otherwise
+  is_split = !!(app && app_db[app]);
+
+  short scanline = is_split ? 200 : 0;
+
+  pbyte_out(VRAM_CTRL_PORT, 0x18); // 7:0
+  pbyte_out(VRAM_DATA_PORT, scanline & 0xff);
+
+  pbyte_out(VRAM_CTRL_PORT, 0x7); // 8 
+  unsigned char old = pbyte_in(VRAM_DATA_PORT);
+  old &= ~((~scanline & 0x100) >> 4); // 8 - 4 = 4
+  pbyte_out(VRAM_DATA_PORT, old);
+
+  pbyte_out(VRAM_CTRL_PORT, 0x9); // 9 
+  old = pbyte_in(VRAM_DATA_PORT);
+  old &= ~((~scanline & 0x200) >> 3); // 9 - 6 = 3
+  pbyte_out(VRAM_DATA_PORT, old);
 }
 #pragma GCC pop_options
 

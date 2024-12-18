@@ -47,7 +47,7 @@ struct Editor : KApp {
     clear_scr();
     set_cur(0);
     write_str(this->contents.buf, COLOUR(BLACK, WHITE));
-    memcpy(header.buf, addr_of_loc(POS(0, VGA_HEIGHT - 1)), header.len);
+    memcpy(header.buf, addr_of_loc(POS(0, VP_HEIGHT - 1)), header.len);
     set_cur(trace_ch_until(contents.buf, contents.ix)); // trace character
   }
 
@@ -74,6 +74,8 @@ public:
   // constructor
   Editor(inode_n which) : KApp(), file(which), contents(file_table[which].loc.len << 9), header(VGA_WIDTH * 2) {
     config_flags = 0; // no flags - we want enter to appear as a real key
+
+    app_name = "fedit";
 
     // get file, has already been initted above
     this->read_file();

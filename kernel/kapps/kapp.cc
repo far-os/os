@@ -62,10 +62,13 @@ extern "C" struct KApp { // struct != class, class is everything's private by de
   char key_q[QUEUE_LEN]; // normal keypress queue
   enum ctrl_char ctrl_q[QUEUE_LEN]; // control code queue (e.g. ^C, ^S, _F10, etc)
 
+  const char *app_name; // name of application
+
   unsigned char app_id; // app identity: low nybble is current handle, high nybble is parent handle
 
   unsigned char config_flags; // configuration
   // bit 0: clear = accepts '\n' characters | set = accepts enter key
+
 
   KApp() {
     memzero(&key_q, QUEUE_LEN);
@@ -104,6 +107,7 @@ protected: // only visible to this and children
 
 // all the app files
 #include "edit.hh"
+//#include "atest.hh"
 #include "shell.hh"
 
 // c-friendly wrapper

@@ -19,6 +19,7 @@ struct k_app {
   struct k_app_fntable *virts; // all the virtual methods
   char key_q[QUEUE_LEN];
   enum ctrl_char ctrl_q[QUEUE_LEN];
+  const char *app_name;
   unsigned char app_id;
   unsigned char config_flags;
 };

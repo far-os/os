@@ -13,8 +13,10 @@ const char* comnames[] = {
   "help",
   "ls",
   "reset",
+  "split",
+  "\xff[<@app>|off]",
   "sys"
-  ":[conf|cpu|disk|indic|mem]",
+  ":[conf|cpu|disk|indic|mem|proc]",
   "time",
   NULL
 };
@@ -38,7 +40,7 @@ struct KShell : KApp {
           this->work.clear();
           break;
         }
-        case ENTER: {// enter is a ctrlcode, we configured it so
+        case ENTER: { // enter is a ctrlcode, we configured it so
           to_exec = true;
           break;
         }
@@ -226,6 +228,26 @@ private: // hidden fields (only for internal use)
     } else if (strcmp(work.buf, "reset")) {
       cpu_reset();
       // if you reach past here, something has gone very wrong indeed
+    } else if (strcmp(work.buf, "split")) {
+      if (strcmp(args, "off")) {
+        split_scr(0);
+      } else if (args[0] == '@') {
+        int ar = -1;
+        if (strlen(args) > 1) {
+          ar = to_uint(args + 1);
+        }
+
+        if (ar == -1) goto _kesh_split_fail;
+        else if (!app_db[ar]) goto _kesh_split_fail;
+
+        split_scr(ar);
+        focus_app(ar);
+        app_db[ar]->invoke();
+        exitting = false;
+      } else {
+      _kesh_split_fail:
+        msg(PROGERR, E_UNKENTITY, "No valid handle supplied");
+      }
     } else if (strcmp(work.buf, "sys:cpu")) {
       sprintf(outbuf, "CPUID.\n\t\x10 %12s\n\tFamily %2xh, Model %2xh, Stepping %1xh\n\tBrand \"%s\"",
         &(hardware -> vendor),
@@ -267,8 +289,15 @@ private: // hidden fields (only for internal use)
     } else if (strcmp(work.buf, "sys:mem")) {
       void *addr = malloc(1);
       sprintf(outbuf, "First free memory addr: %p\n\t\tout of: %p", addr, MEM_END);
+      free(addr);
 
       fmt = COLOUR(MAGENTA, B_YELLOW); // fmt
+    } else if (strcmp(work.buf, "sys:proc")) {
+      for (app_handle i = 0; i < AVAILABLE_KAPPS; ++i) {
+        sprintf(outbuf, "@%d: %s\n", i, app_db[i] ? app_db[i]->app_name : "-");
+        write_str(outbuf, app_db[i] ? 0xa : 0xc);
+        memzero(outbuf, strlen(outbuf));
+      }
     } else if (strcmp(work.buf, "time")) {
       sprintf(outbuf, "Time since kernel load: %d.%2ds\n%s%c%4d-%2d-%2d %2d:%2d:%2d",
         countx / 100,
@@ -305,6 +334,8 @@ public:
   KShell(int comlen = 32): KApp(), work(comlen) {
     // bitflags, or as many together as need be
     config_flags = NEEDS_ENTER_CTRLCODE;
+
+    app_name = "kesh";
 
     histbuf = malloc(comlen);
   }

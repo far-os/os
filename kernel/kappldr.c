@@ -46,6 +46,8 @@ void focus_app(app_handle which) {
     return;
   }
   curr_kapp = which;
+//  (*app_db[curr_kapp]->virts->invoke)(app_db[curr_kapp]);
+  
   set_page(which); // move to the page on which app is operating
 }
 
@@ -54,7 +56,10 @@ void terminate_app(app_handle which) {
   kapp_destroy(app_db[which]);
   app_db[which] = NULL; // no switching back
 
-  if (curr_kapp == which) focus_app(parent);
+  if (curr_kapp == which) {
+    if (is_split) { split_scr(0); } // unsplit
+    focus_app(parent);
+  }
 
   (*app_db[curr_kapp]->virts->invoke)(app_db[curr_kapp]);
 }
