@@ -36,7 +36,6 @@ inode_n name2inode(char *name) {
     if (strcmp(name, file_table[search].name)) return search;
   }
   msg(PROGERR, E_NOFILE, "File not found");
-  line_feed();
   return -1;
 }
 

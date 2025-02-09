@@ -139,10 +139,22 @@ void read_kbd() {
         keys -> modifs |= (1 << 5); // meta
       }
       break;
-    case 0x44: // shift-f10
-      if (keys -> modifs & (1 << 3)) {
-        putch(SHIFT_F10, CTRL); // TODO: jank, needs improving
-      }
+    case 0x3b: 
+    case 0x3c: 
+    case 0x3d: 
+    case 0x3e: 
+    case 0x3f: 
+    case 0x40: 
+    case 0x41: 
+    case 0x42: 
+    case 0x43: 
+    case 0x44: 
+    case 0x57: 
+    case 0x58: 
+      putch(
+        (scan % 18) - 4 + (keys -> modifs & (1 << 3) ? SHIFT_FN_BASE : FN_BASE),
+        CTRL
+      );
       break;
 
     case 0x47:
@@ -216,6 +228,12 @@ void read_kbd() {
         putch(scan_map_en_UK[scan] - 0x60 + CTRL_BASE, CTRL);
         break;
       }
+
+      if (keys -> modifs & (1 << 6) && is_letter) { // alt key sequence (*A, *B, etc)
+        putch(scan_map_en_UK[scan] - 0x60 + ALT_BASE, CTRL);
+        break;
+      }
+
       if (!!(keys -> modifs & 0b00001000) != ((keys -> modifs & 0b00000100) && is_letter)) {
         ascii = scan_map_en_UK_shift[scan];
       } else {

@@ -15,24 +15,23 @@ The kernel code is located in `kernel/`, and the boot sector is located in `boot
 
 The kernel's files are explained below: 
 - `entry.asm`: The extended bootloader which calls `main`. It also contains the IDT as well.
-- `ata.h`: Contains the ATA disk driver
-- `cmos.h`: Functions for reading the time from the CMOS RTC
-- `config.h`: Contains code to handle the configuration file.
-- `defs.h`: Definitions - structs, `#define`s, etc
-- `err.h`: Error message system - warnings, panics, etc
-- `fs.h`: Contains the CSDFS driver.
-- `hwinf.h`: Detecting and identifying detected hardware.
-- `ih.h`: Interrupt handling functions.
-- `kbd.h`: Utilities for reading input from the 8042 PS/2 device.
+- `ata.c`: Contains the ATA disk driver
+- `cmos.c`: Functions for reading the time from the CMOS RTC
+- `err.c`: Error message system - warnings, panics, etc
+- `fs.c`: Contains the CSDFS driver.
+- `hwinf.c`: Detecting and identifying detected hardware.
+- `ih.c`: Interrupt handling functions.
+- `kappldr.c`: For loading Kernel Applications (e.g. shell) in `kapps/`
+- `kbd.c`: Utilities for reading input from the 8042 PS/2 device.
 - `kernel.c`: The kernel itself.
-- `memring.h`: Memory management: malloc and free
-- `pic.h`: Utilities for initialising the PIC, masking the PIC, etc.
-- `port.h`: Code to communicate to the I/O ports.
-- `shell.h`: Contains FarSH, the shell.
-- `syscall.h`: Contains code for `syscall`ing.
-- `text.h`: Code for writing to the screen.
-- `timer.h`: Code to control the PIT.
-- `util.h`: Miscellaneous utilities, such as `memcpy`, `strcpy`, `memcmp`, etc.
+- `memring.c`: Memory management: malloc and free
+- `misc.c`: Definitions - structs, `#define`s, etc
+- `pic.c`: Utilities for initialising the PIC, masking the PIC, etc.
+- `shell.c`: Contains FarSH, the shell.
+- `syscall.c`: Contains code for `syscall`ing.
+- `text.c`: Code for writing to the screen.
+- `timer.c`: Code to control the PIT.
+- `util.c`: Miscellaneous utilities, such as `memcpy`, `strcpy`, `memcmp`, etc.
 
 There is also the `syscall/` directory: each header file inside contains a different ABI service.
 
@@ -40,9 +39,9 @@ There is also the `syscall/` directory: each header file inside contains a diffe
 You will need access to the following tools:
 
 - `nasm`: To compile the bootloader sectors.
-- `gcc`: To compile the kernel.
+- `gcc`/`g++`: To compile the kernel.
 - `ld`: To link the kernel code together with the extended bootloader sector.
-- `objcopy`: To convert the kernel's ELF object into raw binary.
+- binutils: `ar`, `as`, `objcopy`: To imanage kernel's ELF object files/raw binaries.
 - `cat`: To concatenate the bootloader and kernel binaries.
 - `dd`: To create the disk image. **Note**: you will also need access to `/dev/zero` for this step.
 - `make`: A convienent way to run all the commands.
@@ -86,3 +85,19 @@ To syscall to the kernel, use `int 0x33`. The service code goes in `ah`, and the
 | `18` | Error in configuration |
 | `23` | Buffer space exceeded (Command too long) |
 | `28` | Error in allocating handle (app handle, file handle, etc) |
+
+## OS Conventions
+
+### Keybindings
+#### Notation
+- `^` means `ctrl` (e.g. `^A` => ctrl+a)
+- `∟` means `shift` (e.g. `⌂A` => shift+a)
+- `α` means `alt` (e.g. `αA` => alt+a)
+- `☼` means `meta`, i.e. the logo key (e.g. `☼A` => meta+a)
+- `ƒ` denotes a function key
+- `◄` denotes the delete key
+
+### keybinds
+`^α◄1 - ctrl + alt + delete
+`∟ƒ10` - clear screen
+

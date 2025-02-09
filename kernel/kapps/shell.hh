@@ -1,24 +1,26 @@
 // execute program
 extern "C" int prog(int arg);
 
-const char* comnames[] = {
-  "clr",
-  "\xff\xf0 shift+f10",
-  "exec",
-  "\xff<u32>",
-  "fedit", 
-  "fread", 
-  "fstat",
-  "\xff[inode|filename]",
-  "help",
-  "ls",
-  "reset",
-  "split",
-  "\xff[<@app>|off]",
-  "sys"
-  ":[conf|cpu|disk|indic|mem|proc]",
-  "time",
-  NULL
+// list of entries, Entry and EntType are children of HelpHost
+const HelpHost::Entry comnames[] = {
+  { .name = "clr", .desc = "Clears screen\0[or \034\23710]", .type = HelpHost::PLAIN_ENTRY },
+  { .name = "exec", .desc = "Executes program, takes <u32>", .type = HelpHost::PLAIN_ENTRY },
+  { .name = "f", .desc = "File I/O namespace", .type = HelpHost::PLAIN_ENTRY },
+  { .name = "edit", .desc = "Text editor", .type = HelpHost::SUB_ENTRY },
+  { .name = "ls", .desc = "Lists all files", .type = HelpHost::SUB_ENTRY },
+  { .name = "read", .desc = "Prints file content", .type = HelpHost::SUB_ENTRY },
+  { .name = "stat", .desc = "Prints info about given <inode> or <filename>", .type = HelpHost::SUB_ENTRY },
+  { .name = "help", .desc = "Prints this help menu", .type = HelpHost::PLAIN_ENTRY },
+  { .name = "reset", .desc = "Resets machine\0[or ^\340\021]", .type = HelpHost::PLAIN_ENTRY },
+  { .name = "sys", .desc = "Utilities that print/dump system info", .type = HelpHost::PLAIN_ENTRY },
+  { .name = "conf", .desc = "Dumps config.qi", .type = HelpHost::SUB_ENTRY },
+  { .name = "cpu", .desc = "Prints CPU info", .type = HelpHost::SUB_ENTRY },
+  { .name = "disk", .desc = "Prints disk/fs info", .type = HelpHost::SUB_ENTRY },
+  { .name = "indic", .desc = "Prints keyboard LED status", .type = HelpHost::SUB_ENTRY },
+  { .name = "mem", .desc = "Prints memory info", .type = HelpHost::SUB_ENTRY },
+  { .name = "proc", .desc = "Prints currently running processes", .type = HelpHost::SUB_ENTRY },
+  { .name = "time", .desc = "Gets current time", .type = HelpHost::PLAIN_ENTRY },
+  { .type = -1 }
 };
 
 // shell applet
@@ -35,7 +37,7 @@ struct KShell : KApp {
     for (int i = 0; i < QUEUE_LEN && !!this->ctrl_q[i]; ++i) { // loop over each arrow key
       switch (this -> ctrl_q[i]) {
         case NO_CTRL: break; // already dealt with, should never happen
-        case CTRL_C: {
+        case CTRL(C): {
           write_str("^C\n", COLOUR(BLACK, B_BLACK));
           this->work.clear();
           break;
@@ -50,7 +52,7 @@ struct KShell : KApp {
           this->work.delchar_at(this->work.ix + offset - 1);
           break;
         }
-        case SHIFT_F10: {
+        case SHIFT_F(10): {
           clear_scr();
           set_cur(0); // set cursor to top left
           break;
@@ -158,7 +160,7 @@ private: // hidden fields (only for internal use)
       } else {
         line_feed();
       }
-    } else if (strcmp(work.buf, "fedit")) {
+    } else if (strcmp(work.buf, "f:edit")) {
       app_handle edt = instantiate(
         new Editor(name2inode("data.txt")),
         this->app_id & 0xf,
@@ -167,7 +169,14 @@ private: // hidden fields (only for internal use)
 
       exitting = false;
       goto shell_clean;
-    } else if (strcmp(work.buf, "fread")) {
+    } else if (strcmp(work.buf, "f:ls")) {
+      for (int filek = 0; file_table[filek].name; filek++) {
+        strcat(outbuf, file_table[filek].name);
+        *endof(outbuf) = '\t';
+      }
+
+      fmt = COLOUR(BLACK, B_WHITE);
+    } else if (strcmp(work.buf, "f:read")) {
       char *datablk = malloc(file_table[name2inode("data.txt")].loc.len << 9);
       read_inode(
         name2inode("data.txt"),
@@ -177,7 +186,7 @@ private: // hidden fields (only for internal use)
 
       free(datablk);
       line_feed();
-    } else if (strcmp(work.buf, "fstat")) {
+    } else if (strcmp(work.buf, "f:stat")) {
       int ar = -1;
       if (strlen(args)) {
         ar = to_uint(args);
@@ -207,24 +216,14 @@ private: // hidden fields (only for internal use)
 
       fmt = COLOUR(GREEN, RED);
     } else if (strcmp(work.buf, "help")) {
-      for (int cm = 0; comnames[cm]; ++cm) {
-        if (comnames[cm][0] == -1) {
-          sprintf(endof(outbuf), " %s", comnames[cm] + 1);
-        } else if (comnames[cm][0] == ':') {
-          strcat(outbuf, comnames[cm]);
-        } else {
-          sprintf(endof(outbuf), "%c\t%s", cm ? '\n' : 0, comnames[cm]);
-        }
-      }
+      app_handle help = instantiate(
+        new HelpHost("shell commands", comnames),
+        this->app_id & 0xf,
+        true
+      );
 
-      fmt = COLOUR(BLUE, B_MAGENTA);
-    } else if (strcmp(work.buf, "ls")) {
-      for (int filek = 0; file_table[filek].name; filek++) {
-        strcat(outbuf, file_table[filek].name);
-        *endof(outbuf) = '\t';
-      }
-
-      fmt = COLOUR(BLACK, B_WHITE);
+      exitting = false;
+      goto shell_clean;
     } else if (strcmp(work.buf, "reset")) {
       cpu_reset();
       // if you reach past here, something has gone very wrong indeed

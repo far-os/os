@@ -3,7 +3,7 @@
 
 # Disk size in units of 512KiB (Half MiB)
 export DISK_SIZE_HM := 1
-export KERN_SIZE := 64
+export KERN_SIZE := 72
 CFLAGS := -falign-functions=1 -fno-stack-protector -ffreestanding -m32 -march=i686 -Wall -fpermissive -D"KERN_LEN=$(KERN_SIZE)"
 
 boot.bin: boot.asm

@@ -33,6 +33,18 @@ short get_cur() {
   return pos & 0x7ff;
 }
 
+void cur_off() {
+  pbyte_out(VRAM_CTRL_PORT, 0xa);
+  pbyte_out(VRAM_DATA_PORT, 0x20); // off
+}
+
+void cur_on_with(unsigned char start_scl, unsigned char end_scl) {
+  pbyte_out(VRAM_CTRL_PORT, 0xa);
+  pbyte_out(VRAM_DATA_PORT, (pbyte_in(VRAM_DATA_PORT) & 0xc0) | start_scl);
+  pbyte_out(VRAM_CTRL_PORT, 0xb);
+  pbyte_out(VRAM_DATA_PORT, (pbyte_in(VRAM_DATA_PORT) & 0xe0) | end_scl);
+}
+
 void set_page(unsigned char pg) {
   page_curloc_cache[page] = get_cur();
   page = pg;
@@ -73,6 +85,14 @@ void split_scr(app_handle app) {
 }
 #pragma GCC pop_options
 
+void paint_row(unsigned char colr) {
+  int ln = ln_nr();
+  for (int k = 0; k < VGA_WIDTH; ++k) {
+    CPAGE[POS(k, ln) * 2 + 1] &= 0xf;
+    CPAGE[POS(k, ln) * 2 + 1] |= colr << 4;
+  }
+}
+
 short ln_nr() {
   return get_cur() / VGA_WIDTH;
 }
@@ -102,9 +122,9 @@ void write_cell(char ch, short pos, unsigned char style) {
   CPAGE[pos * 2 + 1] = style;
 }
 
-void adv_cur() {
+void adv_cur_by(short n) {
   short cur = get_cur();
-  ++cur;
+  cur += n;
   set_cur(cur);
 }
 

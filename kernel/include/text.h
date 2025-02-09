@@ -51,29 +51,35 @@ struct inp_strbuf {
   #endif
 };
 
-#define CTRL_BASE 0
+#define CTRL_BASE 0x0
+#define CTRL(LET) (CTRL_BASE + (#LET[0] - 0x40))
 #define FN_BASE 0x20
+#define F(n) (FN_BASE + n)
 #define SHIFT_FN_BASE 0x2c
+#define SHIFT_F(n) (SHIFT_FN_BASE + n)
+#define ALT_BASE 0x40
+#define ALT(LET) (ALT_BASE + (#LET[0] - 0x40))
+
 enum ctrl_char {
   NO_CTRL = 0,
   // ^A = 1 ... ^Z = 26
-  CTRL_C = 3, // ctrl_c
-  CTRL_S = 19, // etc.
+ // CTRL_C = 3, // ctrl_c
+//  CTRL_S = 19, // etc.
   ENTER = 29, // a slot for enter, can either be used like this or have a new line sent
   BACKSPACE = 30, // backspace, it's not a real character (i know it doesnt map to ascii)
   DEL = 31,
   ESC = 32,
   // F1 -> F12 take up 0x21-2c (0x20 + n)
   // _F1 -> _F12 take up 0x2d-38 (0x2c + n)
-  SHIFT_F10 = 0x36,
-  UP = 0x37,
-  DOWN = 0x38,
-  LEFT = 0x39,
-  RIGHT = 0x3a,
-  PGUP = 0x3b,
-  PGDOWN = 0x3c,
-  HOME = 0x3d,
-  END = 0x3e
+  UP = 0x39,
+  DOWN = 0x3a,
+  LEFT = 0x3b,
+  RIGHT = 0x3c,
+  PGUP = 0x3d,
+  PGDOWN = 0x3e,
+  HOME = 0x3f,
+  END = 0x40,
+  // alt+A = 0x41 ... alt+Z = 0x5a
 };
 
 #define PAGE_COUNT 8
@@ -96,7 +102,14 @@ extern void scroll_pag(unsigned char p);
 
 void set_cur(short pos);
 short get_cur();
+void cur_off();
+void cur_on_with(unsigned char, unsigned char);
+
+#define cur_on() cur_on_with(14, 15);
+
 void set_page(unsigned char pg);
+
+void paint_row(unsigned char);
 
 extern unsigned char is_split;
 void split_scr(int);
@@ -106,7 +119,10 @@ void line_feed();
 void carriage_return();
 void tab();
 void v_tab();
-void adv_cur();
+void adv_cur_by(short);
+
+#define adv_cur() adv_cur_by(1)
+
 void write_cell(char ch, short pos, unsigned char style);
 void write_cell_cur(char ch, unsigned char style);
 void write_str_at(char *str, short pos, unsigned char style);
