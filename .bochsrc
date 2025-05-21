@@ -2,5 +2,4 @@ cpu: model=p4_willamette
 ata0-master: type=disk, path=os.img, mode=flat, cylinders=($DISK_SIZE_HM), heads=16, spt=63, translation=none
 boot: disk
 display_library: x, options=nokeyrepeat
-keyboard: keymap=/usr/share/bochs/keymaps/x11-pc-uk.map
 clock: sync=realtime

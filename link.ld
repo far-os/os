@@ -1,15 +1,15 @@
 SECTIONS
 {
-  . = 0x19fc0;
-  .csdfs : { *(.csdfs) }
-
   . = 0x1a000;
   .second_boot : { *(.second_boot) }
   
-  . = 0x1a190;
+  . = 0x1a1d0;
   .gdt : { *(.gdt) }
 
-  . = 0x1a1c0;
+  . = 0x1a1fc;
+  .magic : { *(.magic) }
+
+  . = 0x1a200;
   .text : { *(.text) }
   .data : { *(.data) }
   .eh_frame : { *(.eh_frame) }

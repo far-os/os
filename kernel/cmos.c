@@ -23,10 +23,37 @@ extern inline unsigned char get_cmos_reg(unsigned char reg) {
   return pbyte_in(P_CMOS_DATA);
 }
 
+struct timestamp from_dostime(struct dos_timestamp dos) {
+  struct timestamp ts;
+  ts.second = (dos.dostime << 1) & 0x3e;
+  ts.minute = (dos.dostime >> 5) & 0x3f;
+  ts.hour = (dos.dostime >> 11) & 0x1f;
+  ts.date = dos.dosdate & 0x1f;
+  ts.month = (dos.dosdate >> 5) & 0xf;
+  ts.year = ((dos.dosdate >> 9) & 0x7f) + 1980;
+
+  ts.second += (dos.centisecs >= 100);
+  ts.centisec = dos.centisecs % 100;
+}
+
+struct dos_timestamp to_dostime(struct timestamp ts) {
+  struct dos_timestamp dos;
+  if ((ts.year - 1980) & 0xffffff80) {
+    msg(INFO, E_TIME, "Cannot convert to dostime: year out of range");
+    return dos;
+  }
+  dos.dostime = (ts.second >> 1) | (ts.minute << 5) | (ts.hour << 11);
+  dos.dosdate = ts.date | (ts.month << 5) | ((ts.year - 1980) << 9);
+
+  dos.centisecs = ts.centisec + ((ts.second & 1) * 100);
+  return dos;
+}
+
 void read_rtc(struct timestamp *ts) {
   // update in progress flag
 //  while (get_cmos_reg(RTC_STAT_A) | 0x80);
 
+  ts -> centisec = 0;
   ts -> second  = get_cmos_reg(RTC_SEC );
   ts -> minute  = get_cmos_reg(RTC_MIN );
   ts -> hour    = get_cmos_reg(RTC_HR );

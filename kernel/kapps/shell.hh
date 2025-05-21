@@ -161,30 +161,33 @@ private: // hidden fields (only for internal use)
         line_feed();
       }
     } else if (strcmp(work.buf, "f:edit")) {
+    /* FIXME
       app_handle edt = instantiate(
         new Editor(name2inode("data.txt")),
         this->app_id & 0xf,
         true
-      );
+      ); */
 
       exitting = false;
       goto shell_clean;
     } else if (strcmp(work.buf, "f:ls")) {
+      /* FIXME
       for (int filek = 0; file_table[filek].name; filek++) {
         strcat(outbuf, file_table[filek].name);
         *endof(outbuf) = '\t';
       }
+      */
 
       fmt = COLOUR(BLACK, B_WHITE);
     } else if (strcmp(work.buf, "f:read")) {
-      char *datablk = malloc(file_table[name2inode("data.txt")].loc.len << 9);
+      /*char *datablk = malloc(file_table[name2inode("data.txt")].loc.len << 9);
       read_inode(
         name2inode("data.txt"),
         datablk
       ); // reads disk, has to get master or slave
       write_str(datablk, COLOUR(BLACK, WHITE));
 
-      free(datablk);
+      free(datablk); FIXME */
       line_feed();
     } else if (strcmp(work.buf, "f:stat")) {
       int ar = -1;
@@ -196,6 +199,7 @@ private: // hidden fields (only for internal use)
         }
       }
       
+      /* FIXME
       if (ar < 0 || !(file_table[ar].name)) {
         msg(PROGERR, E_NOFILE, "Invalid inode");
         goto shell_clean;
@@ -214,6 +218,7 @@ private: // hidden fields (only for internal use)
         file_table[ar].modified.second
       );
 
+      */
       fmt = COLOUR(GREEN, RED);
     } else if (strcmp(work.buf, "help")) {
       app_handle help = instantiate(
@@ -267,15 +272,17 @@ private: // hidden fields (only for internal use)
       );
 
       fmt = COLOUR(BLUE, B_YELLOW); // fmt
-    } else if (strcmp(work.buf, "sys:disk")) {
+    } else if (strcmp(work.buf, "sys:disk")) { 
+      /* FIXME
       sprintf(outbuf, "CSDFS Disk:\n\tVol. label \"%16s\"\n\tVol. ID %16X\n\tDisk %2xh\n\tVolume size %d",
         &(csdfs -> label),
         &(csdfs -> vol_id),
         &(hardware -> bios_disk),
         csdfs -> fs_size * SECTOR_LEN
       );
+      */
 
-      fmt = COLOUR(RED, B_YELLOW); // fmt
+      fmt = COLOUR(RED, B_YELLOW); // fmt 
     } else if (strcmp(work.buf, "sys:indic")) {
       // indicators
       sprintf(outbuf, "scroll: %d\nnum: %d\ncaps: %d",
