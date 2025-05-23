@@ -4,11 +4,6 @@
 
 #define SECTOR_LEN 512
 
-struct sector_box { // a pointer to a place of disk
-  unsigned int lba; // lba of start
-  unsigned char len; // length
-} __attribute__((packed));
-
 struct fat_superblock {
   char jmp_seq[3];
   char oem_id[8];
@@ -23,10 +18,10 @@ struct fat_superblock {
   unsigned short sec_per_track;
   unsigned short n_heads;
   unsigned int hidden_secs; // n sectors before partition
-  unsigned int large_n_sectors; // extended field.
+  unsigned int large_n_sectors; // extended field. TODO: add code to move normal sectors here anyway
   unsigned char drive_number;
   unsigned char nt_flags; // mystery
-  unsigned char sig; // 0x28 or 0x29, idk really which means what
+  unsigned char sig; // 0x28 or 0x29, idrk which means what
   unsigned int serial_no;
   char vol_lbl[11];
   char sys_ident[8]; // supposed to be "FATxx   ", where xx is the type of FAT. do not trust
@@ -38,7 +33,7 @@ typedef unsigned short dostime;
 typedef unsigned short dosdate;
 
 // fat file entry structure
-struct inode {
+struct dir_entry {
   char name[8];
   char ext[3];
   unsigned char attrib;
@@ -54,11 +49,11 @@ struct inode {
   unsigned int size;
 } __attribute__((packed));
 
-typedef int inode_n;
+void read_fat();
 
-extern struct inode *file_table;
+extern unsigned char *file_table;
+extern struct dir_entry *root_dir;
 
-void fs_init();
-inode_n name2inode(char *name);
-void read_inode(inode_n file, void * where);
-void write_inode(inode_n file, void * where);
+#define NO_NEXT_SECTOR 0xff8
+
+void next_sector();

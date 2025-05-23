@@ -1,5 +1,5 @@
 .DEFAULT_GOAL := os.img
-.PHONY: qemu bochs clean
+.PHONY: qemu bochs clean deepclean
 
 # Disk size in units of 512KiB (Half MiB)
 export DISK_SIZE_HM := 1
@@ -38,15 +38,15 @@ boot.kern.bin: boot.bin kernel.bin
 	cargo build --manifest-path=./util/qic/Cargo.toml --release
 	cp ./util/qic/target/release/qic ./util/bin
 
-config.qi: ./util/bin/qic config.qit
+emptyfat.qi: ./util/bin/qic emptyfat.qit
 	$^
 
-os.img: boot.kern.bin config.qi prog.bin program/data.txt
+os.img: boot.kern.bin emptyfat.qi prog.bin program/data.txt
 	dd if=/dev/zero of=$@ bs=512K count=$(DISK_SIZE_HM)
 	dd if=$< of=$@ conv=notrunc
-	dd if=config.qi of=$@ bs=512 conv=notrunc seek=$(KERN_SIZE)
-	dd if=prog.bin of=$@ bs=512 conv=notrunc seek=$$(( $(KERN_SIZE) + 1 ))
-	dd if=program/data.txt of=$@ bs=512 conv=notrunc seek=$$(( $(KERN_SIZE) + 2 ))
+	dd if=emptyfat.qi of=$@ bs=512 conv=notrunc seek=$(KERN_SIZE)
+	mcopy -i $@ prog.bin ::PROG.BIN
+	mcopy -i $@ program/data.txt ::DATA.TXT
 	chmod +w $@
 
 qemu: os.img
@@ -56,6 +56,9 @@ bochs: os.img .bochsrc
 	$@ -q
 
 clean:
-	cargo clean --manifest-path=./util/qic/Cargo.toml
-	rm -rf ./util/bin ./obj
+	rm -rf ./obj
 	rm -f *.qi *.bin *.o *.a *.img
+
+deepclean: clean
+	cargo clean --manifest-path=./util/qic/Cargo.toml
+	rm -rf ./util/bin

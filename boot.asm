@@ -7,8 +7,9 @@
 
 %define BOOT_DRV 0x0 ; the boot drive location, from gs
 %define DRV_PARAM 0x1 ; the boot drive parameter bock location, from gs
-%define KERN_LEN %!KERN_SIZE - 1 ; the kernel length (15k kernel >:))
+%define KERN_LEN %!KERN_SIZE - 1 ; the kernel length. this changes quite frequently. MUST BE `4n-1`, as the FAT aftwerwards needs to be cluster-aligned. i decided 4 sectors per cluster
 
+%define DISK_OFFSET 0
 %define GDT_LEN 4
 %define GDT_OFFS OFFSET + 0x1d0
 
@@ -25,7 +26,7 @@
         fat_sectors_per_fat: dw 4
         fat_sectors_per_track: dw 63
         fat_heads: dw 16
-        fat_n_hidden_sectors: dd 0
+        fat_n_hidden_sectors: dd DISK_OFFSET ; number of sectors beforehand
         fat_n_sectors_extended: dd 0 ; if fat_n_sectors > 65535, use this.
 
         fat_drive_no: db 0x80 ; no idea really
@@ -48,6 +49,7 @@ __start:
         mov sp, bp
 
         mov [gs:BOOT_DRV], dl
+        mov [fat_drive_no], dl
 
         mov si, string ; log a message
         call print_16
@@ -190,7 +192,7 @@ dap_packet:
         seg_offset:
           dw 0x0 ; offset
           dw (OFFSET >> 4) ; segment
-        seg_start: dq 0x1 ; second sector (starts from zero - first after boot, including csdfs superblock)
+        seg_start: dq (DISK_OFFSET + 0x1) ; second sector (starts from zero - first after boot, including csdfs superblock)
 [bits 32]
 seg_init:
         ; 32-bit segments

@@ -137,6 +137,7 @@ private: // hidden fields (only for internal use)
       clear_scr();
       set_cur(0);
     } else if (strcmp(work.buf, "exec")) {
+      /* FIXME
       if (disk_config -> qi_magic != CONFIG_MAGIC) {
         msg(KERNERR, E_NOSTORAGE, "Disk is unavailable");
         goto shell_clean;
@@ -160,6 +161,7 @@ private: // hidden fields (only for internal use)
       } else {
         line_feed();
       }
+      */
     } else if (strcmp(work.buf, "f:edit")) {
     /* FIXME
       app_handle edt = instantiate(
@@ -190,6 +192,7 @@ private: // hidden fields (only for internal use)
       free(datablk); FIXME */
       line_feed();
     } else if (strcmp(work.buf, "f:stat")) {
+      /* FIXME
       int ar = -1;
       if (strlen(args)) {
         ar = to_uint(args);
@@ -199,7 +202,6 @@ private: // hidden fields (only for internal use)
         }
       }
       
-      /* FIXME
       if (ar < 0 || !(file_table[ar].name)) {
         msg(PROGERR, E_NOFILE, "Invalid inode");
         goto shell_clean;
@@ -273,14 +275,15 @@ private: // hidden fields (only for internal use)
 
       fmt = COLOUR(BLUE, B_YELLOW); // fmt
     } else if (strcmp(work.buf, "sys:disk")) { 
-      /* FIXME
-      sprintf(outbuf, "CSDFS Disk:\n\tVol. label \"%16s\"\n\tVol. ID %16X\n\tDisk %2xh\n\tVolume size %d",
-        &(csdfs -> label),
-        &(csdfs -> vol_id),
+      sprintf(outbuf, "%5s disk:\n\tVol. label \"%11s\"\n\tVol. ID %8X\n\tCluster size: %d sectors\n\tN. Fats: %d\n\tDisk %2xh\n\tVolume size %dB",
+        &(bpb -> sys_ident),
+        &(bpb -> vol_lbl),
+        &(bpb -> serial_no),
+        bpb -> sec_per_clust,
+        bpb -> n_fats,
         &(hardware -> bios_disk),
-        csdfs -> fs_size * SECTOR_LEN
+        bpb -> n_sectors * bpb -> bytes_per_sec // TODO: move n_sectors into long anyway
       );
-      */
 
       fmt = COLOUR(RED, B_YELLOW); // fmt 
     } else if (strcmp(work.buf, "sys:indic")) {

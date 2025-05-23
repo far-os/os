@@ -7,41 +7,36 @@
 #include "include/misc.h"
 #include "include/util.h"
 #include "include/text.h"
+#include "include/memring.h"
 
 struct fat_superblock *bpb = (struct fat_superblock *) 0x7c00; // boot location, but thats where the superblock os
-struct inode *file_table = (void *) 0x30000;
+unsigned char *file_table = (void *) 0x30000;
+struct dir_entry *root_dir = NULL;
 
-void fs_init() {
-/* FIXME
-  file_table[0].name = "kernel.bin";
-  file_table[0].loc = (struct sector_box){ .lba = 0, .len = KERN_LEN },
-  memcpy(curr_time, &file_table[0].modified, sizeof(struct timestamp));
+void read_fat() {
+  read_pio28(
+    file_table,
+    bpb -> reserved_secs + bpb -> hidden_secs,
+    bpb -> sec_per_fat * 2,
+    hardware -> boot_disk_p.dev_path[0] & 0x01
+  ); // reads disk for config, has to get master or slave
 
-  file_table[1].name = "config.qi";
-  file_table[1].loc = (struct sector_box){ .lba = KERN_LEN, .len = 1 },
-  memcpy(curr_time, &file_table[1].modified, sizeof(struct timestamp));
+  int n = bpb -> sec_per_fat << 9;
 
-  file_table[2].name = "prog.bin";
-  memcpy(&disk_config -> exec, &file_table[2].loc, sizeof(struct sector_box));
-  memcpy(curr_time, &file_table[2].modified, sizeof(struct timestamp));
-
-  file_table[3].name = "data.txt";
-  memcpy(&disk_config -> wdata, &file_table[3].loc, sizeof(struct sector_box));
-  memcpy(curr_time, &file_table[3].modified, sizeof(struct timestamp));
-
-  file_table[4].name = NULL;
-*/
+  if (!memcmp(file_table, file_table + n, n)) {
+    msg(KERNERR, E_NOSTORAGE, "FATs are not identical");
+  }
 }
 
-inode_n name2inode(char *name) { // FIXME
+//inode_n name2inode(char *name) { // FIXME
 /*  for (inode_n search = 0; !!(file_table[search].name); search++) {
     if (strcmp(name, file_table[search].name)) return search;
   }
   msg(PROGERR, E_NOFILE, "File not found"); */
-  return -1;
-}
+  //return -1;
+//}
 
-void read_inode(inode_n file, void * where) {
+//void read_inode(inode_n file, void * where) {
   /* FIXME
   if (file < 0) {
     msg(KERNERR, E_NOFILE, "Invalid inode");
@@ -55,10 +50,10 @@ void read_inode(inode_n file, void * where) {
     hardware -> boot_disk_p.dev_path[0] & 0x01
   ); // reads disk for config, has to get master or slave
   */
-}
+//}
 
-void write_inode(inode_n file, void * where) { /* FIXME
-  if (file < 0) {
+//void write_inode(inode_n file, void * where) { /* FIXME
+  /*if (file < 0) {
     msg(KERNERR, E_NOFILE, "Invalid inode");
     line_feed();
     return;
@@ -72,4 +67,4 @@ void write_inode(inode_n file, void * where) { /* FIXME
 
   // changes mtime to most recent write
   memcpy(curr_time, &file_table[file].modified, sizeof(struct timestamp)); */
-}
+//}
