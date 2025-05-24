@@ -11,3 +11,6 @@ struct far_ver * curr_ver = &((struct far_ver) {
 struct farb_header __seg_fs *prog_head = 0;
 
 struct config_qi *disk_config = (struct config_qi *) 0xc800;
+
+// where the kernel starts
+void *kernel = 0x80000 - (KERN_LEN << 9);

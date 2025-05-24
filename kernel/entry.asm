@@ -164,6 +164,11 @@ fake_outsw:
         leave
         ret
 
+[global rip_thunk]
+rip_thunk:
+        pop eax
+        jmp eax
+
 print_32:
         pushad ; pusha but 32bit this time
 

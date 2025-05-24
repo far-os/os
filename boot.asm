@@ -3,7 +3,7 @@
 ;
 [bits 16]
 [org 0x7c00]
-%define OFFSET 0x1a000 ; the offset at which our kernel is loaded
+%define OFFSET 0x80000 - (%!KERN_SIZE << 9) ; the offset at which our kernel is loaded
 
 %define BOOT_DRV 0x0 ; the boot drive location, from gs
 %define DRV_PARAM 0x1 ; the boot drive parameter bock location, from gs

@@ -21,6 +21,7 @@ kernel.a: $(wildcard kernel/*.c) $(wildcard kernel/include/*.h) $(wildcard kerne
 	ar rv $@ obj/*.o
 
 kernel.entry.o: link.ld entry.o kernel.a kapps.o
+	echo "kern_size = $(KERN_SIZE);" > env.ld
 	ld -o $@ -melf_i386 -T $+
 
 kernel.bin: kernel.entry.o
@@ -57,7 +58,7 @@ bochs: os.img .bochsrc
 
 clean:
 	rm -rf ./obj
-	rm -f *.qi *.bin *.o *.a *.img
+	rm -f *.qi *.bin *.o *.a *.img env.ld
 
 deepclean: clean
 	cargo clean --manifest-path=./util/qic/Cargo.toml

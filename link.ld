@@ -1,15 +1,18 @@
+INCLUDE env.ld
+
+loaded_at = 0x80000 - (kern_size << 9);
 SECTIONS
 {
-  . = 0x1a000;
+  . = loaded_at;
   .second_boot : { *(.second_boot) }
   
-  . = 0x1a1d0;
+  . = loaded_at + 0x1d0;
   .gdt : { *(.gdt) }
 
-  . = 0x1a1fc;
+  . = loaded_at + 0x1fc;
   .magic : { *(.magic) }
 
-  . = 0x1a200;
+  . = loaded_at + 0x200;
   .text : { *(.text) }
   .data : { *(.data) }
   .eh_frame : { *(.eh_frame) }

@@ -13,7 +13,6 @@ const HelpHost::Entry comnames[] = {
   { .name = "help", .desc = "Prints this help menu", .type = HelpHost::PLAIN_ENTRY },
   { .name = "reset", .desc = "Resets machine\0[or ^\340\021]", .type = HelpHost::PLAIN_ENTRY },
   { .name = "sys", .desc = "Utilities that print/dump system info", .type = HelpHost::PLAIN_ENTRY },
-  { .name = "conf", .desc = "Dumps config.qi", .type = HelpHost::SUB_ENTRY },
   { .name = "cpu", .desc = "Prints CPU info", .type = HelpHost::SUB_ENTRY },
   { .name = "disk", .desc = "Prints disk/fs info", .type = HelpHost::SUB_ENTRY },
   { .name = "indic", .desc = "Prints keyboard LED status", .type = HelpHost::SUB_ENTRY },
@@ -264,16 +263,6 @@ private: // hidden fields (only for internal use)
       );
 
       fmt = COLOUR(YELLOW, B_GREEN); // fmt
-    } else if (strcmp(work.buf, "sys:conf")) {
-      sprintf(outbuf, "config.qi\n\tProgram at lba sector %2X, %d sector(s)\n\t\x10\t%s\n\tWritable data at lba sector %2X, %d sector(s)",
-        &(disk_config -> exec.lba),
-        disk_config -> exec.len,
-        hardware -> boot_disk_p.itrf_type,
-        &(disk_config -> wdata.lba),
-        disk_config -> wdata.len
-      );
-
-      fmt = COLOUR(BLUE, B_YELLOW); // fmt
     } else if (strcmp(work.buf, "sys:disk")) { 
       sprintf(outbuf, "%5s disk:\n\tVol. label \"%11s\"\n\tVol. ID %8X\n\tCluster size: %d sectors\n\tN. Fats: %d\n\tDisk %2xh\n\tVolume size %dB",
         &(bpb -> sys_ident),
@@ -297,7 +286,7 @@ private: // hidden fields (only for internal use)
       fmt = COLOUR(GREEN, RED);
     } else if (strcmp(work.buf, "sys:mem")) {
       void *addr = malloc(1);
-      sprintf(outbuf, "First free memory addr: %p\n\t\tout of: %p", addr, MEM_END);
+      sprintf(outbuf, "First free memory addr: %p\n\t\tout of: %p\n\nCurrently running from: %p", addr, MEM_END, rip_thunk());
       free(addr);
 
       fmt = COLOUR(MAGENTA, B_YELLOW); // fmt

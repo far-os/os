@@ -10,6 +10,8 @@ void backmemcpy(void *srcend, void *destend, unsigned int amount);
 void strcpy(char *src, char *dest);
 unsigned char memcmp(void *src, void *dest, unsigned int amount);
 
+extern unsigned int rip_thunk();
+
 static inline unsigned char bittest(void *src, unsigned int bit) {
   unsigned char o;
   asm volatile ("bt %2, (%1)" : 
