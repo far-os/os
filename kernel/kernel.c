@@ -83,8 +83,11 @@ void main() {
   query_cpuid();
 
   // init fs
+  init_locs();
   read_fat();
+  read_root();
 
+  // run shell
   app_handle shell = instantiate(mk_shell(32), -1, 1);
 
   // stop. just stop.

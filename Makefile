@@ -1,9 +1,16 @@
 .DEFAULT_GOAL := os.img
 .PHONY: qemu bochs clean deepclean
 
-# Disk size in units of 512KiB (Half MiB)
+# Partition size in units of 512KiB (Half MiB)
 export DISK_SIZE_HM := 1
+
+# Partition offset in sectors. For the sake of simplicity, we have here a partitionless disk for testing
+export DISK_OFFSET := 0
+
+# Size allocated to kernel in sectors. This must be able to fit boot.kern.bin, otherwise bad things will happen
+# Also used to determine load location in memory (loaded at 0x80_000 - KERN_SIZE{in bytes}. done so that it resides in the highest possible region in 640k that's not possible hoarded by bios).
 export KERN_SIZE := 72
+
 CFLAGS := -falign-functions=1 -fno-stack-protector -ffreestanding -m32 -march=i686 -Wall -fpermissive -D"KERN_LEN=$(KERN_SIZE)"
 
 boot.bin: boot.asm
@@ -43,6 +50,7 @@ emptyfat.qi: ./util/bin/qic emptyfat.qit
 	$^
 
 os.img: boot.kern.bin emptyfat.qi prog.bin program/data.txt
+	$(if $(shell [ $$(($(KERN_SIZE)<<9)) -lt $$(stat -c %s boot.kern.bin) ] && echo "OK"), $(error FATAL: KERN_SIZE too small))
 	dd if=/dev/zero of=$@ bs=512K count=$(DISK_SIZE_HM)
 	dd if=$< of=$@ conv=notrunc
 	dd if=emptyfat.qi of=$@ bs=512 conv=notrunc seek=$(KERN_SIZE)

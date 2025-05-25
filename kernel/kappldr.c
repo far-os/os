@@ -2,6 +2,7 @@
 #include "include/err.h"
 #include "include/misc.h"
 #include "include/text.h"
+#include "include/util.h"
 #include "include/memring.h"
 
 struct k_app *app_db[AVAILABLE_KAPPS];

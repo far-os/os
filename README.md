@@ -2,13 +2,17 @@
 A simple OS built in nasm and C.
 To clone, makes sure you use `git clone --recursive`. See [below](#quick-information-compiler-qic)
 
-## CSDFS
-CSDFS (**C**ompact **S**ystem **D**isk **F**ile **S**ystem) is the file system used by FarOS disks. The bootable disks are organised like this, where each character is one sector:
-`bBkkkkk...kkffffff....ff`
-- `b` is the boot sector.
-- `B` is the extended boot sector - this contains the CSDFS superblock (64 bytes) and more boot code.
-- `k` - The first few sectors can be defined in the superblock to be non-FS: they tend to be used as kernel space, and a vfs file can be mapped to that block in memory.
-- `f` - The actual file system.
+## Compilation config
+For ease in the emulation environment, the `Makefile` is by default configured to create a partitionless disk image, with size 512KiB.
+
+This is controlled by the following `Makefile` variables:
+| Variable | Default value | Meaning |
+|:-:|:-|:-|
+| `DISK_SIZE_HM` | 1 | The number of 512KiB blocks to create the partition image. Chosen to be quivalent to the value of cylinders, in an old-style CHS disk, assuming 16 heads and 63 sectors. |
+| `DISK_OFFSET` | 0 | The LBA of the boot sector on disk, i.e. the sector offset of a partition, if you choose to contain the fie system in a partition. |
+| `KERN_SIZE` | - | **DO NOT CHANGE!** The number of sectors allocated to the raw kernel, i.e. >= than the number of sectors taken up by `boot.kern.bin`. This must be a multiple of 4 sectors, so as to cluster align it in the file system. |
+
+***NOTE:*** If you wish to install this to a partition of a disk, you must change at least `DISK_OFFSET` above.
 
 ## File hierarchy
 The kernel code is located in `kernel/`, and the boot sector is located in `boot.asm`.
@@ -45,6 +49,7 @@ You will need access to the following tools:
 - `cat`: To concatenate the bootloader and kernel binaries.
 - `dd`: To create the disk image. **Note**: you will also need access to `/dev/zero` for this step.
 - `make`: A convienent way to run all the commands.
+- `mtools`: GNU toolchain that allows manipulation of FAT images
 - `qic`: A custom tool for generating config files, see below
 
 ### Quick Information Compiler (qic)

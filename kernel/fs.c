@@ -10,8 +10,25 @@
 #include "include/memring.h"
 
 struct fat_superblock *bpb = (struct fat_superblock *) 0x7c00; // boot location, but thats where the superblock os
-unsigned char *file_table = (void *) 0x30000;
+unsigned char *file_table = (void *) 0x20000;
 struct dir_entry *root_dir = NULL;
+
+unsigned int root_dir_secs_n = 0;
+lba_n root_starts_at = 0;
+lba_n data_starts_at = 0;
+
+// TODO: embiggen
+const unsigned char FAT_TYPE = 12;
+
+void init_locs() {
+  root_dir_secs_n = CEIL_DIV(bpb -> n_root_entries, bpb -> bytes_per_sec);
+  root_starts_at = bpb -> hidden_secs + bpb -> reserved_secs + (bpb -> n_fats * bpb -> sec_per_fat);
+  data_starts_at = root_starts_at + root_dir_secs_n;
+}
+
+void *get_cluster(cluster_id from) {
+  return ((from - 2) * bpb -> sec_per_clust) + data_starts_at;
+}
 
 void read_fat() {
   read_pio28(
@@ -23,18 +40,68 @@ void read_fat() {
 
   int n = bpb -> sec_per_fat << 9;
 
+  root_dir = file_table + n;
+
   if (!memcmp(file_table, file_table + n, n)) {
     msg(KERNERR, E_NOSTORAGE, "FATs are not identical");
   }
 }
 
-//inode_n name2inode(char *name) { // FIXME
-/*  for (inode_n search = 0; !!(file_table[search].name); search++) {
+// follow chain
+cluster_id next_cluster(cluster_id from) {
+  switch (FAT_TYPE) {
+    case 12:
+      int byte_index = (from * 3) >> 1; // get byte
+      unsigned short v_short = *((unsigned short *) (file_table + byte_index));
+      return (from & 1) ? v_short >> 4 : v_short & 0xfff;
+    case 16:
+      return *((unsigned short *) (file_table + (from << 1)));
+  }
+}
+
+// read root directory
+void read_root() {
+  read_pio28(
+    root_dir,
+    root_starts_at,
+    root_dir_secs_n,
+    hardware -> boot_disk_p.dev_path[0] & 0x01
+  ); // reads disk for config, has to get master or slave
+}
+
+void canonicalise_name(char *from, char *to) {
+  memset(to, 11, ' ');
+  unsigned char dotted = 0; // have we dotted yet?
+  int g = -1;
+  for (int c = 0; (from[c] && dotted < 2); ++c) {
+    if (from[c] == '.') {
+      dotted++;
+      g = 0;
+      continue;
+    }
+
+    if (dotted == 0) {
+      if (c < 8) {
+        to[c] = to_upper(from[c]);
+      }
+    } else { // dotted == 1, can't be 2, as that's in for loop condition
+      to[8 + g++] = to_upper(from[c]);
+      if (g >= 3) {
+        break;
+      }
+    }
+  }
+}
+
+/*struct dir_entry get_file(char *name) {
+  char nbuf[12] = {0};
+  canonicalise_name(name, nbuf);
+  for (unsigned int search = 0; !!(file_table[search].name); search++) {
     if (strcmp(name, file_table[search].name)) return search;
   }
-  msg(PROGERR, E_NOFILE, "File not found"); */
-  //return -1;
-//}
+  msg(PROGERR, E_NOFILE, "File not found");
+  return -1; 
+}*/
 
 //void read_inode(inode_n file, void * where) {
   /* FIXME

@@ -2,6 +2,8 @@
 
 #pragma once
 
+#define CEIL_DIV(a, b) ((a/b) + !!(a%b))
+
 void idle();
 
 int strlen(char *str);
@@ -73,6 +75,8 @@ void to_hex(void *data, unsigned char i_len, char *out);
 void to_filled_dec(int input, char *out, unsigned char size, char fill);
 void to_dec(int input, char *out);
 unsigned int to_uint(char *input);
+
+char to_upper(char);
 
 static inline char *strcat(char *out, char *in) {
   strcpy(in, endof(out));

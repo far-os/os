@@ -12,13 +12,13 @@ struct fat_superblock {
   unsigned short reserved_secs; // should be KERN_LEN
   unsigned char n_fats;
   unsigned short n_root_entries;
-  unsigned short n_sectors; // if > 65535, use large_n_sectors below
+  unsigned short small_n_sectors; // bootloader zeroised this for us, in favour of n_sectors later on
   unsigned char media_desc;
   unsigned short sec_per_fat;
   unsigned short sec_per_track;
   unsigned short n_heads;
   unsigned int hidden_secs; // n sectors before partition
-  unsigned int large_n_sectors; // extended field. TODO: add code to move normal sectors here anyway
+  unsigned int n_sectors;
   unsigned char drive_number;
   unsigned char nt_flags; // mystery
   unsigned char sig; // 0x28 or 0x29, idrk which means what
@@ -49,11 +49,19 @@ struct dir_entry {
   unsigned int size;
 } __attribute__((packed));
 
+#define NO_NEXT_CLUSTER 0xff8
+
+typedef unsigned short cluster_id;
+typedef unsigned int lba_n;
+cluster_id next_cluster(cluster_id from);
+
+void init_locs();
 void read_fat();
+void read_root();
+
+void canonicalise_name(char *from, char *to);
+void *get_cluster(cluster_id from);
 
 extern unsigned char *file_table;
 extern struct dir_entry *root_dir;
 
-#define NO_NEXT_SECTOR 0xff8
-
-void next_sector();

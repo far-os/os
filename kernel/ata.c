@@ -6,7 +6,7 @@ static inline void ata_cache_flush() {
   pbyte_out(0x1f7, CACHE_FLUSH);
 }
 
-void read_pio28(void *addr, unsigned int lba, unsigned int len, unsigned char drv) {
+void read_pio28(void *addr, lba_n lba, unsigned int len, unsigned char drv) {
   // id: high nybble is E for master or F for slave - how nybble in highest nybble of LBA
   pbyte_out(0x1f6, 0xe0 | (drv << 4) | ((lba >> 24) & 0x0f));
 
@@ -33,7 +33,7 @@ void read_pio28(void *addr, unsigned int lba, unsigned int len, unsigned char dr
   }
 }
 
-void write_pio28(void *data, unsigned int lba, unsigned int len, unsigned char drv) {
+void write_pio28(void *data, lba_n lba, unsigned int len, unsigned char drv) {
   // same as above 
 
   pbyte_out(0x1f6, 0xe0 | (drv << 4) | ((lba >> 24) & 0x0f));

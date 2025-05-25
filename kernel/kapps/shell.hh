@@ -12,6 +12,7 @@ const HelpHost::Entry comnames[] = {
   { .name = "stat", .desc = "Prints info about given <inode> or <filename>", .type = HelpHost::SUB_ENTRY },
   { .name = "help", .desc = "Prints this help menu", .type = HelpHost::PLAIN_ENTRY },
   { .name = "reset", .desc = "Resets machine\0[or ^\340\021]", .type = HelpHost::PLAIN_ENTRY },
+  { .name = "split", .desc = "Forms a split-screen with another open app. Takes <@handle>", .type = HelpHost::PLAIN_ENTRY },
   { .name = "sys", .desc = "Utilities that print/dump system info", .type = HelpHost::PLAIN_ENTRY },
   { .name = "cpu", .desc = "Prints CPU info", .type = HelpHost::SUB_ENTRY },
   { .name = "disk", .desc = "Prints disk/fs info", .type = HelpHost::SUB_ENTRY },
@@ -19,6 +20,8 @@ const HelpHost::Entry comnames[] = {
   { .name = "mem", .desc = "Prints memory info", .type = HelpHost::SUB_ENTRY },
   { .name = "proc", .desc = "Prints currently running processes", .type = HelpHost::SUB_ENTRY },
   { .name = "time", .desc = "Gets current time", .type = HelpHost::PLAIN_ENTRY },
+  { .name = "util", .desc = "Utilities and tools", .type = HelpHost::PLAIN_ENTRY },
+  { .name = "to8.3", .desc = "Canonicalises a filename into 8.3. Takes <string>", .type = HelpHost::SUB_ENTRY },
   { .type = -1 }
 };
 
@@ -264,14 +267,14 @@ private: // hidden fields (only for internal use)
 
       fmt = COLOUR(YELLOW, B_GREEN); // fmt
     } else if (strcmp(work.buf, "sys:disk")) { 
-      sprintf(outbuf, "%5s disk:\n\tVol. label \"%11s\"\n\tVol. ID %8X\n\tCluster size: %d sectors\n\tN. Fats: %d\n\tDisk %2xh\n\tVolume size %dB",
+      sprintf(outbuf, "%5s disk:\n\tVol. label \"%11s\"\n\tVol. ID %8X\n\tCluster size: %d sectors\n\tN. Fats: %d\n\tDisk %2xh\n\tVolume size %dKiB",
         &(bpb -> sys_ident),
         &(bpb -> vol_lbl),
         &(bpb -> serial_no),
         bpb -> sec_per_clust,
         bpb -> n_fats,
         &(hardware -> bios_disk),
-        bpb -> n_sectors * bpb -> bytes_per_sec // TODO: move n_sectors into long anyway
+        (bpb -> n_sectors * bpb -> bytes_per_sec) >> 10
       );
 
       fmt = COLOUR(RED, B_YELLOW); // fmt 
@@ -311,6 +314,9 @@ private: // hidden fields (only for internal use)
       );
 
       fmt = COLOUR(RED, B_CYAN);
+    } else if (strcmp(work.buf, "util:to_8.3")) {
+      canonicalise_name(args, outbuf);
+      fmt = COLOUR(RED, B_GREEN);
     } else {
       msg(WARN, E_UNKENTITY, "Unknown command");
       goto shell_clean;

@@ -242,3 +242,11 @@ unsigned short trace_ch_until_with(char *str, int until, int start) {
 unsigned char is_whitespace(char x) {
   return (x == '\0' || x == ' ' || x == '\xff');
 }
+
+char to_upper(char x) {
+  if (x >= 'a' && x <= 'z') {
+    return x - 0x20;
+  } else {
+    return x;
+  }
+}

@@ -9,7 +9,6 @@
 %define DRV_PARAM 0x1 ; the boot drive parameter bock location, from gs
 %define KERN_LEN %!KERN_SIZE - 1 ; the kernel length. this changes quite frequently. MUST BE `4n-1`, as the FAT aftwerwards needs to be cluster-aligned. i decided 4 sectors per cluster
 
-%define DISK_OFFSET 0
 %define GDT_LEN 4
 %define GDT_OFFS OFFSET + 0x1d0
 
@@ -26,7 +25,7 @@
         fat_sectors_per_fat: dw 4
         fat_sectors_per_track: dw 63
         fat_heads: dw 16
-        fat_n_hidden_sectors: dd DISK_OFFSET ; number of sectors beforehand
+        fat_n_hidden_sectors: dd %!DISK_OFFSET ; number of sectors beforehand
         fat_n_sectors_extended: dd 0 ; if fat_n_sectors > 65535, use this.
 
         fat_drive_no: db 0x80 ; no idea really
@@ -55,6 +54,16 @@ __start:
         call print_16
 
         call load_krn
+        
+        movzx eax, word [fat_n_sectors]
+        test ax, ax
+        jz _after_sector_move
+
+        mov [fat_n_sectors_extended], eax
+        mov word [fat_n_sectors], 0
+
+
+      _after_sector_move:
 
         ; start protected!
         call prot
@@ -184,7 +193,7 @@ kernel_in_progress:
 hdd_test:
         db "Reading from hard disk...",0xd,0xa,0
 invalid_diskette:
-        db 0xd,0xa,"FATAL: The disk does not contain a known file system.",0xd,0xa,0x0 
+        db 0xd,0xa,"FATAL: No complatible FarOS install found",0xd,0xa,0x0 
 dap_packet:
         dap_len: db 0x10 ; length of DAP
         reserved: db 0 ; is zero
@@ -192,7 +201,7 @@ dap_packet:
         seg_offset:
           dw 0x0 ; offset
           dw (OFFSET >> 4) ; segment
-        seg_start: dq (DISK_OFFSET + 0x1) ; second sector (starts from zero - first after boot, including csdfs superblock)
+        seg_start: dq (%!DISK_OFFSET + 0x1) ; second sector (starts from zero - first after boot, including csdfs superblock)
 [bits 32]
 seg_init:
         ; 32-bit segments

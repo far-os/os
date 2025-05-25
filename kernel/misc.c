@@ -2,10 +2,10 @@
 #include "include/config.h"
 
 struct far_ver * curr_ver = &((struct far_ver) {
-  .major = 0,
-  .minor = 0,
-  .patch = 4,
-  .build = 3, // minor changes + hotfixes
+  .major = 0x00,
+  .minor = 0x00,
+  .patch = 0x04,
+  .build = 0x80, // minor changes + hotfixes
 });
 
 struct farb_header __seg_fs *prog_head = 0;
