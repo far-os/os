@@ -3,16 +3,16 @@ extern "C" int prog(int arg);
 
 // list of entries, Entry and EntType are children of HelpHost
 const HelpHost::Entry comnames[] = {
-  { .name = "clr", .desc = "Clears screen\0[or \034\23710]", .type = HelpHost::PLAIN_ENTRY },
-  { .name = "exec", .desc = "Executes program, takes <u32>", .type = HelpHost::PLAIN_ENTRY },
+  { .name = "clr", .desc = "Clears screen\0[or shift+\23710]", .type = HelpHost::PLAIN_ENTRY },
+  { .name = "exec", .desc = "Executes program\0<u32>", .type = HelpHost::PLAIN_ENTRY },
   { .name = "f", .desc = "File I/O namespace", .type = HelpHost::PLAIN_ENTRY },
   { .name = "edit", .desc = "Text editor", .type = HelpHost::SUB_ENTRY },
   { .name = "ls", .desc = "Lists all files", .type = HelpHost::SUB_ENTRY },
   { .name = "read", .desc = "Prints file content", .type = HelpHost::SUB_ENTRY },
-  { .name = "stat", .desc = "Prints info about given <inode> or <filename>", .type = HelpHost::SUB_ENTRY },
+  { .name = "stat", .desc = "Prints info about given file\0<string>", .type = HelpHost::SUB_ENTRY },
   { .name = "help", .desc = "Prints this help menu", .type = HelpHost::PLAIN_ENTRY },
-  { .name = "reset", .desc = "Resets machine\0[or ^\340\021]", .type = HelpHost::PLAIN_ENTRY },
-  { .name = "split", .desc = "Forms a split-screen with another open app. Takes <@handle>", .type = HelpHost::PLAIN_ENTRY },
+  { .name = "reset", .desc = "Resets machine\0[or ctrl+alt+del]", .type = HelpHost::PLAIN_ENTRY },
+  { .name = "split", .desc = "Forms a split-screen with another open app\0<@handle>", .type = HelpHost::PLAIN_ENTRY },
   { .name = "sys", .desc = "Utilities that print/dump system info", .type = HelpHost::PLAIN_ENTRY },
   { .name = "cpu", .desc = "Prints CPU info", .type = HelpHost::SUB_ENTRY },
   { .name = "disk", .desc = "Prints disk/fs info", .type = HelpHost::SUB_ENTRY },
@@ -21,7 +21,7 @@ const HelpHost::Entry comnames[] = {
   { .name = "proc", .desc = "Prints currently running processes", .type = HelpHost::SUB_ENTRY },
   { .name = "time", .desc = "Gets current time", .type = HelpHost::PLAIN_ENTRY },
   { .name = "util", .desc = "Utilities and tools", .type = HelpHost::PLAIN_ENTRY },
-  { .name = "to8.3", .desc = "Canonicalises a filename into 8.3. Takes <string>", .type = HelpHost::SUB_ENTRY },
+  { .name = "to8.3", .desc = "Canonicalises a filename into 8.3\0<string>", .type = HelpHost::SUB_ENTRY },
   { .type = -1 }
 };
 
@@ -175,12 +175,10 @@ private: // hidden fields (only for internal use)
       exitting = false;
       goto shell_clean;
     } else if (strcmp(work.buf, "f:ls")) {
-      /* FIXME
-      for (int filek = 0; file_table[filek].name; filek++) {
-        strcat(outbuf, file_table[filek].name);
+      for (unsigned int search = 0; *((unsigned char*) &root_dir[search]); search++) {
+        sane_name(root_dir[search].name, endof(outbuf));
         *endof(outbuf) = '\t';
       }
-      */
 
       fmt = COLOUR(BLACK, B_WHITE);
     } else if (strcmp(work.buf, "f:read")) {
@@ -194,35 +192,35 @@ private: // hidden fields (only for internal use)
       free(datablk); FIXME */
       line_feed();
     } else if (strcmp(work.buf, "f:stat")) {
-      /* FIXME
-      int ar = -1;
-      if (strlen(args)) {
-        ar = to_uint(args);
-        if (ar < 0) {
-          ar = name2inode(args);
-          if (ar < 0) goto shell_clean;
-        }
-      }
-      
-      if (ar < 0 || !(file_table[ar].name)) {
-        msg(PROGERR, E_NOFILE, "Invalid inode");
-        goto shell_clean;
+      struct dir_entry f = { .name = "\0" };
+      if (!f.name[0]) {
+        f = get_file(args);
+        if (!f.name[0]) goto shell_clean;
       }
 
-      sprintf(outbuf, "%s <%d>\n\t%d bytes, sector %2X\n\tModified %4d-%2d-%2d %2d:%2d:%2d",
-        file_table[ar].name,
-        ar,
-        file_table[ar].loc.len << 9,
-        &(file_table[ar].loc.lba),
-        file_table[ar].modified.year,
-        file_table[ar].modified.month,
-        file_table[ar].modified.date,
-        file_table[ar].modified.hour,
-        file_table[ar].modified.minute,
-        file_table[ar].modified.second
+      struct timestamp ctime = from_dostime({
+        .dostime = f.ctime,
+        .dosdate = f.cdate,
+        .centisecs = f.ctime_cs
+      });
+
+      char *name = malloc(12);
+      sane_name(f.name, name);
+
+      sprintf(outbuf, "%s\n\t%d bytes, cluster %3X\n\tCreated %4d-%2d-%2d %2d:%2d:%2d",
+        name,
+        f.size,
+        &(f.first_cluster_lo),
+        ctime.year,
+        ctime.month,
+        ctime.date,
+        ctime.hour,
+        ctime.minute,
+        ctime.second
       );
 
-      */
+      free(name);
+
       fmt = COLOUR(GREEN, RED);
     } else if (strcmp(work.buf, "help")) {
       app_handle help = instantiate(
@@ -314,7 +312,7 @@ private: // hidden fields (only for internal use)
       );
 
       fmt = COLOUR(RED, B_CYAN);
-    } else if (strcmp(work.buf, "util:to_8.3")) {
+    } else if (strcmp(work.buf, "util:to8.3")) {
       canonicalise_name(args, outbuf);
       fmt = COLOUR(RED, B_GREEN);
     } else {

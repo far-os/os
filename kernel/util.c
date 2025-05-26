@@ -75,10 +75,11 @@ char nybble_to_hex(int num) {
 
 void to_hex(void *data, unsigned char i_len, char *out) {
   char temporary;
-  for (int j = 0; j < i_len; ++j) {
+  int z = i_len & 1;
+  for (int j = z; j < (i_len + z); ++j) {
     temporary = ((char *) data)[((i_len-1) / 2) - (j / 2)];
     temporary >>= (!(j % 2) * 4);
-    out[j] = nybble_to_hex(temporary);
+    out[j - z] = nybble_to_hex(temporary);
   }
 }
 

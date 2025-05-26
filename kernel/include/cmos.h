@@ -43,3 +43,6 @@ struct dos_timestamp {
   unsigned short dosdate;
   unsigned char centisecs;
 } __attribute__((packed));
+
+struct timestamp from_dostime(struct dos_timestamp dos);
+struct dos_timestamp to_dostime(struct timestamp ts);

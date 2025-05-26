@@ -45,6 +45,10 @@ struct HelpHost : KApp {
       if (endof(this->ents[ent].desc)[1] == '[') {
         adv_cur();
         write_str(endof(this->ents[ent].desc) + 1, COLOUR(BLUE, MAGENTA));
+      } else if (endof(this->ents[ent].desc)[1] == '<') {
+        set_cur(POS(VGA_WIDTH - 8 - strlen(endof(this->ents[ent].desc) + 1), ent + 1));
+        write_str("args: ", COLOUR(BLUE, RED));
+        write_str(endof(this->ents[ent].desc) + 1, COLOUR(BLUE, B_RED));
       }
 
       write_cell(0xb3, (ln_nr() + 1) * VGA_WIDTH - 1, COLOUR(BLUE, B_BLACK));

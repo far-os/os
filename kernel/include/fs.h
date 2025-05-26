@@ -51,8 +51,12 @@ struct dir_entry {
 
 #define NO_NEXT_CLUSTER 0xff8
 
+#define FAT_FILENAME_LEN 11
+
 typedef unsigned short cluster_id;
 typedef unsigned int lba_n;
+
+typedef unsigned short dir_n;
 cluster_id next_cluster(cluster_id from);
 
 void init_locs();
@@ -60,7 +64,10 @@ void read_fat();
 void read_root();
 
 void canonicalise_name(char *from, char *to);
+void sane_name(char *from, char *to);
 void *get_cluster(cluster_id from);
+
+struct dir_entry get_file(char *name);
 
 extern unsigned char *file_table;
 extern struct dir_entry *root_dir;

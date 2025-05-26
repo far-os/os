@@ -25,6 +25,8 @@ extern inline unsigned char get_cmos_reg(unsigned char reg) {
 
 struct timestamp from_dostime(struct dos_timestamp dos) {
   struct timestamp ts;
+  //memzero(&ts, sizeof(struct timestamp));
+
   ts.second = (dos.dostime << 1) & 0x3e;
   ts.minute = (dos.dostime >> 5) & 0x3f;
   ts.hour = (dos.dostime >> 11) & 0x1f;
@@ -34,6 +36,8 @@ struct timestamp from_dostime(struct dos_timestamp dos) {
 
   ts.second += (dos.centisecs >= 100);
   ts.centisec = dos.centisecs % 100;
+
+  return ts;
 }
 
 struct dos_timestamp to_dostime(struct timestamp ts) {

@@ -56,6 +56,8 @@ cluster_id next_cluster(cluster_id from) {
       return (from & 1) ? v_short >> 4 : v_short & 0xfff;
     case 16:
       return *((unsigned short *) (file_table + (from << 1)));
+    default:
+      return -1;
   }
 }
 
@@ -69,8 +71,9 @@ void read_root() {
   ); // reads disk for config, has to get master or slave
 }
 
+// e.g. abcdefgh.xyz => ABCDEFGHXYZ
 void canonicalise_name(char *from, char *to) {
-  memset(to, 11, ' ');
+  memset(to, FAT_FILENAME_LEN, ' ');
   unsigned char dotted = 0; // have we dotted yet?
   int g = -1;
   for (int c = 0; (from[c] && dotted < 2); ++c) {
@@ -93,15 +96,32 @@ void canonicalise_name(char *from, char *to) {
   }
 }
 
-/*struct dir_entry get_file(char *name) {
-  char nbuf[12] = {0};
+// opposite of above. because LFN may not make sense later on (TODO), i'm keeping it uppercase
+void sane_name(char *from, char *to) {
+  memzero(to, FAT_FILENAME_LEN);
+  for (int c = 0; (c < 8 && from[c] != ' '); ++c) {
+    to[c] = from[c];
+  }
+
+  if (from[8] != ' ') {
+    *endof(to) = '.';
+  }
+
+  for (int c = 8; (c < FAT_FILENAME_LEN && from[c] != ' '); ++c) {
+    *endof(to) = from[c];
+  }
+}
+
+struct dir_entry get_file(char *name) {
+  struct dir_entry blank = { .name = "\0" };
+  char nbuf[FAT_FILENAME_LEN + 1] = {0};
   canonicalise_name(name, nbuf);
-  for (unsigned int search = 0; !!(file_table[search].name); search++) {
-    if (strcmp(name, file_table[search].name)) return search;
+  for (unsigned int search = 0; *((unsigned char*) &root_dir[search]); search++) {
+    if (memcmp(nbuf, root_dir[search].name, FAT_FILENAME_LEN)) return root_dir[search];
   }
   msg(PROGERR, E_NOFILE, "File not found");
-  return -1; 
-}*/
+  return blank;
+}
 
 //void read_inode(inode_n file, void * where) {
   /* FIXME
