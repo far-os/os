@@ -49,6 +49,7 @@ struct dir_entry {
   unsigned int size;
 } __attribute__((packed));
 
+// anywhere between 0xff8 - 0xfff. TODO: embiggen
 #define NO_NEXT_CLUSTER 0xff8
 
 #define FAT_FILENAME_LEN 11
@@ -65,10 +66,13 @@ void read_root();
 
 void canonicalise_name(char *from, char *to);
 void sane_name(char *from, char *to);
-void *get_cluster(cluster_id from);
+lba_n get_cluster(cluster_id from);
 
 struct dir_entry get_file(char *name);
 
 extern unsigned char *file_table;
 extern struct dir_entry *root_dir;
 
+#define VALID_FILE(f) (*((unsigned char*) &(f)))
+
+void read_file(char *filename, void *where);

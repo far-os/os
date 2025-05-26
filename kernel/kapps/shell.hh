@@ -3,16 +3,16 @@ extern "C" int prog(int arg);
 
 // list of entries, Entry and EntType are children of HelpHost
 const HelpHost::Entry comnames[] = {
-  { .name = "clr", .desc = "Clears screen\0[or shift+\23710]", .type = HelpHost::PLAIN_ENTRY },
-  { .name = "exec", .desc = "Executes program\0<u32>", .type = HelpHost::PLAIN_ENTRY },
+  { .name = "clr", .desc = "Clears screen\xff[or shift+\23710]", .type = HelpHost::PLAIN_ENTRY },
+  { .name = "exec", .desc = "Executes program\xff<u32>", .type = HelpHost::PLAIN_ENTRY },
   { .name = "f", .desc = "File I/O namespace", .type = HelpHost::PLAIN_ENTRY },
   { .name = "edit", .desc = "Text editor", .type = HelpHost::SUB_ENTRY },
   { .name = "ls", .desc = "Lists all files", .type = HelpHost::SUB_ENTRY },
-  { .name = "read", .desc = "Prints file content", .type = HelpHost::SUB_ENTRY },
-  { .name = "stat", .desc = "Prints info about given file\0<string>", .type = HelpHost::SUB_ENTRY },
+  { .name = "read", .desc = "Prints file content\xff<filename>", .type = HelpHost::SUB_ENTRY },
+  { .name = "stat", .desc = "Prints info about given file\xff<filename>", .type = HelpHost::SUB_ENTRY },
   { .name = "help", .desc = "Prints this help menu", .type = HelpHost::PLAIN_ENTRY },
-  { .name = "reset", .desc = "Resets machine\0[or ctrl+alt+del]", .type = HelpHost::PLAIN_ENTRY },
-  { .name = "split", .desc = "Forms a split-screen with another open app\0<@handle>", .type = HelpHost::PLAIN_ENTRY },
+  { .name = "reset", .desc = "Resets machine\xff[or ctrl+alt+del]", .type = HelpHost::PLAIN_ENTRY },
+  { .name = "split", .desc = "Forms a split-screen with another open app\xff<@handle>", .type = HelpHost::PLAIN_ENTRY },
   { .name = "sys", .desc = "Utilities that print/dump system info", .type = HelpHost::PLAIN_ENTRY },
   { .name = "cpu", .desc = "Prints CPU info", .type = HelpHost::SUB_ENTRY },
   { .name = "disk", .desc = "Prints disk/fs info", .type = HelpHost::SUB_ENTRY },
@@ -21,7 +21,7 @@ const HelpHost::Entry comnames[] = {
   { .name = "proc", .desc = "Prints currently running processes", .type = HelpHost::SUB_ENTRY },
   { .name = "time", .desc = "Gets current time", .type = HelpHost::PLAIN_ENTRY },
   { .name = "util", .desc = "Utilities and tools", .type = HelpHost::PLAIN_ENTRY },
-  { .name = "to8.3", .desc = "Canonicalises a filename into 8.3\0<string>", .type = HelpHost::SUB_ENTRY },
+  { .name = "to8.3", .desc = "Canonicalises a filename into 8.3\xff<string>", .type = HelpHost::SUB_ENTRY },
   { .type = -1 }
 };
 
@@ -107,7 +107,7 @@ struct KShell : KApp {
   void first_run() {
     /*
     write_str("os ", 0x07); */
-    write_str("Kernel Executive Shell. (c) 2022-4.\n", COLOUR(BLUE, B_RED));
+    write_str("Kernel Executive Shell. (c) 2022-5.\n", COLOUR(BLUE, B_RED));
 
     // print out prompt
     write_str(prompt, COLOUR(BLACK, WHITE));
@@ -139,14 +139,8 @@ private: // hidden fields (only for internal use)
       clear_scr();
       set_cur(0);
     } else if (strcmp(work.buf, "exec")) {
-      /* FIXME
-      if (disk_config -> qi_magic != CONFIG_MAGIC) {
-        msg(KERNERR, E_NOSTORAGE, "Disk is unavailable");
-        goto shell_clean;
-      }
-
-      read_inode(
-        name2inode("prog.bin"),
+      read_file(
+        "prog.bin",
         0x100000
       ); // reads disk, has to get master or slave
 
@@ -163,7 +157,6 @@ private: // hidden fields (only for internal use)
       } else {
         line_feed();
       }
-      */
     } else if (strcmp(work.buf, "f:edit")) {
     /* FIXME
       app_handle edt = instantiate(
@@ -175,21 +168,27 @@ private: // hidden fields (only for internal use)
       exitting = false;
       goto shell_clean;
     } else if (strcmp(work.buf, "f:ls")) {
-      for (unsigned int search = 0; *((unsigned char*) &root_dir[search]); search++) {
+      for (unsigned int search = 0; VALID_FILE(root_dir[search]); search++) {
         sane_name(root_dir[search].name, endof(outbuf));
         *endof(outbuf) = '\t';
       }
 
       fmt = COLOUR(BLACK, B_WHITE);
     } else if (strcmp(work.buf, "f:read")) {
-      /*char *datablk = malloc(file_table[name2inode("data.txt")].loc.len << 9);
-      read_inode(
-        name2inode("data.txt"),
+      struct dir_entry f = { .name = "\0" };
+      if (!f.name[0]) {
+        f = get_file(args);
+        if (!f.name[0]) goto shell_clean;
+      }
+
+      char *datablk = malloc(f.size);
+      read_file(
+        args,
         datablk
       ); // reads disk, has to get master or slave
       write_str(datablk, COLOUR(BLACK, WHITE));
 
-      free(datablk); FIXME */
+      free(datablk);
       line_feed();
     } else if (strcmp(work.buf, "f:stat")) {
       struct dir_entry f = { .name = "\0" };

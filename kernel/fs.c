@@ -16,17 +16,19 @@ struct dir_entry *root_dir = NULL;
 unsigned int root_dir_secs_n = 0;
 lba_n root_starts_at = 0;
 lba_n data_starts_at = 0;
+unsigned int bytes_per_clust = 0;
 
 // TODO: embiggen
 const unsigned char FAT_TYPE = 12;
 
 void init_locs() {
-  root_dir_secs_n = CEIL_DIV(bpb -> n_root_entries, bpb -> bytes_per_sec);
+  root_dir_secs_n = CEIL_DIV(bpb -> n_root_entries * 32, bpb -> bytes_per_sec);
   root_starts_at = bpb -> hidden_secs + bpb -> reserved_secs + (bpb -> n_fats * bpb -> sec_per_fat);
   data_starts_at = root_starts_at + root_dir_secs_n;
+  bytes_per_clust = bpb -> bytes_per_sec * bpb -> sec_per_clust;
 }
 
-void *get_cluster(cluster_id from) {
+lba_n get_cluster(cluster_id from) {
   return ((from - 2) * bpb -> sec_per_clust) + data_starts_at;
 }
 
@@ -116,28 +118,53 @@ struct dir_entry get_file(char *name) {
   struct dir_entry blank = { .name = "\0" };
   char nbuf[FAT_FILENAME_LEN + 1] = {0};
   canonicalise_name(name, nbuf);
-  for (unsigned int search = 0; *((unsigned char*) &root_dir[search]); search++) {
+  for (unsigned int search = 0; VALID_FILE(root_dir[search]); search++) {
     if (memcmp(nbuf, root_dir[search].name, FAT_FILENAME_LEN)) return root_dir[search];
   }
   msg(PROGERR, E_NOFILE, "File not found");
   return blank;
 }
 
-//void read_inode(inode_n file, void * where) {
-  /* FIXME
-  if (file < 0) {
-    msg(KERNERR, E_NOFILE, "Invalid inode");
+void read_file(char *filename, void * where) {
+  struct dir_entry f = get_file(filename);
+
+  if (!VALID_FILE(f)) {
+    msg(KERNERR, E_NOFILE, "Invalid file");
     line_feed();
     return;
   }
 
-  read_pio28(
-    where,
-    file_table[file].loc,
-    hardware -> boot_disk_p.dev_path[0] & 0x01
-  ); // reads disk for config, has to get master or slave
-  */
-//}
+  cluster_id trace = (f.first_cluster_hi << 16) | (f.first_cluster_lo);
+  unsigned int bytes_left = f.size;
+
+  do {
+    if (bytes_left < bytes_per_clust) {
+      void *tmp = malloc(bytes_per_clust); // to avoid overwriting, we put it in a buf first. there are umpteen better ways of doing this, but no
+
+      read_pio28(
+        tmp,
+        get_cluster(trace),
+        bpb -> sec_per_clust,
+        hardware -> boot_disk_p.dev_path[0] & 0x01
+      ); // reads disk for config, has to get master or slave
+
+      memcpy(tmp, where, bytes_left);
+      free(tmp);
+    } else {
+      read_pio28(
+        where,
+        get_cluster(trace),
+        bpb -> sec_per_clust,
+        hardware -> boot_disk_p.dev_path[0] & 0x01
+      ); // reads disk for config, has to get master or slave
+    }
+
+    bytes_left -= bytes_per_clust;
+    where += bytes_per_clust;
+
+    trace = next_cluster(trace);
+  } while ((trace & NO_NEXT_CLUSTER) != NO_NEXT_CLUSTER);
+}
 
 //void write_inode(inode_n file, void * where) { /* FIXME
   /*if (file < 0) {
