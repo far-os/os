@@ -1,7 +1,8 @@
 const HelpHost::Entry keyb_shortcuts[] = {
-  { .name = "\340K", .desc = "Clear line", .type = HelpHost::PLAIN_ENTRY },
   { .name = "^H", .desc = "Show this help menu", .type = HelpHost::PLAIN_ENTRY },
   { .name = "^S", .desc = "Save", .type = HelpHost::PLAIN_ENTRY },
+  { .name = "alt+K", .desc = "Clear line", .type = HelpHost::PLAIN_ENTRY },
+  { .name = "shift+\23712", .desc = "Insert 80 `a`s", .type = HelpHost::PLAIN_ENTRY | HelpHost::DEBUG_ENTRY },
   { .name = "<Esc>", .desc = "Quit\0[without saving]", .type = HelpHost::PLAIN_ENTRY },
   { .type = -1 }
 };
@@ -44,6 +45,10 @@ struct Editor : KApp {
           this->contents.ix = index - 1;
           break;
         }
+        case SHIFT_F(12): {
+          memset(endof(this->contents.buf), 80, 'a');
+          break;
+        }
         case ESC:
           terminate_app(this->app_id & 0xf);
           return;
@@ -83,47 +88,54 @@ no_fill:
   void first_run() {
     clear_scr();
     set_cur(0);
-    write_str(this->contents.buf, COLOUR(BLACK, WHITE));
+    write_str(contents.buf, COLOUR(BLACK, WHITE));
     memcpy(header.buf, addr_of_loc(POS(0, VP_HEIGHT - 1)), header.len);
     set_cur(trace_ch_until(contents.buf, contents.ix)); // trace character
   }
 
 private:
   struct inp_strbuf contents; // file buffer
-  inode_n file; // the exact file
+  char filename[13]; // the exact file
   struct inp_strbuf header; // first character
   bool dirty; // whether the file has recently been saved
 
-  void read_file() {
-    read_inode(
-      file,
+  void read() {
+    //contents.buf[0] = '\0';
+    read_file(
+      filename,
       contents.buf
     );
   };
 
   void save() {
     dirty = false;
-    write_inode(
-      file,
-      contents.buf
+    write_file(
+      filename,
+      contents.buf,
+      strlen(contents.buf)
     );
   };
 
 public:
   // constructor
-  Editor(inode_n which) : KApp(), file(which), contents(file_table[which].loc.len << 9), header(VGA_WIDTH * 2), dirty(false) {
+  Editor(char *which) : KApp(), header(VGA_WIDTH * 2), dirty(false), contents(get_file(which)->size + 128) {
     config_flags = 0; // no flags - we want enter to appear as a real key
 
-    app_name = "fedit";
+    app_name = "edit";
 
     // get file, has already been initted above
-    this->read_file();
+    struct dir_entry *f = get_file(which);
+
+    sane_name(f->name, this->filename);
+
+    this->read();
     contents.ix = strlen(contents.buf);
 
+
     // "^S to save, <Esc> to exit" is 31 ch long
-    unsigned char pad_len = VGA_WIDTH - strlen(file_table[file].name) - 11 - 4; // 4 for padding
+    unsigned char pad_len = VGA_WIDTH - strlen(filename) - 11 - 4; // 4 for padding
     write_cell_into(&header, ' ', COLOUR(RED, B_GREEN));
-    write_str_into(&header, file_table[file].name, COLOUR(RED, B_WHITE));
+    write_str_into(&header, filename, COLOUR(RED, B_WHITE));
     write_cell_into(&header, ' ', COLOUR(RED, 0));
     for (int p = 0; p < pad_len; ++p) write_cell_into(&header, 0xcd, COLOUR(RED, B_BLACK));
     write_cell_into(&header, ' ', COLOUR(RED, 0));

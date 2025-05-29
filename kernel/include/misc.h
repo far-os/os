@@ -8,6 +8,9 @@
 #define NULL (void *) 0
 #define endof(str) (str + strlen(str))
 
+// where the kernel is stored
+extern void *kernel;
+
 struct far_ver {
   unsigned char major;
   unsigned char minor;

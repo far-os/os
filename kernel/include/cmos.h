@@ -1,4 +1,5 @@
 #pragma once
+#include "fs.h"
 
 #define RTC_SEC  0x00
 #define RTC_MIN  0x02
@@ -18,6 +19,7 @@
 #define MK_BCD(num) num = ((num) & 0x0f) + (((num) >> 4) * 10)
 
 struct timestamp {
+  unsigned char centisec;
   unsigned char second;
   unsigned char minute;
   unsigned char hour;
@@ -35,3 +37,12 @@ void read_rtc(struct timestamp *ts);
 void time(void *tbuf);
 
 void adv_time(struct timestamp *ts);
+
+struct dos_timestamp {
+  unsigned short dostime;
+  unsigned short dosdate;
+  unsigned char centisecs;
+} __attribute__((packed));
+
+struct timestamp from_dostime(struct dos_timestamp dos);
+struct dos_timestamp to_dostime(struct timestamp ts);

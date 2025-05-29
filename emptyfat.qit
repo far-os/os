@@ -1,0 +1,11 @@
+## empty fat filesystem. ##
+
+!nomagic
+
+rept 2 ## two fats ##
+  block fat ## fat ##
+    int24 init : 0xfffff8; ## 0xff8 then 0xfff. 0xff8 means disk, 0xfff is reserved ##
+  endblock
+
+  !align 0x800 ## 4 sectors per fat ##
+endrept

@@ -3,15 +3,39 @@
 ;
 [bits 16]
 [org 0x7c00]
-%define OFFSET 0x1a000 ; the offset at which our kernel is loaded
+%define OFFSET 0x80000 - (%!KERN_SIZE << 9) ; the offset at which our kernel is loaded
 
 %define BOOT_DRV 0x0 ; the boot drive location, from gs
 %define DRV_PARAM 0x1 ; the boot drive parameter bock location, from gs
-%define KERN_LEN %!KERN_SIZE - 1 ; the kernel length (15k kernel >:))
+%define KERN_LEN %!KERN_SIZE - 1 ; the kernel length. this changes quite frequently. MUST BE `4n-1`, as the FAT aftwerwards needs to be cluster-aligned. i decided 4 sectors per cluster
 
 %define GDT_LEN 4
-%define GDT_OFFS OFFSET + 0x190
+%define GDT_OFFS OFFSET + 0x1d0
 
+        fat_jump: jmp short __start
+        nop
+        fat_oemid: db "FAROSfat"
+        fat_bytes_per_sector: dw 512
+        fat_sectors_per_cluster: db 4
+        fat_rsrvd_sectors: dw %!KERN_SIZE
+        fat_n_fats: db 2
+        fat_n_root_entries: dw 0x100
+        fat_n_sectors: dw (%!DISK_SIZE_HM * 1024) ; if DISK_SIZE_HM surpasses 64, we have problems
+        fat_media_desc: db 0xf8 ; hard disk
+        fat_sectors_per_fat: dw 4
+        fat_sectors_per_track: dw 63
+        fat_heads: dw 16
+        fat_n_hidden_sectors: dd %!DISK_OFFSET ; number of sectors beforehand
+        fat_n_sectors_extended: dd 0 ; if fat_n_sectors > 65535, use this.
+
+        fat_drive_no: db 0x80 ; no idea really
+        fat_nt_flags: db 0 ; mystery
+        fat_sig: db 0x29 ; 0x28 or 0x29
+        fat_vol_ser_no: dd 0xa30e4af3 ; volume serial number. whatever really
+        fat_vol_label: db "FarOS Boot "
+        fat_sys_id: db "FAT12   "
+
+__start:
         xor cx, cx ; segment setup
         mov ds, cx
         mov es, cx
@@ -24,13 +48,22 @@
         mov sp, bp
 
         mov [gs:BOOT_DRV], dl
-        movzx esi, byte [gs:BOOT_DRV]
-        call print_hx_32_real
+        mov [fat_drive_no], dl
 
         mov si, string ; log a message
         call print_16
 
         call load_krn
+        
+        movzx eax, word [fat_n_sectors]
+        test ax, ax
+        jz _after_sector_move
+
+        mov [fat_n_sectors_extended], eax
+        mov word [fat_n_sectors], 0
+
+
+      _after_sector_move:
 
         ; start protected!
         call prot
@@ -43,15 +76,9 @@ prot:
         cli ; no more interrupts
         lgdt [gdt_descriptor] ; gdt time
 
-        xor esi, esi
-        call print_hx_32_real
-
         mov esi, cr0 ; set the protected mode flag
-        call print_hx_32_real
         or esi, 0x1  ; it can't be set directly, so we use
-        call print_hx_32_real
         mov cr0, esi ; esi a an intermediary register
-        ;call print_hx_32_real
         
         jmp 0x08:seg_init ; init the segments
         ret
@@ -73,56 +100,17 @@ print_16:
         popa
         ret
  
-print_hx_32_real: ; prints hex string from ebx
-        pusha
-        mov ah, 0x0f ; page number
-        int 0x10
-
-        mov ah, 0x0e ; teletype mode
-        mov cl, 0x20 ; length of ebx in bits
-        mov al, 0x30 ; "0"
-        int 0x10
-        mov al, 0x78 ; "x"
-        int 0x10
-  print_nyb_32_real:
-        ; this whole routine shifts ebx by a certain amount
-        ; the amount starts at twenty-eight and decreases in increments of four (i.e. nybbles) all the way until zero
-        ; that then provides each nybble, which is piped into continue
-
-        sub cl, 4 ; subtract four
-        mov edx, esi ; move esi into the temporary edx - we do the shift work here
-        shr edx, cl ; shift by our amount - due to the cpu limitations this amount can only be in cx 
-        and dl, 0x0F ; last nybble (since we discarded the ones after it this is the one we want)
-        add dl, 0x30 ; push into the range of ascii numbers
-        cmp dl, 0x3A ; for the letters - they will be outside of numbers
-        jnae continue_32_real ; if it's a number go to continue
-        add dl, 0x27 ; push the letters into the ascii lowercase letter range
-  continue_32_real:
-        mov al, dl ; moves our temporary dx into al, ready to print
-        int 0x10 ; print
-
-        cmp cl, 0 ; have we reached the end of ebx? - i.e. can we right shift no more after this
-        jnz print_nyb_32_real ; if not, print the next nybble
-        
-        mov al, 0x0d ; print cr
-        int 0x10
-        mov al, 0x0a ; print lf
-        int 0x10
-
-        popa
-        ret
-
 load_krn:
         mov si, kernel_in_progress ; kernel boot message
         call print_16 
 
-        mov cx, ((OFFSET >> 4) - 4) ; writes to the address
+        mov cx, (OFFSET >> 4) ; writes to the address
         mov es, cx ; puts the address in es, which is where the read interrupt looks
 
         call read
 
-        mov eax, 0xac50dfc5 ; magic number
-        xor edi, edi ; load the magic number: its address is alreaddy in es
+        mov eax, 0xfa205d5c
+        mov edi, 0x1fc ; load the magic number: its offset is already in es
         scasd
         jne krn_fail
 
@@ -188,7 +176,6 @@ read:
   write_disk_error:
         mov esi, 0xd15c0000 ; blank out bx, add a "d15c" (for disk) so that we know it's the disk code
         movzx si, ah ; move the return status into bl
-        call print_hx_32_real ; print return status
 
         ret
 
@@ -206,15 +193,15 @@ kernel_in_progress:
 hdd_test:
         db "Reading from hard disk...",0xd,0xa,0
 invalid_diskette:
-        db 0xd,0xa,"FATAL: The disk does not contain a known file system.",0xd,0xa,0x0 
+        db 0xd,0xa,"FATAL: No complatible FarOS install found",0xd,0xa,0x0 
 dap_packet:
         dap_len: db 0x10 ; length of DAP
         reserved: db 0 ; is zero
         sect_amount: dw KERN_LEN ; amount of sectors
         seg_offset:
           dw 0x0 ; offset
-          dw ((OFFSET >> 4) - 4) ; segment
-        seg_start: dq 0x1 ; second sector (starts from zero - first after boot, including csdfs superblock)
+          dw (OFFSET >> 4) ; segment
+        seg_start: dq (%!DISK_OFFSET + 0x1) ; second sector (starts from zero - first after boot, including csdfs superblock)
 [bits 32]
 seg_init:
         ; 32-bit segments

@@ -82,23 +82,17 @@ void main() {
 
   query_cpuid();
 
-  // init fs and inode table
-  fs_init();
+  // init fs
+  init_locs();
+  read_fat();
+  read_root();
 
-  read_inode(
-    name2inode("config.qi"),
-    disk_config
+  read_file(
+    "xconfig.qi",
+    xconf
   );
- 
-  // init fs (again) - for new files found in config.qi
-  fs_init();
 
-  // magic check
-  if (disk_config -> qi_magic != CONFIG_MAGIC) {
-    msg(INFO, NONE, hardware -> boot_disk_p.itrf_type);
-    msg(KERNERR, E_CONFIG, "Bad kernel config: invalid magic"); 
-  }
-
+  // run shell
   app_handle shell = instantiate(mk_shell(32), -1, 1);
 
   // stop. just stop.

@@ -16,6 +16,8 @@ static inline char is_memring(void *ptr) {
 }
 
 void * malloc(unsigned int len) {
+  if (!len) { return NULL; }
+
   unsigned int blocks = (len / MEMBLK_SIZE) + !!(len % MEMBLK_SIZE); // amount of blocks taken up
   unsigned int run = 0;
   for (; run < MEMRING_LEN; ++run) { // loop through all memrings

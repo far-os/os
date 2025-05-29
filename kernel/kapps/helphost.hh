@@ -28,23 +28,43 @@ struct HelpHost : KApp {
     }
 
     for (int ent = 0; this->ents[ent].type != -1; ++ent) {
+      unsigned char brightness = this->ents[ent].type & DEBUG_ENTRY ? BLACK : B_BLACK;
       write_cell_cur(0xb3, COLOUR(BLUE, B_BLACK));
       adv_cur();
-      if (this->ents[ent].type == SUB_ENTRY) {
+      if (this->ents[ent].type & SUB_ENTRY) {
         adv_cur_by(2);
         write_cell_cur(':', COLOUR(BLUE, GREEN));
-        write_str(this->ents[ent].name, COLOUR(BLUE, B_GREEN));
+        write_str(this->ents[ent].name, COLOUR(BLUE, GREEN) | brightness);
       } else {
-        write_str(this->ents[ent].name, COLOUR(BLUE, B_YELLOW));
+        write_str(this->ents[ent].name, COLOUR(BLUE, YELLOW) | brightness);
       }
 
-      set_cur(POS(furthest + (this->ents[ent].type) << 1, ent + 1));
-      write_str("- ", COLOUR(BLUE, WHITE));
-      write_str(this->ents[ent].desc, COLOUR(BLUE, B_WHITE));
+      int cix = 0;
+      for (; this->ents[ent].desc[cix] && (this->ents[ent].desc[cix] != '\xff'); ++cix);
+      if (this->ents[ent].desc[cix] != '\xff') { // we can't edit the string to contain a null, because it would break it for future help runs.
+                                                 // don't even think about fixing it afterwards. c++ "can't edit constants" or smth
+        cix = -1;
+      }
 
-      if (endof(this->ents[ent].desc)[1] == '[') {
-        adv_cur();
-        write_str(endof(this->ents[ent].desc) + 1, COLOUR(BLUE, MAGENTA));
+      set_cur(POS(furthest + (this->ents[ent].type & SUB_ENTRY) << 1, ent + 1));
+      write_str("- ", COLOUR(BLUE, WHITE));
+
+      if (cix != -1) {
+        // budget write_str
+        for (int q = 0; q < cix; ++q) {
+          write_cell_cur(this->ents[ent].desc[q], COLOUR(BLUE, B_WHITE));
+        }
+
+        if (this->ents[ent].desc[cix + 1] == '[') {
+          adv_cur();
+          write_str(this->ents[ent].desc + cix + 1, COLOUR(BLUE, MAGENTA));
+        } else if (this->ents[ent].desc[cix+1] == '<') {
+          set_cur(POS(VGA_WIDTH - 8 - strlen(this->ents[ent].desc + cix + 1), ent + 1));
+          write_str("args: ", COLOUR(BLUE, RED));
+          write_str(this->ents[ent].desc + cix + 1, COLOUR(BLUE, B_RED));
+        }
+      } else { // sanity, at long last
+        write_str(this->ents[ent].desc, COLOUR(BLUE, B_WHITE));
       }
 
       write_cell(0xb3, (ln_nr() + 1) * VGA_WIDTH - 1, COLOUR(BLUE, B_BLACK));
@@ -56,7 +76,7 @@ struct HelpHost : KApp {
     write_cell_cur(0xd4, COLOUR(BLUE, B_BLACK));
     for (int p = 2; p < VGA_WIDTH; ++p) write_cell_cur(0xcd, COLOUR(BLUE, B_BLACK));
     write_cell_cur(0xbe, COLOUR(BLUE, B_BLACK));
-    write_str("\n\020 Any key to continue...  ", COLOUR(BLACK, RED));
+    write_str("\n\020 any key to continue...  ", COLOUR(BLACK, RED));
     adv_cur_by(-1);
   }
 
@@ -65,6 +85,7 @@ public:
   enum EntType {
     PLAIN_ENTRY,
     SUB_ENTRY,
+    DEBUG_ENTRY = 2,
   };
 
   struct Entry {

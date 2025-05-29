@@ -3,23 +3,27 @@ extern "C" int prog(int arg);
 
 // list of entries, Entry and EntType are children of HelpHost
 const HelpHost::Entry comnames[] = {
-  { .name = "clr", .desc = "Clears screen\0[or \034\23710]", .type = HelpHost::PLAIN_ENTRY },
-  { .name = "exec", .desc = "Executes program, takes <u32>", .type = HelpHost::PLAIN_ENTRY },
+  { .name = "clr", .desc = "Clears screen\xff[or shift+\23710]", .type = HelpHost::PLAIN_ENTRY },
+  { .name = "exec", .desc = "Executes program\xff<u32>", .type = HelpHost::PLAIN_ENTRY },
   { .name = "f", .desc = "File I/O namespace", .type = HelpHost::PLAIN_ENTRY },
-  { .name = "edit", .desc = "Text editor", .type = HelpHost::SUB_ENTRY },
+  { .name = "edit", .desc = "Text editor\xff<filename>", .type = HelpHost::SUB_ENTRY },
   { .name = "ls", .desc = "Lists all files", .type = HelpHost::SUB_ENTRY },
-  { .name = "read", .desc = "Prints file content", .type = HelpHost::SUB_ENTRY },
-  { .name = "stat", .desc = "Prints info about given <inode> or <filename>", .type = HelpHost::SUB_ENTRY },
+  { .name = "read", .desc = "Prints file content\xff<filename>", .type = HelpHost::SUB_ENTRY },
+  { .name = "stat", .desc = "Prints info about given file\xff<filename>", .type = HelpHost::SUB_ENTRY },
   { .name = "help", .desc = "Prints this help menu", .type = HelpHost::PLAIN_ENTRY },
-  { .name = "reset", .desc = "Resets machine\0[or ^\340\021]", .type = HelpHost::PLAIN_ENTRY },
+  { .name = "reset", .desc = "Resets machine\xff[or ctrl+alt+del]", .type = HelpHost::PLAIN_ENTRY },
+  { .name = "split", .desc = "Forms a split-screen with another open app\xff<@handle>", .type = HelpHost::PLAIN_ENTRY },
+  { .name = "set", .desc = "Gets/Sets config variables (see sub-entries)", .type = HelpHost::PLAIN_ENTRY },
+  { .name = "verbose", .desc = "Sets verbose level. Max 2.\xff<u8>?", .type = HelpHost::SUB_ENTRY },
   { .name = "sys", .desc = "Utilities that print/dump system info", .type = HelpHost::PLAIN_ENTRY },
-  { .name = "conf", .desc = "Dumps config.qi", .type = HelpHost::SUB_ENTRY },
   { .name = "cpu", .desc = "Prints CPU info", .type = HelpHost::SUB_ENTRY },
   { .name = "disk", .desc = "Prints disk/fs info", .type = HelpHost::SUB_ENTRY },
   { .name = "indic", .desc = "Prints keyboard LED status", .type = HelpHost::SUB_ENTRY },
   { .name = "mem", .desc = "Prints memory info", .type = HelpHost::SUB_ENTRY },
   { .name = "proc", .desc = "Prints currently running processes", .type = HelpHost::SUB_ENTRY },
   { .name = "time", .desc = "Gets current time", .type = HelpHost::PLAIN_ENTRY },
+  { .name = "util", .desc = "Utilities and tools", .type = HelpHost::PLAIN_ENTRY },
+  { .name = "to8.3", .desc = "Canonicalises a filename into 8.3\xff<string>", .type = HelpHost::SUB_ENTRY },
   { .type = -1 }
 };
 
@@ -105,7 +109,7 @@ struct KShell : KApp {
   void first_run() {
     /*
     write_str("os ", 0x07); */
-    write_str("Kernel Executive Shell. (c) 2022-4.\n", COLOUR(BLUE, B_RED));
+    write_str("Kernel Executive Shell. (c) 2022-5.\n", COLOUR(BLUE, B_RED));
 
     // print out prompt
     write_str(prompt, COLOUR(BLACK, WHITE));
@@ -137,13 +141,8 @@ private: // hidden fields (only for internal use)
       clear_scr();
       set_cur(0);
     } else if (strcmp(work.buf, "exec")) {
-      if (disk_config -> qi_magic != CONFIG_MAGIC) {
-        msg(KERNERR, E_NOSTORAGE, "Disk is unavailable");
-        goto shell_clean;
-      }
-
-      read_inode(
-        name2inode("prog.bin"),
+      read_file(
+        "prog.bin",
         0x100000
       ); // reads disk, has to get master or slave
 
@@ -161,8 +160,15 @@ private: // hidden fields (only for internal use)
         line_feed();
       }
     } else if (strcmp(work.buf, "f:edit")) {
+      // TODO: allow no file
+      struct dir_entry *f = NULL;
+      if (!f) {
+        f = get_file(args);
+        if (!f) goto shell_clean;
+      }
+
       app_handle edt = instantiate(
-        new Editor(name2inode("data.txt")),
+        new Editor(args),
         this->app_id & 0xf,
         true
       );
@@ -170,16 +176,22 @@ private: // hidden fields (only for internal use)
       exitting = false;
       goto shell_clean;
     } else if (strcmp(work.buf, "f:ls")) {
-      for (int filek = 0; file_table[filek].name; filek++) {
-        strcat(outbuf, file_table[filek].name);
+      for (unsigned int search = 0; VALID_FILE(root_dir[search]); search++) {
+        sane_name(root_dir[search].name, endof(outbuf));
         *endof(outbuf) = '\t';
       }
 
       fmt = COLOUR(BLACK, B_WHITE);
     } else if (strcmp(work.buf, "f:read")) {
-      char *datablk = malloc(file_table[name2inode("data.txt")].loc.len << 9);
-      read_inode(
-        name2inode("data.txt"),
+      struct dir_entry *f = NULL;
+      if (!f) {
+        f = get_file(args);
+        if (!f) goto shell_clean;
+      }
+
+      char *datablk = malloc(f->size);
+      read_file(
+        args,
         datablk
       ); // reads disk, has to get master or slave
       write_str(datablk, COLOUR(BLACK, WHITE));
@@ -187,37 +199,57 @@ private: // hidden fields (only for internal use)
       free(datablk);
       line_feed();
     } else if (strcmp(work.buf, "f:stat")) {
-      int ar = -1;
-      if (strlen(args)) {
-        ar = to_uint(args);
-        if (ar < 0) {
-          ar = name2inode(args);
-          if (ar < 0) goto shell_clean;
-        }
-      }
-      
-      if (ar < 0 || !(file_table[ar].name)) {
-        msg(PROGERR, E_NOFILE, "Invalid inode");
-        goto shell_clean;
+      struct dir_entry *f = NULL;
+      if (!f) {
+        f = get_file(args);
+        if (!f) goto shell_clean;
       }
 
-      sprintf(outbuf, "%s <%d>\n\t%d bytes, sector %2X\n\tModified %4d-%2d-%2d %2d:%2d:%2d",
-        file_table[ar].name,
-        ar,
-        file_table[ar].loc.len << 9,
-        &(file_table[ar].loc.lba),
-        file_table[ar].modified.year,
-        file_table[ar].modified.month,
-        file_table[ar].modified.date,
-        file_table[ar].modified.hour,
-        file_table[ar].modified.minute,
-        file_table[ar].modified.second
+      struct timestamp ctime = from_dostime({
+        .dostime = f->ctime,
+        .dosdate = f->cdate,
+        .centisecs = f->ctime_cs
+      });
+
+      struct timestamp mtime = from_dostime({
+        .dostime = f->mtime,
+        .dosdate = f->mdate
+      });
+
+      struct timestamp atime = from_dostime({
+        .dosdate = f->adate
+      });
+
+      char *name = malloc(12);
+      sane_name(f->name, name);
+
+      sprintf(outbuf, "%s\n\t%d bytes, intial cluster %3X\n\tCreated  %4d-%2d-%2d %2d:%2d:%2d\n\tModified %4d-%2d-%2d %2d:%2d:%2d\n\tAccessed %4d-%2d-%2d",
+        name,
+        f->size,
+        &(f->first_cluster_lo),
+        ctime.year,
+        ctime.month,
+        ctime.date,
+        ctime.hour,
+        ctime.minute,
+        ctime.second,
+        mtime.year,
+        mtime.month,
+        mtime.date,
+        mtime.hour,
+        mtime.minute,
+        mtime.second,
+        atime.year,
+        atime.month,
+        atime.date
       );
 
-      fmt = COLOUR(GREEN, RED);
+      free(name);
+
+      fmt = COLOUR(BLUE, B_YELLOW);
     } else if (strcmp(work.buf, "help")) {
       app_handle help = instantiate(
-        new HelpHost("shell commands", comnames),
+        new HelpHost("shell builtins", comnames),
         this->app_id & 0xf,
         true
       );
@@ -227,6 +259,22 @@ private: // hidden fields (only for internal use)
     } else if (strcmp(work.buf, "reset")) {
       cpu_reset();
       // if you reach past here, something has gone very wrong indeed
+    } else if (strcmp(work.buf, "set:verbose")) {
+      int ar = -1;
+      if (strlen(args)) {
+        ar = to_uint(args);
+      }
+
+      if (ar != -1) {
+        sprintf(outbuf, "was %d\nnow ", xconf -> verbosity);
+        xconf->verbosity = ar;
+        WRITE_CONF();
+        fmt = COLOUR(BLUE, B_GREEN);
+      } else {
+        fmt = COLOUR(BLUE, B_YELLOW);
+      }
+
+      sprintf(endof(outbuf), "verbose = %d", xconf -> verbosity);
     } else if (strcmp(work.buf, "split")) {
       if (strcmp(args, "off")) {
         split_scr(0);
@@ -257,25 +305,18 @@ private: // hidden fields (only for internal use)
       );
 
       fmt = COLOUR(YELLOW, B_GREEN); // fmt
-    } else if (strcmp(work.buf, "sys:conf")) {
-      sprintf(outbuf, "config.qi\n\tProgram at lba sector %2X, %d sector(s)\n\t\x10\t%s\n\tWritable data at lba sector %2X, %d sector(s)",
-        &(disk_config -> exec.lba),
-        disk_config -> exec.len,
-        hardware -> boot_disk_p.itrf_type,
-        &(disk_config -> wdata.lba),
-        disk_config -> wdata.len
-      );
-
-      fmt = COLOUR(BLUE, B_YELLOW); // fmt
-    } else if (strcmp(work.buf, "sys:disk")) {
-      sprintf(outbuf, "CSDFS Disk:\n\tVol. label \"%16s\"\n\tVol. ID %16X\n\tDisk %2xh\n\tVolume size %d",
-        &(csdfs -> label),
-        &(csdfs -> vol_id),
+    } else if (strcmp(work.buf, "sys:disk")) { 
+      sprintf(outbuf, "%5s disk:\n\tVol. label \"%11s\"\n\tVol. ID %8X\n\tCluster size: %d sectors\n\tN. Fats: %d\n\tDisk %2xh\n\tVolume size %dKiB",
+        &(bpb -> sys_ident),
+        &(bpb -> vol_lbl),
+        &(bpb -> serial_no),
+        bpb -> sec_per_clust,
+        bpb -> n_fats,
         &(hardware -> bios_disk),
-        csdfs -> fs_size * SECTOR_LEN
+        (bpb -> n_sectors * bpb -> bytes_per_sec) >> 10
       );
 
-      fmt = COLOUR(RED, B_YELLOW); // fmt
+      fmt = COLOUR(RED, B_YELLOW); // fmt 
     } else if (strcmp(work.buf, "sys:indic")) {
       // indicators
       sprintf(outbuf, "scroll: %d\nnum: %d\ncaps: %d",
@@ -287,7 +328,7 @@ private: // hidden fields (only for internal use)
       fmt = COLOUR(GREEN, RED);
     } else if (strcmp(work.buf, "sys:mem")) {
       void *addr = malloc(1);
-      sprintf(outbuf, "First free memory addr: %p\n\t\tout of: %p", addr, MEM_END);
+      sprintf(outbuf, "First free memory addr: %p\n\t\tout of: %p\n\nCurrently running from: %p", addr, MEM_END, rip_thunk());
       free(addr);
 
       fmt = COLOUR(MAGENTA, B_YELLOW); // fmt
@@ -312,6 +353,9 @@ private: // hidden fields (only for internal use)
       );
 
       fmt = COLOUR(RED, B_CYAN);
+    } else if (strcmp(work.buf, "util:to8.3")) {
+      canonicalise_name(args, outbuf);
+      fmt = COLOUR(RED, B_GREEN);
     } else {
       msg(WARN, E_UNKENTITY, "Unknown command");
       goto shell_clean;

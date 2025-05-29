@@ -1,2 +1,0 @@
-This is a test file. Do with it as you please.
-The quick brown fox jumps over the lazy dog.

@@ -2,6 +2,10 @@
 
 #pragma once
 
+#define CEIL_DIV(a, b) ((a/b) + !!(a%b))
+#define MAX(a, b) ((a > b) ? a : b)
+#define MIN(a, b) ((a < b) ? a : b)
+
 void idle();
 
 int strlen(char *str);
@@ -9,6 +13,8 @@ void memcpy(void *src, void *dest, unsigned int amount);
 void backmemcpy(void *srcend, void *destend, unsigned int amount);
 void strcpy(char *src, char *dest);
 unsigned char memcmp(void *src, void *dest, unsigned int amount);
+
+extern unsigned int rip_thunk();
 
 static inline unsigned char bittest(void *src, unsigned int bit) {
   unsigned char o;
@@ -71,6 +77,8 @@ void to_hex(void *data, unsigned char i_len, char *out);
 void to_filled_dec(int input, char *out, unsigned char size, char fill);
 void to_dec(int input, char *out);
 unsigned int to_uint(char *input);
+
+char to_upper(char);
 
 static inline char *strcat(char *out, char *in) {
   strcpy(in, endof(out));

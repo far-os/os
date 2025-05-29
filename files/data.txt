@@ -1,0 +1,7 @@
+ฺฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤฤท
+ณ The quick brown fox jumps over the lazy dog. บ
+ณ Sphinx of black quartz, judge my vow!        บ
+ิออออออออออออออออออออออออออออออออออออออออออออออผ
+
+This is a small file for testing purposes. Can't use the big file, because the editor chokes on anything more.
+The screen can only show a maximum of 2000 chars; barely even one cluster.
