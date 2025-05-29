@@ -46,6 +46,8 @@ struct inp_strbuf {
     void delchar_at(int at);
     void clear();
 
+    void resize_by(int offset);
+
     inp_strbuf(unsigned int with);
     ~inp_strbuf();
   #endif

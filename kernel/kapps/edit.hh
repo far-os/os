@@ -2,16 +2,20 @@ const HelpHost::Entry keyb_shortcuts[] = {
   { .name = "^H", .desc = "Show this help menu", .type = HelpHost::PLAIN_ENTRY },
   { .name = "^S", .desc = "Save", .type = HelpHost::PLAIN_ENTRY },
   { .name = "alt+K", .desc = "Clear line", .type = HelpHost::PLAIN_ENTRY },
-  { .name = "shift+\23712", .desc = "Insert 80 `a`s", .type = HelpHost::PLAIN_ENTRY | HelpHost::DEBUG_ENTRY },
-  { .name = "<Esc>", .desc = "Quit\0[without saving]", .type = HelpHost::PLAIN_ENTRY },
+  { .name = "<Esc>", .desc = "Quit", .type = HelpHost::PLAIN_ENTRY },
+  { .name = "alt+Q", .desc = "Throw away unsaved changes", .type = HelpHost::SUB_ENTRY },
   { .type = -1 }
 };
 
 // text editor
 struct Editor : KApp {
   void invoke() {
-    if (this->key_q[0]) dirty = true;
-    this->write_keys_to_buf(&this->contents);
+    if (dirty < 2) {
+      if (this->key_q[0]) dirty = 1;
+      while (this->write_keys_to_buf(&this->contents) < 0) {
+        this->contents.resize_by(128);
+      }
+    }
 
     for (int i = 0; i < QUEUE_LEN && !!this->ctrl_q[i]; ++i) { // loop over each arrow key
       switch (this -> ctrl_q[i]) {
@@ -37,7 +41,7 @@ struct Editor : KApp {
           }
 
           do {
-            dirty = true;
+            dirty = 1;
             this->contents.delchar_at(index);
           } while (this->contents.buf[index] && this->contents.buf[index] != '\n');
           this->contents.delchar_at(index);
@@ -45,13 +49,25 @@ struct Editor : KApp {
           this->contents.ix = index - 1;
           break;
         }
-        case SHIFT_F(12): {
-          memset(endof(this->contents.buf), 80, 'a');
-          break;
+        case ALT(Q): {
+          if (dirty == 2) {
+            terminate_app(this->app_id & 0xf);
+            return;
+          } else {
+            break;
+          }
         }
         case ESC:
-          terminate_app(this->app_id & 0xf);
-          return;
+          if (dirty == 2) {
+            dirty = 1;
+            break;
+          } else if (dirty == 1) {
+            dirty = 2;
+            break;
+          } else {
+            terminate_app(this->app_id & 0xf);
+            return;
+          }
         case BACKSPACE:
         case DEL: {
           dirty = true;
@@ -91,13 +107,23 @@ no_fill:
     write_str(contents.buf, COLOUR(BLACK, WHITE));
     memcpy(header.buf, addr_of_loc(POS(0, VP_HEIGHT - 1)), header.len);
     set_cur(trace_ch_until(contents.buf, contents.ix)); // trace character
+
+    if (dirty == 2) {
+      memset(addr_of_loc(POS((80 - 66) / 2, (VP_HEIGHT / 2) - 1)), modal.len, 0x11);
+      memcpy(modal.buf, addr_of_loc(POS((80 - 66) / 2, (VP_HEIGHT / 2))), modal.len);
+      memset(addr_of_loc(POS((80 - 66) / 2, (VP_HEIGHT / 2) + 1)), modal.len, 0x11);
+    }
   }
 
 private:
   struct inp_strbuf contents; // file buffer
   char filename[13]; // the exact file
   struct inp_strbuf header; // first character
-  bool dirty; // whether the file has recently been saved
+  struct inp_strbuf modal; 
+  unsigned char dirty; // whether the file has recently been saved, jank three-way bool:
+                       // 0 = just saved
+                       // 1 = made changes
+                       // 2 = are you sure? modal
 
   void read() {
     //contents.buf[0] = '\0';
@@ -108,7 +134,7 @@ private:
   };
 
   void save() {
-    dirty = false;
+    dirty = 0;
     write_file(
       filename,
       contents.buf,
@@ -118,7 +144,7 @@ private:
 
 public:
   // constructor
-  Editor(char *which) : KApp(), header(VGA_WIDTH * 2), dirty(false), contents(get_file(which)->size + 128) {
+  Editor(char *which) : KApp(), header(VGA_WIDTH * 2), modal(66 * 2), dirty(0), contents(get_file(which)->size + 128) {
     config_flags = 0; // no flags - we want enter to appear as a real key
 
     app_name = "edit";
@@ -134,13 +160,19 @@ public:
 
     // "^S to save, <Esc> to exit" is 31 ch long
     unsigned char pad_len = VGA_WIDTH - strlen(filename) - 11 - 4; // 4 for padding
-    write_cell_into(&header, ' ', COLOUR(RED, B_GREEN));
+    write_cell_into(&header, ' ', COLOUR(RED, B_GREEN)); // dirty indicator. shows a green interpunct if changes have been made
     write_str_into(&header, filename, COLOUR(RED, B_WHITE));
     write_cell_into(&header, ' ', COLOUR(RED, 0));
     for (int p = 0; p < pad_len; ++p) write_cell_into(&header, 0xcd, COLOUR(RED, B_BLACK));
     write_cell_into(&header, ' ', COLOUR(RED, 0));
     write_str_into(&header, "^H", COLOUR(RED, B_CYAN));
     write_str_into(&header, " for help ", COLOUR(RED, B_YELLOW));
+
+    write_str_into(&header, "  Quit without saving? ", COLOUR(BLUE, B_WHITE)); // 22
+    write_str_into(&header, "alt+Q", COLOUR(BLUE, B_GREEN)); // 27
+    write_str_into(&header, " to quit, ", COLOUR(BLUE, B_YELLOW)); // 37
+    write_str_into(&header, "<Esc>", COLOUR(BLUE, B_GREEN)); // 42
+    write_str_into(&header, " to return to editing  ", COLOUR(BLUE, B_YELLOW)); // 66
   }
 
   ~Editor() {

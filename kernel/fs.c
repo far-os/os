@@ -56,6 +56,14 @@ void write_fat() {
     bpb -> sec_per_fat,
     hardware -> boot_disk_p.dev_path[0] & 0x01
   ); // reads disk for config, has to get master or slave
+  
+  // the second fat
+  write_pio28(
+    file_table,
+    bpb -> reserved_secs + bpb -> hidden_secs + bpb -> sec_per_fat,
+    bpb -> sec_per_fat,
+    hardware -> boot_disk_p.dev_path[0] & 0x01
+  ); // reads disk for config, has to get master or slave
 }
 
 // follow chain
@@ -109,6 +117,7 @@ void set_cluster(cluster_id nth, cluster_id to) {
         v_short &= 0xf000;
         v_short |= to;
       };
+      *((unsigned short *) (file_table + byte_index)) = v_short;
       break;
     case 16:
       *((unsigned short *) (file_table + (nth << 1))) = to;
@@ -241,6 +250,18 @@ void write_file(char *filename, void *where, unsigned int new_size) {
     return;
   }
 
+  if (f -> attrib & (A_VOLID | A_DIR)) {
+    msg(KERNERR, E_NOFILE, "Not a file");
+    line_feed();
+    return;
+  }
+
+  if (f -> attrib & A_READONLY) {
+    msg(KERNERR, E_NOFILE, "Cannot write to file; is readonly.");
+    line_feed();
+    return;
+  }
+
   unsigned int old_size = f->size;
   f->size = new_size;
 
@@ -258,7 +279,7 @@ void write_file(char *filename, void *where, unsigned int new_size) {
   if (old_n_clusts < new_n_clusts) { // growth
     // e.g. 3 => 5: [2] 3 4 ! _ _ => [2] 3 4 5 6 !
     cluster_id with_min = 2;
-    for (int z_growth = old_n_clusts - 1; z_growth < (new_n_clusts - 1); z_growth) {
+    for (int z_growth = old_n_clusts - 1; z_growth < (new_n_clusts - 1); ++z_growth) {
       with_min =
         traces[z_growth] = alloc_cluster(with_min);
     }
@@ -266,7 +287,7 @@ void write_file(char *filename, void *where, unsigned int new_size) {
   } else if (old_n_clusts > new_n_clusts) { // shrinkage
     // e.g. 5 => 3: [2] 3 4 5 6 ! => [2] 3 4 ! _ _
     traces[new_n_clusts - 1] = NO_NEXT_CLUSTER;
-    for (int z_shrink = new_n_clusts; z_shrink < old_n_clusts; z_shrink) {
+    for (int z_shrink = new_n_clusts; z_shrink < old_n_clusts; ++z_shrink) {
       traces[z_shrink] = 0;
     }
   }
@@ -311,9 +332,28 @@ void write_file(char *filename, void *where, unsigned int new_size) {
     trace = next_cluster(trace);
   } while ((trace & NO_NEXT_CLUSTER) != NO_NEXT_CLUSTER);
 
+  // file stuff
+  f -> attrib |= A_ARCHIVE;
+
   struct dos_timestamp dos = to_dostime(*curr_time);
   f->mdate = dos.dosdate;
   f->mtime = dos.dostime;
+
   write_fat();
   write_root();
+}
+
+char attribify_buf[9] = {0};
+
+void attribify(unsigned char att) {
+  strcpy("RHSVDA L", attribify_buf);
+  for (int z = 0; z < 6; ++z) {
+    if (!(att & (1 << z))) {
+      attribify_buf[z] = '-';
+    }
+  }
+
+  if ((att & A_LFN) != A_LFN) {
+    attribify_buf[7] = '-';
+  }
 }

@@ -32,6 +32,10 @@ void inp_strbuf::clear() {
   this->ix = 0;
 }
 
+void inp_strbuf::resize_by(int offset) {
+  this->buf = realloc(this->buf, this->len += offset);
+}
+
 inp_strbuf::inp_strbuf(unsigned int with): len(with) {
   buf = malloc(len);
   this->clear(); // just in case
@@ -82,16 +86,17 @@ extern "C" struct KApp { // struct != class, class is everything's private by de
 
 protected: // only visible to this and children
   // it's a very common thing to need to do, write input keys to buffer, so we make a function to do it avoid repetition
-  void write_keys_to_buf(struct inp_strbuf *to) {
+  // returns the final length of the buffer, -1 if its too big (this will help us in reallocking)
+  int write_keys_to_buf(struct inp_strbuf *to) {
     // if we'll be past the end of the buffer's allocation (comlen)
     // it'll error anyway, no point in putting characters
     char n_to_put = strlen(this->key_q);
     if (!n_to_put) return; // nothing to do beyond this point
 
-    if (strlen(to->buf) + n_to_put >= to->len) {
-      to->clear();
+    int targ_len = strlen(to->buf) + n_to_put;
+    if (targ_len >= to->len) {
       msg(PROGERR, E_BUFOVERFLOW, "Buffer size exceeded");
-      return;
+      return -1;
     };
 
     backmemcpy(
@@ -102,6 +107,8 @@ protected: // only visible to this and children
     strcpy(this->key_q, to->buf + to->ix);
     memzero(this->key_q, QUEUE_LEN);
     to->ix++;
+
+    return targ_len;
   }
 };
 

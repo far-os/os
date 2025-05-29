@@ -31,11 +31,14 @@ const HelpHost::Entry comnames[] = {
 #define OUTBUF_LEN 120
 struct KShell : KApp {
   void invoke() { // here, is effectively equivalent to comupd and curupd
-    // write queued keys to the buffer, its a parent class function as it's quite common
-    this->write_keys_to_buf(&this->work);
-
     // cause bools exist here
     bool to_exec = false;
+    bool exitting = true;
+
+    // write queued keys to the buffer, its a parent class function as it's quite common
+    if (this->write_keys_to_buf(&this->work) < 0) {
+      goto histify;
+    }
 
     // control key processing
     for (int i = 0; i < QUEUE_LEN && !!this->ctrl_q[i]; ++i) { // loop over each arrow key
@@ -98,10 +101,16 @@ struct KShell : KApp {
     if (!to_exec) return;
 
     line_feed();
-    bool exitting = this->shexec();
+
+    if (!strlen(this->work.buf)) goto dehistify;
+    
+    exitting = this->shexec();
+
+  histify:
     memcpy(this->work.buf, histbuf, this->work.len);
     this->work.clear();
 
+  dehistify:
     to_exec = 0;
     if (exitting) goto comupd; // get prompt to reappear
   }
@@ -220,13 +229,16 @@ private: // hidden fields (only for internal use)
         .dosdate = f->adate
       });
 
-      char *name = malloc(12);
+      char *name = malloc(13);
       sane_name(f->name, name);
 
-      sprintf(outbuf, "%s\n\t%d bytes, intial cluster %3X\n\tCreated  %4d-%2d-%2d %2d:%2d:%2d\n\tModified %4d-%2d-%2d %2d:%2d:%2d\n\tAccessed %4d-%2d-%2d",
+      attribify(f->attrib);
+
+      sprintf(outbuf, "%s\n\t%d bytes, intial cluster %3X\n\tAttributes: %s\n\tCreated  %4d-%2d-%2d %2d:%2d:%2d\n\tModified %4d-%2d-%2d %2d:%2d:%2d\n\tAccessed %4d-%2d-%2d",
         name,
         f->size,
         &(f->first_cluster_lo),
+        attribify_buf,
         ctime.year,
         ctime.month,
         ctime.date,

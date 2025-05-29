@@ -58,7 +58,9 @@ os.img: boot.kern.bin emptyfat.qi xconfig.qi prog.bin $(wildcard files/*)
 	dd if=$< of=$@ conv=notrunc
 	dd if=emptyfat.qi of=$@ bs=512 conv=notrunc seek=$(KERN_SIZE)
 	mcopy -i $@ prog.bin ::PROG.BIN
+	mattrib -i $@ +r PROG.BIN
 	mcopy -i $@ xconfig.qi ::XCONFIG.QI
+	mattrib -i $@ +s XCONFIG.QI
 	for f in `ls files` ; do echo "$$f" | awk '{print "::"toupper($$1)}' | xargs mcopy -i $@ files/$$f ; done
 	chmod +w $@
 
