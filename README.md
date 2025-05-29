@@ -91,18 +91,3 @@ To syscall to the kernel, use `int 0x33`. The service code goes in `ah`, and the
 | `23` | Buffer space exceeded (Command too long) |
 | `28` | Error in allocating handle (app handle, file handle, etc) |
 
-## OS Conventions
-
-### Keybindings
-#### Notation
-- `^` means `ctrl` (e.g. `^A` => ctrl+a)
-- `∟` means `shift` (e.g. `⌂A` => shift+a)
-- `α` means `alt` (e.g. `αA` => alt+a)
-- `☼` means `meta`, i.e. the logo key (e.g. `☼A` => meta+a)
-- `ƒ` denotes a function key
-- `◄` denotes the delete key
-
-### keybinds
-`^α◄1 - ctrl + alt + delete
-`∟ƒ10` - clear screen
-

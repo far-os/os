@@ -6,13 +6,15 @@ const HelpHost::Entry comnames[] = {
   { .name = "clr", .desc = "Clears screen\xff[or shift+\23710]", .type = HelpHost::PLAIN_ENTRY },
   { .name = "exec", .desc = "Executes program\xff<u32>", .type = HelpHost::PLAIN_ENTRY },
   { .name = "f", .desc = "File I/O namespace", .type = HelpHost::PLAIN_ENTRY },
-  { .name = "edit", .desc = "Text editor", .type = HelpHost::SUB_ENTRY },
+  { .name = "edit", .desc = "Text editor\xff<filename>", .type = HelpHost::SUB_ENTRY },
   { .name = "ls", .desc = "Lists all files", .type = HelpHost::SUB_ENTRY },
   { .name = "read", .desc = "Prints file content\xff<filename>", .type = HelpHost::SUB_ENTRY },
   { .name = "stat", .desc = "Prints info about given file\xff<filename>", .type = HelpHost::SUB_ENTRY },
   { .name = "help", .desc = "Prints this help menu", .type = HelpHost::PLAIN_ENTRY },
   { .name = "reset", .desc = "Resets machine\xff[or ctrl+alt+del]", .type = HelpHost::PLAIN_ENTRY },
   { .name = "split", .desc = "Forms a split-screen with another open app\xff<@handle>", .type = HelpHost::PLAIN_ENTRY },
+  { .name = "set", .desc = "Gets/Sets config variables (see sub-entries)", .type = HelpHost::PLAIN_ENTRY },
+  { .name = "verbose", .desc = "Sets verbose level. Max 2.\xff<u8>?", .type = HelpHost::SUB_ENTRY },
   { .name = "sys", .desc = "Utilities that print/dump system info", .type = HelpHost::PLAIN_ENTRY },
   { .name = "cpu", .desc = "Prints CPU info", .type = HelpHost::SUB_ENTRY },
   { .name = "disk", .desc = "Prints disk/fs info", .type = HelpHost::SUB_ENTRY },
@@ -158,12 +160,18 @@ private: // hidden fields (only for internal use)
         line_feed();
       }
     } else if (strcmp(work.buf, "f:edit")) {
-    /* FIXME
+      // TODO: allow no file
+      struct dir_entry *f = NULL;
+      if (!f) {
+        f = get_file(args);
+        if (!f) goto shell_clean;
+      }
+
       app_handle edt = instantiate(
-        new Editor(name2inode("data.txt")),
+        new Editor(args),
         this->app_id & 0xf,
         true
-      ); */
+      );
 
       exitting = false;
       goto shell_clean;
@@ -175,13 +183,13 @@ private: // hidden fields (only for internal use)
 
       fmt = COLOUR(BLACK, B_WHITE);
     } else if (strcmp(work.buf, "f:read")) {
-      struct dir_entry f = { .name = "\0" };
-      if (!f.name[0]) {
+      struct dir_entry *f = NULL;
+      if (!f) {
         f = get_file(args);
-        if (!f.name[0]) goto shell_clean;
+        if (!f) goto shell_clean;
       }
 
-      char *datablk = malloc(f.size);
+      char *datablk = malloc(f->size);
       read_file(
         args,
         datablk
@@ -191,39 +199,57 @@ private: // hidden fields (only for internal use)
       free(datablk);
       line_feed();
     } else if (strcmp(work.buf, "f:stat")) {
-      struct dir_entry f = { .name = "\0" };
-      if (!f.name[0]) {
+      struct dir_entry *f = NULL;
+      if (!f) {
         f = get_file(args);
-        if (!f.name[0]) goto shell_clean;
+        if (!f) goto shell_clean;
       }
 
       struct timestamp ctime = from_dostime({
-        .dostime = f.ctime,
-        .dosdate = f.cdate,
-        .centisecs = f.ctime_cs
+        .dostime = f->ctime,
+        .dosdate = f->cdate,
+        .centisecs = f->ctime_cs
+      });
+
+      struct timestamp mtime = from_dostime({
+        .dostime = f->mtime,
+        .dosdate = f->mdate
+      });
+
+      struct timestamp atime = from_dostime({
+        .dosdate = f->adate
       });
 
       char *name = malloc(12);
-      sane_name(f.name, name);
+      sane_name(f->name, name);
 
-      sprintf(outbuf, "%s\n\t%d bytes, cluster %3X\n\tCreated %4d-%2d-%2d %2d:%2d:%2d",
+      sprintf(outbuf, "%s\n\t%d bytes, intial cluster %3X\n\tCreated  %4d-%2d-%2d %2d:%2d:%2d\n\tModified %4d-%2d-%2d %2d:%2d:%2d\n\tAccessed %4d-%2d-%2d",
         name,
-        f.size,
-        &(f.first_cluster_lo),
+        f->size,
+        &(f->first_cluster_lo),
         ctime.year,
         ctime.month,
         ctime.date,
         ctime.hour,
         ctime.minute,
-        ctime.second
+        ctime.second,
+        mtime.year,
+        mtime.month,
+        mtime.date,
+        mtime.hour,
+        mtime.minute,
+        mtime.second,
+        atime.year,
+        atime.month,
+        atime.date
       );
 
       free(name);
 
-      fmt = COLOUR(GREEN, RED);
+      fmt = COLOUR(BLUE, B_YELLOW);
     } else if (strcmp(work.buf, "help")) {
       app_handle help = instantiate(
-        new HelpHost("shell commands", comnames),
+        new HelpHost("shell builtins", comnames),
         this->app_id & 0xf,
         true
       );
@@ -233,6 +259,22 @@ private: // hidden fields (only for internal use)
     } else if (strcmp(work.buf, "reset")) {
       cpu_reset();
       // if you reach past here, something has gone very wrong indeed
+    } else if (strcmp(work.buf, "set:verbose")) {
+      int ar = -1;
+      if (strlen(args)) {
+        ar = to_uint(args);
+      }
+
+      if (ar != -1) {
+        sprintf(outbuf, "was %d\nnow ", xconf -> verbosity);
+        xconf->verbosity = ar;
+        WRITE_CONF();
+        fmt = COLOUR(BLUE, B_GREEN);
+      } else {
+        fmt = COLOUR(BLUE, B_YELLOW);
+      }
+
+      sprintf(endof(outbuf), "verbose = %d", xconf -> verbosity);
     } else if (strcmp(work.buf, "split")) {
       if (strcmp(args, "off")) {
         split_scr(0);

@@ -51,6 +51,7 @@ struct inp_strbuf {
   #endif
 };
 
+// to future me: forint symbol that i like to notate function keys is \237
 #define CTRL_BASE 0x0
 #define CTRL(LET) (CTRL_BASE + (#LET[0] - 0x40))
 #define FN_BASE 0x20

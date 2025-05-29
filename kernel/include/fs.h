@@ -59,20 +59,25 @@ typedef unsigned int lba_n;
 
 typedef unsigned short dir_n;
 cluster_id next_cluster(cluster_id from);
+cluster_id alloc_cluster(cluster_id with_min);
+void set_cluster(cluster_id nth, cluster_id to);
 
 void init_locs();
 void read_fat();
+void write_fat();
 void read_root();
+void write_root();
 
 void canonicalise_name(char *from, char *to);
 void sane_name(char *from, char *to);
 lba_n get_cluster(cluster_id from);
 
-struct dir_entry get_file(char *name);
+struct dir_entry *get_file(char *name);
 
 extern unsigned char *file_table;
 extern struct dir_entry *root_dir;
 
-#define VALID_FILE(f) (*((unsigned char*) &(f)))
+#define VALID_FILE(f) ((*((unsigned char*) &(f))))
 
 void read_file(char *filename, void *where);
+void write_file(char *filename, void *where, unsigned int new_size);

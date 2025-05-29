@@ -9,7 +9,7 @@ export DISK_OFFSET := 0
 
 # Size allocated to kernel in sectors. This must be able to fit boot.kern.bin, otherwise bad things will happen
 # Also used to determine load location in memory (loaded at 0x80_000 - KERN_SIZE{in bytes}. done so that it resides in the highest possible region in 640k that's not possible hoarded by bios).
-export KERN_SIZE := 72
+export KERN_SIZE := 80
 
 CFLAGS := -falign-functions=1 -fno-stack-protector -ffreestanding -m32 -march=i686 -Wall -Werror=return-type -fpermissive -D"KERN_LEN=$(KERN_SIZE)"
 
@@ -49,13 +49,17 @@ boot.kern.bin: boot.bin kernel.bin
 emptyfat.qi: ./util/bin/qic emptyfat.qit
 	$^
 
-os.img: boot.kern.bin emptyfat.qi prog.bin program/data.txt
+xconfig.qi: ./util/bin/qic xconfig.qit
+	$^
+
+os.img: boot.kern.bin emptyfat.qi xconfig.qi prog.bin $(wildcard files/*)
 	$(if $(shell [ $$(($(KERN_SIZE)<<9)) -lt $$(stat -c %s boot.kern.bin) ] && echo "OK"), $(error FATAL: KERN_SIZE too small))
 	dd if=/dev/zero of=$@ bs=512K count=$(DISK_SIZE_HM)
 	dd if=$< of=$@ conv=notrunc
 	dd if=emptyfat.qi of=$@ bs=512 conv=notrunc seek=$(KERN_SIZE)
 	mcopy -i $@ prog.bin ::PROG.BIN
-	mcopy -i $@ program/data.txt ::DATA.TXT
+	mcopy -i $@ xconfig.qi ::XCONFIG.QI
+	for f in `ls files` ; do echo "$$f" | awk '{print "::"toupper($$1)}' | xargs mcopy -i $@ files/$$f ; done
 	chmod +w $@
 
 qemu: os.img

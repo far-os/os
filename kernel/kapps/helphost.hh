@@ -28,14 +28,15 @@ struct HelpHost : KApp {
     }
 
     for (int ent = 0; this->ents[ent].type != -1; ++ent) {
+      unsigned char brightness = this->ents[ent].type & DEBUG_ENTRY ? BLACK : B_BLACK;
       write_cell_cur(0xb3, COLOUR(BLUE, B_BLACK));
       adv_cur();
-      if (this->ents[ent].type == SUB_ENTRY) {
+      if (this->ents[ent].type & SUB_ENTRY) {
         adv_cur_by(2);
         write_cell_cur(':', COLOUR(BLUE, GREEN));
-        write_str(this->ents[ent].name, COLOUR(BLUE, B_GREEN));
+        write_str(this->ents[ent].name, COLOUR(BLUE, GREEN) | brightness);
       } else {
-        write_str(this->ents[ent].name, COLOUR(BLUE, B_YELLOW));
+        write_str(this->ents[ent].name, COLOUR(BLUE, YELLOW) | brightness);
       }
 
       int cix = 0;
@@ -45,7 +46,7 @@ struct HelpHost : KApp {
         cix = -1;
       }
 
-      set_cur(POS(furthest + (this->ents[ent].type) << 1, ent + 1));
+      set_cur(POS(furthest + (this->ents[ent].type & SUB_ENTRY) << 1, ent + 1));
       write_str("- ", COLOUR(BLUE, WHITE));
 
       if (cix != -1) {
@@ -84,6 +85,7 @@ public:
   enum EntType {
     PLAIN_ENTRY,
     SUB_ENTRY,
+    DEBUG_ENTRY = 2,
   };
 
   struct Entry {

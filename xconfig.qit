@@ -1,0 +1,12 @@
+## xconfig.qi ##
+
+!magic
+
+block flags
+  ## 
+    0 => no verbosity
+    1 => show msg(INFO) calls
+    2 => show stacktraces in all msg() calls
+  ##
+  int8 verbosity : 1;
+endblock

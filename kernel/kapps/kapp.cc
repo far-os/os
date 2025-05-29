@@ -107,7 +107,7 @@ protected: // only visible to this and children
 
 // all the app files
 #include "helphost.hh"
-// FIXME: #include "edit.hh"
+#include "edit.hh"
 //#include "atest.hh"
 #include "shell.hh"
 

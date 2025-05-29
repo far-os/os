@@ -5,7 +5,7 @@ struct keystates *keys = &((struct keystates) { .states_high = 0x0, .states_low 
 
 struct fatfs_superblock *bpb = (struct csdfs_superblock *) 0x7c00;
 struct timestamp *curr_time = (struct timestamp *) 0xc7f0;
-struct config_qi *disk_config = (struct config_qi *) 0xc800;
+struct xconf_qi *xconf = (struct config_qi *) 0xc800;
 struct hwinf *hardware = (struct hwinf *) 0xcc00;
 
 unsigned char *memring = (unsigned char *) 0x12_000; // until 0x13_000

@@ -87,6 +87,11 @@ void main() {
   read_fat();
   read_root();
 
+  read_file(
+    "xconfig.qi",
+    xconf
+  );
+
   // run shell
   app_handle shell = instantiate(mk_shell(32), -1, 1);
 
