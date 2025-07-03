@@ -84,17 +84,16 @@ void to_hex(void *data, unsigned char i_len, char *out) {
 }
 
 void to_filled_dec(int input, char *out, unsigned char size, char fill) {
-  char * dectempbuf = malloc(size);
-  memset(dectempbuf, size, fill);
-  for (int i = input, j = 0; i > 0; i /= 10, ++j) {
-    dectempbuf[j] = (char) (i % 10) + '0';
+  memset(out, size, fill);
+  for (int i = input, j = size - 1; i > 0; i /= 10, --j) {
+    out[j] = (char) (i % 10) + '0';
   }
-  memrev(dectempbuf, strlen(dectempbuf), out);
-  free(dectempbuf);
+  //memrev(dectempbuf, strlen(dectempbuf), out);
+  //free(dectempbuf);
 }
 
-void to_dec(int input, char *out) {
-  char * dectempbuf = malloc(12);
+void l_to_dec(long long input, char *out) {
+  char dectempbuf[21] = {0};
   if (!input) {
     dectempbuf[0] = '0';
   } else {
@@ -103,7 +102,12 @@ void to_dec(int input, char *out) {
     }
   }
   memrev(dectempbuf, strlen(dectempbuf), out);
-  free(dectempbuf);
+//  free(dectempbuf);
+}
+
+// historical accident
+void to_dec(int input, char *out) {
+  l_to_dec((long long) input, out);
 }
 
 unsigned int to_uint(char *input) {
@@ -158,12 +162,25 @@ void sprintf(char *dest, const char *fmt, ...) {
           length_modif *= 10;
           length_modif += fmt[fi] - '0';
           break;
+        case 'b': 
+          // NOTE: lesson learnt here. ALWAYS give va_arg unsigned int, nothing shorter, because otherwise gcc will emit ud2 and will only tell you in a pathetic little "note:"
+          strcat(dest, va_arg(args, unsigned int) ? "true" : "false");
+          di = strlen(dest);
+          goto stop_waiting;
+        case 'B': 
+          strcat(dest, va_arg(args, unsigned int) ? "yes" : "no");
+          di = strlen(dest);
+          goto stop_waiting;
         case 'd':
           if (length_modif) {
             to_filled_dec(va_arg(args, unsigned int), dest + di, length_modif, '0');
           } else {
             to_dec(va_arg(args, unsigned int), dest + di);
           }
+          di = strlen(dest);
+          goto stop_waiting;
+        case 'l': // no filled variant, historical accident again
+          l_to_dec(va_arg(args, unsigned int), dest + di);
           di = strlen(dest);
           goto stop_waiting;
         case 'X':

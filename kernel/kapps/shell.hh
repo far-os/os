@@ -16,8 +16,9 @@ const HelpHost::Entry comnames[] = {
   { .name = "set", .desc = "Gets/Sets config variables (see sub-entries)", .type = HelpHost::PLAIN_ENTRY },
   { .name = "verbose", .desc = "Sets verbose level. Max 2.\xff<u8>?", .type = HelpHost::SUB_ENTRY },
   { .name = "sys", .desc = "Utilities that print/dump system info", .type = HelpHost::PLAIN_ENTRY },
+  { .name = "ata", .desc = "Prints ATA disk info", .type = HelpHost::SUB_ENTRY },
   { .name = "cpu", .desc = "Prints CPU info", .type = HelpHost::SUB_ENTRY },
-  { .name = "disk", .desc = "Prints disk/fs info", .type = HelpHost::SUB_ENTRY },
+  { .name = "fs", .desc = "Prints file system info", .type = HelpHost::SUB_ENTRY },
   { .name = "indic", .desc = "Prints keyboard LED status", .type = HelpHost::SUB_ENTRY },
   { .name = "mem", .desc = "Prints memory info", .type = HelpHost::SUB_ENTRY },
   { .name = "proc", .desc = "Prints currently running processes", .type = HelpHost::SUB_ENTRY },
@@ -307,6 +308,17 @@ private: // hidden fields (only for internal use)
       _kesh_split_fail:
         msg(PROGERR, E_UNKENTITY, "No valid handle supplied");
       }
+    } else if (strcmp(work.buf, "sys:ata")) { 
+      sprintf(outbuf, "IDENTIFY of disk %2xh:\n\tLBA28\t%d sectors\n\tLBA48\t%B, %l sectors\n\tUDMA\t80CC: %B, %4x",
+        &(hardware -> bios_disk),
+        ATA_N_LBA28,
+        ATA_HAS_LBA48,
+        ATA_N_LBA48,
+        ATA_HAS_80CC,
+        &(ATA_UDMA_MODES)
+      );
+
+      fmt = COLOUR(RED, B_GREEN); // fmt 
     } else if (strcmp(work.buf, "sys:cpu")) {
       sprintf(outbuf, "CPUID.\n\t\x10 %12s\n\tFamily %2xh, Model %2xh, Stepping %1xh\n\tBrand \"%s\"",
         &(hardware -> vendor),
@@ -317,14 +329,13 @@ private: // hidden fields (only for internal use)
       );
 
       fmt = COLOUR(YELLOW, B_GREEN); // fmt
-    } else if (strcmp(work.buf, "sys:disk")) { 
-      sprintf(outbuf, "%5s disk:\n\tVol. label \"%11s\"\n\tVol. ID %8X\n\tCluster size: %d sectors\n\tN. Fats: %d\n\tDisk %2xh\n\tVolume size %dKiB",
+    } else if (strcmp(work.buf, "sys:fs")) { 
+      sprintf(outbuf, "%5s disk:\n\tVol. label \"%11s\"\n\tVol. ID %8X\n\tCluster size: %d sectors\n\tN. Fats: %d\n\tVolume size %dKiB",
         &(bpb -> sys_ident),
         &(bpb -> vol_lbl),
         &(bpb -> serial_no),
         bpb -> sec_per_clust,
         bpb -> n_fats,
-        &(hardware -> bios_disk),
         (bpb -> n_sectors * bpb -> bytes_per_sec) >> 10
       );
 

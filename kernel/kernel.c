@@ -82,6 +82,11 @@ void main() {
 
   query_cpuid();
 
+  ata_identify(
+    ata_identity,
+    hardware -> boot_disk_p.dev_path[0] & 0x01
+  );
+
   // init fs
   init_locs();
   read_fat();
@@ -92,7 +97,7 @@ void main() {
     xconf
   );
 
-  // run shell
+  // run shell, TODO: further separate, and make it its own file (will need a decent syscall library tho)
   app_handle shell = instantiate(mk_shell(32), -1, 1);
 
   // stop. just stop.

@@ -1,4 +1,5 @@
 #include "include/ih.h"
+#include "include/err.h"
 #include "include/text.h"
 #include "include/kbd.h"
 #include "include/syscall.h"
@@ -21,7 +22,11 @@ void eh_c(struct cpu_state c, unsigned int i, struct stack_state s) {
     retto_progeh(&s);
     break;
   case 0x06: // #UD - Illegal instruction
-    c.eax = 9;
+    if (s.cs == 0x08) { // if from kernel (oh no very very bad)
+      msg(PANIC, E_ILLEGAL, "Illegal instruction in kernel"); 
+    } else {
+      c.eax = 9;
+    }
     retto_progeh(&s);
     break;
   case 0x20: // timer
