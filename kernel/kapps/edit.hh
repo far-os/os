@@ -94,7 +94,7 @@ struct Editor : KApp {
         default: break;
       }
     }
-    this->header.buf[0] = dirty ? 0x07 : 0x20;
+    this->header[0].ch = dirty ? 0x07 : 0x20;
     this->first_run();
 
 no_fill:
@@ -105,28 +105,27 @@ no_fill:
     clear_scr();
     set_cur(0);
     write_str(contents.buf, COLOUR(BLACK, WHITE));
-    memcpy(header.buf, addr_of_loc(POS(0, VP_HEIGHT - 1)), header.len);
+    vram.paste(&header, POS(0, VP_HEIGHT - 1));
     set_cur(trace_ch_until(contents.buf, contents.ix)); // trace character
 
     if (dirty == 2) {
-      memset(addr_of_loc(POS((80 - 66) / 2, (VP_HEIGHT / 2) - 1)), modal.len, 0x11);
-      memcpy(modal.buf, addr_of_loc(POS((80 - 66) / 2, (VP_HEIGHT / 2))), modal.len);
-      memset(addr_of_loc(POS((80 - 66) / 2, (VP_HEIGHT / 2) + 1)), modal.len, 0x11);
+      memset(&vram[POS((80 - 66) / 2, (VP_HEIGHT / 2) - 1)], modal.len, 0x11);
+      vram.paste(&modal, POS((80 - 66) / 2, (VP_HEIGHT / 2)));
+      memset(&vram[POS((80 - 66) / 2, (VP_HEIGHT / 2) + 1)], modal.len, 0x11);
     }
   }
 
 private:
   struct inp_strbuf contents; // file buffer
   char filename[13]; // the exact file
-  struct inp_strbuf header; // first character
-  struct inp_strbuf modal; 
+  struct f_videobuf header; // first character
+  struct f_videobuf modal; 
   unsigned char dirty; // whether the file has recently been saved, jank three-way bool:
                        // 0 = just saved
                        // 1 = made changes
                        // 2 = are you sure? modal
 
   void read() {
-    //contents.buf[0] = '\0';
     read_file(
       filename,
       contents.buf
@@ -160,23 +159,24 @@ public:
 
     // "^S to save, <Esc> to exit" is 31 ch long
     unsigned char pad_len = VGA_WIDTH - strlen(filename) - 11 - 4; // 4 for padding
-    write_cell_into(&header, ' ', COLOUR(RED, B_GREEN)); // dirty indicator. shows a green interpunct if changes have been made
-    write_str_into(&header, filename, COLOUR(RED, B_WHITE));
-    write_cell_into(&header, ' ', COLOUR(RED, 0));
-    for (int p = 0; p < pad_len; ++p) write_cell_into(&header, 0xcd, COLOUR(RED, B_BLACK));
-    write_cell_into(&header, ' ', COLOUR(RED, 0));
-    write_str_into(&header, "^H", COLOUR(RED, B_CYAN));
-    write_str_into(&header, " for help ", COLOUR(RED, B_YELLOW));
+    write_cell_into(header, ' ', COLOUR(RED, B_GREEN)); // dirty indicator. shows a green interpunct if changes have been made
+    write_str_into(header, filename, COLOUR(RED, B_WHITE));
+    write_cell_into(header, ' ', COLOUR(RED, 0));
+    for (int p = 0; p < pad_len; ++p) write_cell_into(header, 0xcd, COLOUR(RED, B_BLACK));
+    write_cell_into(header, ' ', COLOUR(RED, 0));
+    write_str_into(header, "^H", COLOUR(RED, B_CYAN));
+    write_str_into(header, " for help ", COLOUR(RED, B_YELLOW));
 
-    write_str_into(&header, "  Quit without saving? ", COLOUR(BLUE, B_WHITE)); // 22
-    write_str_into(&header, "alt+Q", COLOUR(BLUE, B_GREEN)); // 27
-    write_str_into(&header, " to quit, ", COLOUR(BLUE, B_YELLOW)); // 37
-    write_str_into(&header, "<Esc>", COLOUR(BLUE, B_GREEN)); // 42
-    write_str_into(&header, " to return to editing  ", COLOUR(BLUE, B_YELLOW)); // 66
+    write_str_into(header, "  Quit without saving? ", COLOUR(BLUE, B_WHITE)); // 22
+    write_str_into(header, "alt+Q", COLOUR(BLUE, B_GREEN)); // 27
+    write_str_into(header, " to quit, ", COLOUR(BLUE, B_YELLOW)); // 37
+    write_str_into(header, "<Esc>", COLOUR(BLUE, B_GREEN)); // 42
+    write_str_into(header, " to return to editing  ", COLOUR(BLUE, B_YELLOW)); // 66
   }
 
   ~Editor() {
-    header.~inp_strbuf();
+    header.~f_videobuf();
+    modal.~f_videobuf();
     contents.~inp_strbuf();
   }
 };

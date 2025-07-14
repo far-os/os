@@ -1,23 +1,35 @@
+extern "C" {
 #include "include/text.h"
 #include "include/kappldr.h"
 #include "include/port.h"
 #include "include/util.h"
+}
+#include "include/textbufs.hh"
 
-char *vram = (char *) 0xb8000;
-unsigned char page = 0;
+// shoehorning
+struct f_videobuf vram(0xb8000, VGA_WIDTH * VGA_HEIGHT * PAGE_COUNT);
+
 short page_curloc_cache[PAGE_COUNT]; 
 unsigned char is_split = 0;
 
+// ok so c++ is stupid. this is 22yo bug: https://lists.debian.org/debian-gcc/2003/07/msg00057.html
+void* __dso_handle = (void*) &__dso_handle;
+void* __cxa_atexit = (void*) &__dso_handle;
+
+// ok so funny story - with no optimisations, there were inexplicable crashes originating from these functions.
+// so "what if i optimise everything" caused the crashes to come from elsewhere. and eventually after much trial and error, we've reached this.
+// only optimising these functions in particular, as if unoptimised gcc has a personal vendetta against manipulating the vga buffer
+// don't touch it, it works, and i would like it to work for the foreseeable future
 #pragma GCC push_options
 #pragma GCC optimize "O3"
 
 void set_cur(short pos) {
   if (pos >= (VGA_WIDTH * VP_HEIGHT)) {
     pos -= VGA_WIDTH;
-    scroll_scr();
+    scroll_pag(vram.page);
   }
 
-  pos += page << 11;
+  pos += vram.page << 11;
   pbyte_out(VRAM_CTRL_PORT, 0xe); // we are sending the high 8 bits of position
   pbyte_out(VRAM_DATA_PORT, ((pos >> 8) & 0x00ff)); // the high eight bits
   pbyte_out(VRAM_CTRL_PORT, 0xf); // we are sending the low 8 bits of position
@@ -33,6 +45,7 @@ short get_cur() {
   return pos & 0x7ff;
 }
 
+
 void cur_off() {
   pbyte_out(VRAM_CTRL_PORT, 0xa);
   pbyte_out(VRAM_DATA_PORT, 0x20); // off
@@ -46,8 +59,8 @@ void cur_on_with(unsigned char start_scl, unsigned char end_scl) {
 }
 
 void set_page(unsigned char pg) {
-  page_curloc_cache[page] = get_cur();
-  page = pg;
+  page_curloc_cache[vram.page] = get_cur();
+  vram.page = pg;
   set_cur(page_curloc_cache[pg]);
 
   if (pg == 0 && is_split) { return; }
@@ -83,111 +96,81 @@ void split_scr(app_handle app) {
   old &= ~((~scanline & 0x200) >> 3); // 9 - 6 = 3
   pbyte_out(VRAM_DATA_PORT, old);
 }
+
+// end of the compiler's bullshit (one would hope)
 #pragma GCC pop_options
 
-void paint_row(unsigned char colr) {
-  int ln = ln_nr();
-  for (int k = 0; k < VGA_WIDTH; ++k) {
-    CPAGE[POS(k, ln) * 2 + 1] &= 0xf;
-    CPAGE[POS(k, ln) * 2 + 1] |= colr << 4;
-  }
-}
+// - functions to interface with plebeian c code
 
-short ln_nr() {
-  return get_cur() / VGA_WIDTH;
-}
+// thunked away using write_str. done for a good reason that i'll almost certainly forget in 5 minutes, so here:
+// all these functions depend on the actual cursor, which ofc IS NOT (i cant stress this enough) `vram.ix'. `vram.ix' IS THE LAST USED LOCATION AND SHOULD NOT BE TRUSTED. THIS IS TO PREVENT EXCESSIVE I/O WRITES.
+// this is the only (easy) way to update vram.ix without much repetition
+void line_feed()        { write_str("\n", 0); }
+void carriage_return()  { write_str("\r", 0); }
+void tab()              { write_str("\t", 0); }
+void v_tab()            { write_str("\v", 0); }
+void adv_cur_by(short n) { set_cur(get_cur() + n); }
 
-void line_feed() {
-  short i = ln_nr();
-  set_cur(++i * VGA_WIDTH);
-}
+int ln_nr() { return get_cur() / VGA_WIDTH; }
 
-void carriage_return() {
-  short i = ln_nr();
-  set_cur(i * VGA_WIDTH);
-}
-
-void tab() {
-  short i = get_cur() / 8;
-  set_cur((i + 1) * 8);
-}
-
-void v_tab() {
-  short i = get_cur();
-  set_cur(i + VGA_WIDTH);
-}
+void clear_scr() { clear_pag(vram.page); }
+void clear_ln(int lnr) { clear_pag_ln(vram.page, lnr); }
+void scroll_scr() { scroll_pag(vram.page); }
 
 void write_cell(char ch, short pos, unsigned char style) {
-  CPAGE[pos * 2] = ch;
-  CPAGE[pos * 2 + 1] = style;
+  vram.ix = pos;
+  write_cell_into(vram, ch, style);
 }
-
-void adv_cur_by(short n) {
-  short cur = get_cur();
-  cur += n;
-  set_cur(cur);
-}
-
 
 void write_cell_cur(char ch, unsigned char style) {
-  short cur = get_cur();
-  write_cell(ch, cur, style);
-  adv_cur();
+  vram.ix = get_cur();
+  write_cell_into(vram, ch, style);
+  set_cur(vram.ix);
 }
 
 void write_str_at(char *str, short pos, unsigned char style) {
-  for (short i = 0; str[i] != 0; ++i) {
-    switch (str[i]) {
-    case '\n':
-      line_feed();
-      break;
-    case '\t':
-      tab();
-      break;
-    case '\r':
-      carriage_return();
-      break;
-    case '\v':
-      v_tab();
-      break;
-    default:
-      write_cell(str[i], pos + i, style);
-      break;
-    }
-  }
+  vram.ix = pos;
+  write_str_into(vram, str, style);
 }
 
 // mostly duplicate code
 void write_str(char *str, unsigned char style) {
+  vram.ix = get_cur();
+  write_str_into(vram, str, style);
+  set_cur(vram.ix);
+}
+
+// - end of plebeian c interface
+
+void write_cell_into(struct f_videobuf dest, char ch, unsigned char style) {
+  unsigned int *x = (unsigned int *)0xb8000;
+  x[0] = (unsigned int) &(*dest) + 1;
+  *dest = (struct fchar) {
+    .ch = ch,
+    .fmt = style
+  };
+  dest.ix++;
+}
+
+// now why should i write into an input
+void write_str_into(struct f_videobuf dest, char *str, unsigned char style) {
   for (int i = 0; str[i] != 0; ++i) {
     switch (str[i]) {
     case '\n':
-      line_feed();
+      dest.line_feed();
       break;
     case '\t':
-      tab();
+      dest.tab();
       break;
     case '\r':
-      carriage_return();
+      dest.carriage_return();
       break;
     case '\v':
-      v_tab();
+      dest.v_tab();
       break;
     default:
-      write_cell_cur(str[i], style);
+      write_cell_into(dest, str[i], style);
       break;
     }
-  }
-}
-
-void write_cell_into(struct inp_strbuf *dest, char ch, unsigned char style) {
-  dest->buf[dest->ix * 2] = ch;
-  dest->buf[dest->ix * 2 + 1] = style;
-  dest->ix++;
-}
-
-void write_str_into(struct inp_strbuf *dest, char *str, unsigned char style) {
-  for (int i = 0; str[i] != 0; ++i) {
-    write_cell_into(dest, str[i], style);
   }
 }

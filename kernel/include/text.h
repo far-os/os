@@ -26,6 +26,9 @@
 // viewport
 #define VP_HEIGHT (is_split ? 12 : VGA_HEIGHT)
 
+// tab is 8 spaces. i know literally noone programs with 8 space tabs, but noone uses actual tab characters anymore unless you're charles babbage himself etching code in stone
+#define TAB_WIDTH 8
+
 #define COLOUR(back, fore) (unsigned char) ((back << 4) + fore)
 #define POS(x, y) ((short) (y) * VGA_WIDTH + (x))
 
@@ -36,22 +39,6 @@
 #define NEEDS_ENTER_CTRLCODE 0x01
 
 #define QUEUE_LEN 8
-struct inp_strbuf {
-  char *buf;
-  unsigned int len;
-  unsigned int ix;
-
-  // methods used with c++ interfacing (im too lazy to create a new definition)
-  #ifdef __cplusplus
-    void delchar_at(int at);
-    void clear();
-
-    void resize_by(int offset);
-
-    inp_strbuf(unsigned int with);
-    ~inp_strbuf();
-  #endif
-};
 
 // to future me: forint symbol that i like to notate function keys is \237
 #define CTRL_BASE 0x0
@@ -86,25 +73,34 @@ enum ctrl_char {
 };
 
 #define PAGE_COUNT 8
-extern char *vram;
-extern unsigned char page;
+// TODO: fix maybe
+#ifdef __cplusplus
+extern struct f_videobuf vram;
+#endif
 extern short page_curloc_cache[PAGE_COUNT]; 
 
 
-#define PAGE(p) (vram + (p << 12))
-#define CPAGE PAGE(page)
-#define addr_of_loc(pos) CPAGE + (pos * 2)
+// PAGOFF is character offset, PAGE is memory offset
+#define PAGOFF(p) (p << 11)
+//#define CPAGOFF PAGOFF(vram.page)
+#define PAGE(p) (vram.buf + (p << 12))
+//#define CPAGE PAGE(vram.page)
+//#define addr_of_loc(pos) CPAGE + (pos * 2)
 
 extern void clear_pag(unsigned char p);
 extern void clear_pag_ln(unsigned char p, int lnr);
 extern void scroll_pag(unsigned char p);
 
-#define clear_scr() clear_pag(page)
-#define clear_ln(lnr) clear_pag_ln(page, lnr)
-#define scroll_scr() scroll_pag(page)
+int ln_nr();
+void clear_scr();
+void clear_ln(int lnr);
+void scroll_scr();
 
 void set_cur(short pos);
 short get_cur();
+void adv_cur_by(short n);
+#define adv_cur() adv_cur_by(1)
+
 void cur_off();
 void cur_on_with(unsigned char, unsigned char);
 
@@ -117,18 +113,17 @@ void paint_row(unsigned char);
 extern unsigned char is_split;
 void split_scr(int);
 
-short ln_nr();
+//short ln_nr();
 void line_feed();
 void carriage_return();
 void tab();
 void v_tab();
-void adv_cur_by(short);
 
-#define adv_cur() adv_cur_by(1)
+//#define adv_cur() adv_cur_by(1)
 
 void write_cell(char ch, short pos, unsigned char style);
 void write_cell_cur(char ch, unsigned char style);
 void write_str_at(char *str, short pos, unsigned char style);
 void write_str(char *str, unsigned char style);
-void write_str_into(struct inp_strbuf *dest, char *str, unsigned char style);
-void write_cell_into(struct inp_strbuf *dest, char ch, unsigned char style);
+void write_str_into(struct f_videobuf dest, char *str, unsigned char style);
+void write_cell_into(struct f_videobuf dest, char ch, unsigned char style);

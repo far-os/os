@@ -68,7 +68,7 @@ struct HelpHost : KApp {
       }
 
       write_cell(0xb3, (ln_nr() + 1) * VGA_WIDTH - 1, COLOUR(BLUE, B_BLACK));
-      paint_row(BLUE);
+      vram.paint_row(BLUE);
       line_feed();
     }
 
