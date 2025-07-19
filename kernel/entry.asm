@@ -19,10 +19,24 @@ kernel_entry:
         call clear_pag
         sub esp, 4
 
+        call pre_main
         call main
 
         cli
         hlt
+
+; todo: post_main using .fini_array
+pre_main:
+        ; c++ shit, stuff that needs to be called *before* main
+        mov esi, kernel_entry+0x1c0
+ _pre_main_loop:
+        call [esi]
+
+        add esi, 4
+        cmp DWORD[esi], 0
+        jnz _pre_main_loop
+        ret
+
 
 [global clear_pag]
 clear_pag: ; clear screen

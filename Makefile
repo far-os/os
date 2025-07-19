@@ -12,7 +12,7 @@ export DISK_OFFSET := 0
 export KERN_SIZE := 88
 
 CFLAGS := -falign-functions=1 -fno-stack-protector -ffreestanding -m32 -march=i686 -Wall -Werror=return-type -fpermissive -D"KERN_LEN=$(KERN_SIZE)"
-CPPFLAGS := -fno-exceptions -fno-rtti -nostdinc++ $(CFLAGS)
+CPPFLAGS := -fno-exceptions -fno-rtti -nostdinc++ $(CFLAGS) -fno-use-cxa-atexit
 
 boot.bin: boot.asm
 	nasm $^ -f bin -o $@
@@ -23,7 +23,7 @@ entry.o: kernel/entry.asm
 kapps.o: kernel/kapps/kapp.cc $(wildcard kernel/kapps/*.hh)
 	g++ $(CPPFLAGS) -c $< -o $@
 
-kernel.a: $(wildcard kernel/*.c) $(wildcard kernel/*.cc) $(wildcard kernel/include/*.h) $(wildcard kernel/syscall/*.h)
+kernel.a: $(wildcard kernel/*.c) $(wildcard kernel/*.cc) $(wildcard kernel/include/*.h) $(wildcard kernel/include/*.hh) $(wildcard kernel/syscall/*.h)
 	mkdir -p obj
 	cd obj && gcc $(CFLAGS) -c ../kernel/*.c
 	cd obj && g++ $(CPPFLAGS) -c ../kernel/*.cc

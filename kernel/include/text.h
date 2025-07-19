@@ -79,6 +79,7 @@ extern struct f_videobuf vram;
 #endif
 extern short page_curloc_cache[PAGE_COUNT]; 
 
+void vram_init();
 
 // PAGOFF is character offset, PAGE is memory offset
 #define PAGOFF(p) (p << 11)
@@ -91,10 +92,12 @@ extern void clear_pag(unsigned char p);
 extern void clear_pag_ln(unsigned char p, int lnr);
 extern void scroll_pag(unsigned char p);
 
+
 int ln_nr();
 void clear_scr();
 void clear_ln(int lnr);
 void scroll_scr();
+int zbuf();
 
 void set_cur(short pos);
 short get_cur();
@@ -125,5 +128,5 @@ void write_cell(char ch, short pos, unsigned char style);
 void write_cell_cur(char ch, unsigned char style);
 void write_str_at(char *str, short pos, unsigned char style);
 void write_str(char *str, unsigned char style);
-void write_str_into(struct f_videobuf dest, char *str, unsigned char style);
-void write_cell_into(struct f_videobuf dest, char ch, unsigned char style);
+void write_str_into(struct f_videobuf *dest, char *str, unsigned char style);
+void write_cell_into(struct f_videobuf *dest, char ch, unsigned char style);

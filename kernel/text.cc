@@ -14,7 +14,7 @@ unsigned char is_split = 0;
 
 // ok so c++ is stupid. this is 22yo bug: https://lists.debian.org/debian-gcc/2003/07/msg00057.html
 void* __dso_handle = (void*) &__dso_handle;
-void* __cxa_atexit = (void*) &__dso_handle;
+//void __cxa_atexit() {}
 
 // ok so funny story - with no optimisations, there were inexplicable crashes originating from these functions.
 // so "what if i optimise everything" caused the crashes to come from elsewhere. and eventually after much trial and error, we've reached this.
@@ -45,6 +45,9 @@ short get_cur() {
   return pos & 0x7ff;
 }
 
+int zbuf() {
+  return vram.buf;
+}
 
 void cur_off() {
   pbyte_out(VRAM_CTRL_PORT, 0xa);
@@ -119,54 +122,53 @@ void scroll_scr() { scroll_pag(vram.page); }
 
 void write_cell(char ch, short pos, unsigned char style) {
   vram.ix = pos;
-  write_cell_into(vram, ch, style);
+  write_cell_into(&vram, ch, style);
 }
 
 void write_cell_cur(char ch, unsigned char style) {
   vram.ix = get_cur();
-  write_cell_into(vram, ch, style);
+  write_cell_into(&vram, ch, style);
   set_cur(vram.ix);
 }
 
 void write_str_at(char *str, short pos, unsigned char style) {
   vram.ix = pos;
-  write_str_into(vram, str, style);
+  write_str_into(&vram, str, style);
 }
 
 // mostly duplicate code
 void write_str(char *str, unsigned char style) {
   vram.ix = get_cur();
-  write_str_into(vram, str, style);
+  write_str_into(&vram, str, style);
   set_cur(vram.ix);
 }
 
 // - end of plebeian c interface
 
-void write_cell_into(struct f_videobuf dest, char ch, unsigned char style) {
-  unsigned int *x = (unsigned int *)0xb8000;
-  x[0] = (unsigned int) &(*dest) + 1;
-  *dest = (struct fchar) {
+void write_cell_into(struct f_videobuf *dest, char ch, unsigned char style) {
+  // trust me, this isn't black magic
+  *(*dest) = (struct fchar) {
     .ch = ch,
     .fmt = style
   };
-  dest.ix++;
+  dest->ix++;
 }
 
 // now why should i write into an input
-void write_str_into(struct f_videobuf dest, char *str, unsigned char style) {
+void write_str_into(struct f_videobuf *dest, char *str, unsigned char style) {
   for (int i = 0; str[i] != 0; ++i) {
     switch (str[i]) {
     case '\n':
-      dest.line_feed();
+      dest->line_feed();
       break;
     case '\t':
-      dest.tab();
+      dest->tab();
       break;
     case '\r':
-      dest.carriage_return();
+      dest->carriage_return();
       break;
     case '\v':
-      dest.v_tab();
+      dest->v_tab();
       break;
     default:
       write_cell_into(dest, str[i], style);

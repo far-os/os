@@ -6,6 +6,9 @@ SECTIONS
   . = loaded_at;
   .second_boot : { *(.second_boot) }
   
+  . = loaded_at + 0x1c0;
+  .init_array : { *(.init_array) }
+
   . = loaded_at + 0x1d0;
   .gdt : { *(.gdt) }
 

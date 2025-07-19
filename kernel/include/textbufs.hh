@@ -5,6 +5,8 @@ extern "C" {
 #include "util.h"
 }
 
+#define DEFAULT_USE_CXA_ATEXIT 0
+
 struct fchar {
   char ch;
   unsigned char fmt;

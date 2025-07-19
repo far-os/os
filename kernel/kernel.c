@@ -27,13 +27,14 @@ struct idtr_contents {
 extern void *eh_list[];
 
 void main() {
-//  clear_scr();
-
   // clear cursor location cache
   memzero(page_curloc_cache, sizeof page_curloc_cache);
   set_cur(POS(0, 0)); // cursor at top left
    
   quitting_prog = 0;
+
+  int *bob = 0xb8000;
+  bob[0] = zbuf();
 
   write_cell_cur('f', 0x0a);
   write_cell_cur('a', 0x0c);

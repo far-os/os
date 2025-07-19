@@ -159,19 +159,19 @@ public:
 
     // "^S to save, <Esc> to exit" is 31 ch long
     unsigned char pad_len = VGA_WIDTH - strlen(filename) - 11 - 4; // 4 for padding
-    write_cell_into(header, ' ', COLOUR(RED, B_GREEN)); // dirty indicator. shows a green interpunct if changes have been made
-    write_str_into(header, filename, COLOUR(RED, B_WHITE));
-    write_cell_into(header, ' ', COLOUR(RED, 0));
-    for (int p = 0; p < pad_len; ++p) write_cell_into(header, 0xcd, COLOUR(RED, B_BLACK));
-    write_cell_into(header, ' ', COLOUR(RED, 0));
-    write_str_into(header, "^H", COLOUR(RED, B_CYAN));
-    write_str_into(header, " for help ", COLOUR(RED, B_YELLOW));
+    write_cell_into(&header, ' ', COLOUR(RED, B_GREEN)); // dirty indicator. shows a green interpunct if changes have been made
+    write_str_into(&header, filename, COLOUR(RED, B_WHITE));
+    write_cell_into(&header, ' ', COLOUR(RED, 0));
+    for (int p = 0; p < pad_len; ++p) write_cell_into(&header, 0xcd, COLOUR(RED, B_BLACK));
+    write_cell_into(&header, ' ', COLOUR(RED, 0));
+    write_str_into(&header, "^H", COLOUR(RED, B_CYAN));
+    write_str_into(&header, " for help ", COLOUR(RED, B_YELLOW));
 
-    write_str_into(header, "  Quit without saving? ", COLOUR(BLUE, B_WHITE)); // 22
-    write_str_into(header, "alt+Q", COLOUR(BLUE, B_GREEN)); // 27
-    write_str_into(header, " to quit, ", COLOUR(BLUE, B_YELLOW)); // 37
-    write_str_into(header, "<Esc>", COLOUR(BLUE, B_GREEN)); // 42
-    write_str_into(header, " to return to editing  ", COLOUR(BLUE, B_YELLOW)); // 66
+    write_str_into(&modal, "  Quit without saving? ", COLOUR(BLUE, B_WHITE)); // 22
+    write_str_into(&modal, "alt+Q", COLOUR(BLUE, B_GREEN)); // 27
+    write_str_into(&modal, " to quit, ", COLOUR(BLUE, B_YELLOW)); // 37
+    write_str_into(&modal, "<Esc>", COLOUR(BLUE, B_GREEN)); // 42
+    write_str_into(&modal, " to return to editing  ", COLOUR(BLUE, B_YELLOW)); // 66
   }
 
   ~Editor() {
