@@ -42,7 +42,7 @@ char scan_map_en_UK_shift[96] = { // scancode map for UK keyboard.
   '1', '2', '3', 
   '0', '.', 
   0 /* 0x54 */, 0 /* 0x55 */,
-  '\\',
+  '|',
   '\0' /* f11 */, '\0' /* f12 */,
   '\0' /* lmeta (e0) */, '\0' /* rmeta (e0) */, '\0' /* context (e0) */,
   0 /* 0x5e */, 0 /* 0x5f */,

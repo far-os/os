@@ -5,3 +5,4 @@
 *.a
 util/bin
 env.ld
+build/

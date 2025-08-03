@@ -71,16 +71,16 @@ _start:
         .asciz " bytes used"
 
     col_test: 
-        .include "program/include/col.s"
+        .include "src/program/include/col.s"
 
     cp_437: 
-        .include "program/include/cp437.s"
+        .include "src/program/include/cp437.s"
 
     mem_test: 
-        .include "program/include/mem.s"
+        .include "src/program/include/mem.s"
 
     mmx_out: 
-        .include "program/include/mmx.s"
+        .include "src/program/include/mmx.s"
 
     death: 
         ud2

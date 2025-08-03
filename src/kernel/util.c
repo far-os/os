@@ -92,8 +92,15 @@ void to_filled_dec(int input, char *out, unsigned char size, char fill) {
   //free(dectempbuf);
 }
 
+// signed. remember.
 void l_to_dec(long long input, char *out) {
   char dectempbuf[21] = {0};
+  unsigned char negative = 0;
+  if (input < 0) {
+    negative = 1;
+    input = -input;
+  }
+
   if (!input) {
     dectempbuf[0] = '0';
   } else {
@@ -101,6 +108,9 @@ void l_to_dec(long long input, char *out) {
       dectempbuf[j] = (char) (i % 10) + '0';
     }
   }
+
+  // end of reverse is beginning
+  if (negative) *endof(dectempbuf) = '-';
   memrev(dectempbuf, strlen(dectempbuf), out);
 //  free(dectempbuf);
 }

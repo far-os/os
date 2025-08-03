@@ -1,4 +1,4 @@
-INCLUDE env.ld
+INCLUDE build/env.ld
 
 loaded_at = 0x80000 - (kern_size << 9);
 SECTIONS

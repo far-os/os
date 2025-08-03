@@ -1,5 +1,5 @@
 # FarOS
-A simple OS built in nasm and C.
+A simple OS with a kernel built in nasm and C, with applets written in C++.
 To clone, makes sure you use `git clone --recursive`. See [below](#quick-information-compiler-qic)
 
 ## Compilation config
@@ -15,9 +15,9 @@ This is controlled by the following `Makefile` variables:
 ***NOTE:*** If you wish to install this to a partition of a disk, you must change at least `DISK_OFFSET` above.
 
 ## File hierarchy
-The kernel code is located in `kernel/`, and the boot sector is located in `boot.asm`.
+The kernel code is located in `src/kernel/`, and the boot sector is located in `src/boot.asm`.
 
-The kernel's files are explained below: 
+The kernel's source files are explained below: 
 - `entry.asm`: The extended bootloader which calls `main`. It also contains the IDT as well.
 - `ata.c`: Contains the ATA disk driver
 - `cmos.c`: Functions for reading the time from the CMOS RTC
@@ -31,13 +31,12 @@ The kernel's files are explained below:
 - `memring.c`: Memory management: malloc and free
 - `misc.c`: Definitions - structs, `#define`s, etc
 - `pic.c`: Utilities for initialising the PIC, masking the PIC, etc.
-- `shell.c`: Contains FarSH, the shell.
 - `syscall.c`: Contains code for `syscall`ing.
 - `text.c`: Code for writing to the screen.
 - `timer.c`: Code to control the PIT.
 - `util.c`: Miscellaneous utilities, such as `memcpy`, `strcpy`, `memcmp`, etc.
 
-There is also the `syscall/` directory: each header file inside contains a different ABI service.
+There is also the `src/syscall/` directory: each header file inside contains a different ABI service.
 
 ## Build instructions
 You will need access to the following tools:
@@ -70,7 +69,7 @@ It also works on real hardware.
 ## OS ABI
 Programs in the sector directly after the kernel on disk will be copied to `0x100000` in memory: and will be executed in a segment where code will appear with origin `0`.
 
-To syscall to the kernel, use `int 0x33`. The service code goes in `ah`, and the subroutine code goes in `al`. To see all services, see [the ABI docs](kernel/syscall/README.md).
+To syscall to the kernel, use `int 0x33`. The service code goes in `ah`, and the subroutine code goes in `al`. To see all services, see [the ABI docs](src/kernel/syscall/README.md).
 
 ### Program errors
 

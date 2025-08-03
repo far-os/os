@@ -31,7 +31,11 @@ app_handle instantiate(struct k_app *app, app_handle parent, char is_fg) {
   msg(INFO, NONE, g);
   free(g);
   
-  if (is_fg) focus_app(found); // background apps dont need to do this
+  if (is_fg) {
+    focus_app(found); // background apps dont need to do this
+    clear_scr();
+    set_cur(0);
+  }
 
   (*app->virts->first_run)(app); // initialise
   return found;

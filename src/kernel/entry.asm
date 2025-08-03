@@ -75,6 +75,7 @@ scroll_pag:
         mov ebp, esp
         pushad
         mov edx, [ebp+8] ; page nr
+        mov ebx, edx
         shl edx, 12
 
         lea esi, [0xb80a0 + edx]
@@ -84,7 +85,7 @@ scroll_pag:
         rep movsd
 
         push 24
-        push edx
+        push ebx
         call clear_pag_ln
         add esp, 8 ; pop what we just did
 

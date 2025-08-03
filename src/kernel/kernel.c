@@ -34,18 +34,6 @@ void main() {
   set_cur(POS(0, 0)); // cursor at top left
    
   quitting_prog = 0;
-
-  write_cell_cur('f', 0x0a);
-  write_cell_cur('a', 0x0c);
-  write_cell_cur('r', 0x0e);
-
-  char * vbf = malloc(32);
-  sprintf(vbf, "OS v%d.%d.%d", curr_ver -> major, curr_ver -> minor, curr_ver -> patch);
-  write_str(vbf, COLOUR(BLACK, B_WHITE)); // welcome message
-  int where = endof(vbf);
-  sprintf(where, ":%2x\n", &(curr_ver -> build));
-  write_str(where, COLOUR(BLACK, B_BLACK)); // welcome message
-  free(vbf);
   
 //  cp437(); // codepage 437: for testing purposes
 
@@ -99,6 +87,25 @@ void main() {
 
   // run shell, TODO: further separate, and make it its own file (will need a decent syscall library tho)
   app_handle shell = instantiate(mk_shell(32), -1, 1);
+
+  { // XXX: 15 characters right now. could make it dynamic with printf perhaps??
+    set_cur(POS(-15, 1));
+    write_cell_cur('f', 0x0a);
+    write_cell_cur('a', 0x0c);
+    write_cell_cur('r', 0x0e);
+
+    char * vbf = malloc(32);
+    sprintf(vbf, "OS v%d.%d.%d", curr_ver -> major, curr_ver -> minor, curr_ver -> patch);
+    write_str(vbf, COLOUR(BLACK, B_WHITE)); // welcome message
+    int where = endof(vbf);
+    sprintf(where, ":%2x", &(curr_ver -> build));
+    write_str(where, COLOUR(BLACK, B_BLACK)); // welcome message
+    free(vbf);
+
+    set_cur(POS(0, 1));
+    (*app_db[shell]->virts->invoke)(app_db[shell]);
+  }
+
 
   // stop. just stop.
   for (;;) {
