@@ -26,6 +26,10 @@ private:
   char* name;
   Entry* ents;
 
+  unsigned int start_ix;
+
+  void put_entries();
+
 public:
   HelpHost(char* what, Entry* loads);
   ~HelpHost();

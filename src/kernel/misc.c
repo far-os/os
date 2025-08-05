@@ -5,7 +5,7 @@ struct far_ver * curr_ver = &((struct far_ver) {
   .major =    0,
   .minor =    0,
   .patch =    5,
-  .build = 0x03, // minor changes + hotfixes
+  .build = 0x04, // minor changes + hotfixes
 });
 
 struct farb_header __seg_fs *prog_head = 0;

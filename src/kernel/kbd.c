@@ -193,7 +193,7 @@ void read_kbd() {
           putch(LEFT, CTRL);
         } else if (scan == 0x50) {
           // down
-          putch(RIGHT, CTRL);
+          putch(DOWN, CTRL);
         } else if (scan == 0x4d) {
           // right
           putch(RIGHT, CTRL);

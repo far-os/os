@@ -18,6 +18,7 @@ enum ERRSIG {
   E_BADADDR = 5,
   E_BOUND = 7,
   E_ILLEGAL = 9,
+  E_SUICIDE = 10,
   E_UNKENTITY = 11,
   E_TIME = 12,
   E_BINLOAD = 15,

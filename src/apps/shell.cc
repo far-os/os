@@ -26,6 +26,7 @@ const HelpHost::Entry comnames[] = {
   { .name = "cpu", .desc = "Prints CPU info", .type = HelpHost::SUB_ENTRY },
   { .name = "fs", .desc = "Prints file system info", .type = HelpHost::SUB_ENTRY },
   { .name = "indic", .desc = "Prints keyboard LED status", .type = HelpHost::SUB_ENTRY },
+  { .name = "kill", .desc = "Kills the specified process\xff<@handle>", .type = HelpHost::SUB_ENTRY },
   { .name = "mem", .desc = "Prints memory info", .type = HelpHost::SUB_ENTRY },
   { .name = "proc", .desc = "Prints currently running processes", .type = HelpHost::SUB_ENTRY },
   { .name = "time", .desc = "Gets current time", .type = HelpHost::PLAIN_ENTRY },
@@ -367,6 +368,25 @@ bool KShell::shexec() {
       sprintf(outbuf, "@%d: %s\n", i, app_db[i] ? app_db[i]->app_name : "-");
       write_str(outbuf, app_db[i] ? 0xa : 0xc);
       memzero(outbuf, strlen(outbuf));
+    }
+  } else if (strcmp(work.buf, "sys:kill")) {
+    if (strcmp(args, "off")) {
+      split_scr(0);
+    } else if (args[0] == '@') {
+      int ar = -1;
+      if (strlen(args) > 1) {
+        ar = to_uint(args + 1);
+      }
+
+      if (ar == -1) goto _kesh_sys_kill_fail;
+      else if (!app_db[ar]) goto _kesh_sys_kill_fail;
+
+      if (ar == (this->app_id & 0xf)) {
+        msg(PROGERR, E_SUICIDE, "Cannot kill current process");
+      } else terminate_app(ar);
+    } else {
+    _kesh_sys_kill_fail:
+      msg(PROGERR, E_UNKENTITY, "No valid handle supplied");
     }
   } else if (strcmp(work.buf, "time")) {
     sprintf(outbuf, "Time since kernel load: %d.%2ds\n%s%c%4d-%2d-%2d %2d:%2d:%2d",
