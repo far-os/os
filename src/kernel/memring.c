@@ -38,7 +38,7 @@ void * malloc(unsigned int len) {
   
   void * ptr = (void *) MEM_LOC + (run * MEMBLK_SIZE);
 
-  if (!is_memring(ptr)) {
+  if (!is_memring(ptr) || !is_memring(ptr + len)) {
     msg(PANIC, E_BOUND, "Out of memory");
   }
 
@@ -52,10 +52,22 @@ void free(void * ptr) {
     return;
   }
 
-  unsigned int blocks = 1; // amount of blocks taken up
-  for (unsigned char * ptr_lc = (unsigned int) ptr / MEMBLK_SIZE; !(*(ptr_lc++) & BLK_END);)
-    ++blocks;
 
+  unsigned char * at_inring = (unsigned int) ptr / MEMBLK_SIZE;
+
+  if (!(*at_inring & BLK_START)) {
+    msg(KERNERR, E_BADADDR, "Cannot double free address");
+    return;
+  }
+
+  unsigned int blocks = 1; // amount of blocks taken up
+  for (
+    ;
+    !(at_inring[blocks - 1] & BLK_END);
+    blocks++
+  )
+  
+  // remove the actual taking up
   memzero((unsigned int) ptr / MEMBLK_SIZE, blocks);
 }
 

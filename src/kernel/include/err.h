@@ -16,6 +16,7 @@ enum ERRSIG {
   E_NOFILE = 3,
   E_NOSTORAGE = 4,
   E_BADADDR = 5,
+  E_ARGS = 6,
   E_BOUND = 7,
   E_ILLEGAL = 9,
   E_SUICIDE = 10,

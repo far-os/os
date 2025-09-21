@@ -10,18 +10,20 @@ namespace Extra {
 
   // diy "split" function
   Split::Split(char *str, char delim) {
-    int last = 0;
-    int at = 0;
+    unsigned int last = 0;
+    unsigned int at = 0;
     do if (str[at] == delim || !(str[at])) {
-      char *ptr = malloc(at - last + 1);
-      memcpy(str+last, ptr, at - last);
-      this->push(ptr);
-      last = at;
+      if (at != last) {
+        char *ptr = malloc(at - last + 1);
+        memcpy(str+last, ptr, at - last);
+        this->push(ptr);
+      } /**/
+      last = at + 1;
     } while (str[at++]);
   }
 
   Split::~Split() {
-    //for (int i = 0; i < curr_size; ++i) free((*this)[i]);
+    for (int i = 0; i < curr_size; ++i) free((*this)[i]);
     Vector::~Vector();
   }
 }

@@ -1,6 +1,8 @@
 #include "include/helphost.hh"
 #include "include/calc.hh"
 #include "include/edit.hh"
+#include "include/extra/split.hh"
+
 #include "include/shell.hh"
 
 // TODO fix outbuf using real printf.
@@ -29,9 +31,10 @@ const HelpHost::Entry comnames[] = {
   { .name = "cpu", .desc = "Prints CPU info", .type = HelpHost::SUB_ENTRY },
   { .name = "fs", .desc = "Prints file system info", .type = HelpHost::SUB_ENTRY },
   { .name = "indic", .desc = "Prints keyboard LED status", .type = HelpHost::SUB_ENTRY },
-  { .name = "kill", .desc = "Kills the specified process\xff<@handle>", .type = HelpHost::SUB_ENTRY },
   { .name = "mem", .desc = "Prints memory info", .type = HelpHost::SUB_ENTRY },
+  { .type = HelpHost::SUB_ENTRY | HelpHost::DIVIDER },
   { .name = "proc", .desc = "Prints currently running processes", .type = HelpHost::SUB_ENTRY },
+  { .name = "kill", .desc = "Kills the specified process\xff<@handle>", .type = HelpHost::SUB_ENTRY },
   { .name = "time", .desc = "Gets current time", .type = HelpHost::PLAIN_ENTRY },
   { .name = "util", .desc = "Utilities and tools", .type = HelpHost::PLAIN_ENTRY },
   { .name = "to8.3", .desc = "Canonicalises a filename into 8.3\xff<string>", .type = HelpHost::SUB_ENTRY },
@@ -139,18 +142,12 @@ bool KShell::shexec() {
 
   unsigned char fmt = 0;
 
-  // TODO avoid schizophrenia
-  // couldn't afford strtok
-  int wher; // first whitespace character
-  for (wher = 0; !is_whitespace(work.buf[wher]); ++wher);
-
-  char *args = &(work.buf[wher + 1]);
-  char safe_padding = work.buf[wher]; // keep the padding character, so that history works
-  work.buf[wher] = '\0'; // make the command the only relevant word
+  // split work.buf by spaces. returns Split, which is a type of Vector
+  Extra::Split argv(work.buf, ' ');
 
   bool exitting = true; // whether we exit normally
 
-  if (strcmp(work.buf, "calc")) {
+  if (strcmp(argv[0], "calc")) {
     app_handle help = instantiate(
       new Calc(),
       this->app_id & 0xf,
@@ -159,18 +156,18 @@ bool KShell::shexec() {
 
     exitting = false;
     goto shell_clean;
-  } else if (strcmp(work.buf, "clr")) { // clear screen
+  } else if (strcmp(argv[0], "clr")) { // clear screen
     clear_scr();
     set_cur(0);
-  } else if (strcmp(work.buf, "exec")) {
+  } else if (strcmp(argv[0], "exec")) {
     read_file(
       "prog.bin",
       0x100000
     ); // reads disk, has to get master or slave
 
     int ar = -1;
-    if (strlen(args)) {
-      ar = to_uint(args);
+    if (argv.len() > 1) {
+      ar = to_uint(argv[1]);
     }
 
     enum ERRSIG ret = prog(ar);
@@ -181,28 +178,33 @@ bool KShell::shexec() {
     } else {
       line_feed();
     }
-  } else if (strcmp(work.buf, "f:ls")) {
+  } else if (strcmp(argv[0], "f:ls")) {
     for (unsigned int search = 0; VALID_FILE(root_dir[search]); search++) {
       sane_name(root_dir[search].name, endof(outbuf));
       *endof(outbuf) = '\t';
     }
 
     fmt = COLOUR(BLACK, B_WHITE);
-  } else if (strcmp(work.buf, "f:new")) {
-    if (!strlen(args)) {
-      msg(KERNERR, E_NOFILE, "Cannot create file with no name");
+  } else if (strcmp(argv[0], "f:new")) {
+    if (argv.len() <= 1) {
+      msg(PROGERR, E_ARGS, "Please provide a filename");
       goto shell_clean;
     }
 
-    create_file(args);
+    create_file(argv[1]);
     goto shell_f_stat;
-  } else if (strcmp(work.buf, "f:ren")) {
-    msg(INFO, 0, "No");
-  } else if (strcmp(work.buf, "f:stat")) {
+  } else if (strcmp(argv[0], "f:ren")) {
+    if (argv.len() <= 2) {
+      msg(PROGERR, E_ARGS, "Please provide two source and destination filenames");
+      goto shell_clean;
+    }
+
+    rename_file(argv[1], argv[2]);
+  } else if (strcmp(argv[0], "f:stat")) {
 shell_f_stat:
     struct dir_entry *f = NULL;
     if (!f) {
-      f = get_file(args);
+      f = get_file(argv[1]);
       if (!f) goto shell_clean;
     }
 
@@ -252,39 +254,39 @@ shell_f_stat:
     free(name);
 
     fmt = COLOUR(BLUE, B_YELLOW);
-  } else if (strcmp(work.buf, "f:edit")) {
+  } else if (strcmp(argv[0], "f:edit")) {
     // TODO: allow no file
     struct dir_entry *f = NULL;
     if (!f) {
-      f = get_file(args);
+      f = get_file(argv[1]);
       if (!f) goto shell_clean;
     }
 
     app_handle edt = instantiate(
-      new Editor(args),
+      new Editor(argv[1]),
       this->app_id & 0xf,
       true
     );
 
     exitting = false;
     goto shell_clean;
-  } else if (strcmp(work.buf, "f:read")) {
+  } else if (strcmp(argv[0], "f:read")) {
     struct dir_entry *f = NULL;
     if (!f) {
-      f = get_file(args);
+      f = get_file(argv[1]);
       if (!f) goto shell_clean;
     }
 
     char *datablk = malloc(f->size);
     read_file(
-      args,
+      argv[1],
       datablk
     ); // reads disk, has to get master or slave
     write_str(datablk, COLOUR(BLACK, WHITE));
 
     free(datablk);
     line_feed();
-  } else if (strcmp(work.buf, "help")) {
+  } else if (strcmp(argv[0], "help")) {
     app_handle help = instantiate(
       new HelpHost("shell builtins", comnames),
       this->app_id & 0xf,
@@ -293,13 +295,13 @@ shell_f_stat:
 
     exitting = false;
     goto shell_clean;
-  } else if (strcmp(work.buf, "reset")) {
+  } else if (strcmp(argv[0], "reset")) {
     cpu_reset();
     // if you reach past here, something has gone very wrong indeed
-  } else if (strcmp(work.buf, "set:verbose")) {
+  } else if (strcmp(argv[0], "set:verbose")) {
     int ar = -1;
-    if (strlen(args)) {
-      ar = to_uint(args);
+    if (argv.len() > 1) {
+      ar = to_uint(argv[1]);
     }
 
     if (ar != -1) {
@@ -312,13 +314,13 @@ shell_f_stat:
     }
 
     sprintf(endof(outbuf), "verbose = %d", xconf -> verbosity);
-  } else if (strcmp(work.buf, "split")) {
-    if (strcmp(args, "off")) {
+  } else if (strcmp(argv[0], "split")) {
+    if (strcmp(argv[1], "off")) {
       split_scr(0);
-    } else if (args[0] == '@') {
+    } else if (argv[1][0] == '@') {
       int ar = -1;
-      if (strlen(args) > 1) {
-        ar = to_uint(args + 1);
+      if (strlen(argv[1]) > 1) {
+        ar = to_uint(argv[1] + 1);
       }
 
       if (ar == -1) goto _kesh_split_fail;
@@ -330,9 +332,9 @@ shell_f_stat:
       exitting = false;
     } else {
     _kesh_split_fail:
-      msg(PROGERR, E_UNKENTITY, "No valid handle supplied");
+      msg(PROGERR, E_ARGS, "No valid handle supplied");
     }
-  } else if (strcmp(work.buf, "sys:ata")) { 
+  } else if (strcmp(argv[0], "sys:ata")) { 
     sprintf(outbuf, "IDENTIFY of disk %2xh:\n\tLBA28\t%d sectors\n\tLBA48\t%B, %l sectors\n\tUDMA\t80CC: %B, %4x",
       &(hardware -> bios_disk),
       ATA_N_LBA28,
@@ -343,7 +345,7 @@ shell_f_stat:
     );
 
     fmt = COLOUR(RED, B_GREEN); // fmt 
-  } else if (strcmp(work.buf, "sys:cpu")) {
+  } else if (strcmp(argv[0], "sys:cpu")) {
     sprintf(outbuf, "CPUID.\n\t\x10 %12s\n\tFamily %2xh, Model %2xh, Stepping %1xh\n\tBrand \"%s\"",
       &(hardware -> vendor),
       &(hardware -> c_family), // family
@@ -353,7 +355,7 @@ shell_f_stat:
     );
 
     fmt = COLOUR(YELLOW, B_GREEN); // fmt
-  } else if (strcmp(work.buf, "sys:fs")) { 
+  } else if (strcmp(argv[0], "sys:fs")) { 
     sprintf(outbuf, "%5s disk:\n\tVol. label \"%11s\"\n\tVol. ID %8X\n\tCluster size: %d sectors\n\tN. Fats: %d\n\tVolume size %dKiB",
       &(bpb -> sys_ident),
       &(bpb -> vol_lbl),
@@ -364,7 +366,7 @@ shell_f_stat:
     );
 
     fmt = COLOUR(RED, B_YELLOW); // fmt 
-  } else if (strcmp(work.buf, "sys:indic")) {
+  } else if (strcmp(argv[0], "sys:indic")) {
     // indicators
     sprintf(outbuf, "scroll: %d\nnum: %d\ncaps: %d",
       bittest(&(keys -> modifs), 0),
@@ -373,25 +375,23 @@ shell_f_stat:
     );
 
     fmt = COLOUR(GREEN, RED);
-  } else if (strcmp(work.buf, "sys:mem")) {
+  } else if (strcmp(argv[0], "sys:mem")) {
     void *addr = malloc(1);
     sprintf(outbuf, "First free memory addr: %p\n\t\tout of: %p\n\nCurrently running from: %p", addr, MEM_END, rip_thunk());
     free(addr);
 
     fmt = COLOUR(MAGENTA, B_YELLOW); // fmt
-  } else if (strcmp(work.buf, "sys:proc")) {
+  } else if (strcmp(argv[0], "sys:proc")) {
     for (app_handle i = 0; i < AVAILABLE_KAPPS; ++i) {
       sprintf(outbuf, "@%d: %s\n", i, app_db[i] ? app_db[i]->app_name : "-");
       write_str(outbuf, app_db[i] ? 0xa : 0xc);
       memzero(outbuf, strlen(outbuf));
     }
-  } else if (strcmp(work.buf, "sys:kill")) {
-    if (strcmp(args, "off")) {
-      split_scr(0);
-    } else if (args[0] == '@') {
+  } else if (strcmp(argv[0], "sys:kill")) {
+    if (argv[1][0] == '@') {
       int ar = -1;
-      if (strlen(args) > 1) {
-        ar = to_uint(args + 1);
+      if (strlen(argv[1]) > 1) {
+        ar = to_uint(argv[1] + 1);
       }
 
       if (ar == -1) goto _kesh_sys_kill_fail;
@@ -402,9 +402,9 @@ shell_f_stat:
       } else terminate_app(ar);
     } else {
     _kesh_sys_kill_fail:
-      msg(PROGERR, E_UNKENTITY, "No valid handle supplied");
+      msg(PROGERR, E_ARGS, "No valid handle supplied");
     }
-  } else if (strcmp(work.buf, "time")) {
+  } else if (strcmp(argv[0], "time")) {
     sprintf(outbuf, "Time since kernel load: %d.%2ds\n%s%c%4d-%2d-%2d %2d:%2d:%2d",
       countx / 100,
       countx % 100,
@@ -419,8 +419,8 @@ shell_f_stat:
     );
 
     fmt = COLOUR(RED, B_CYAN);
-  } else if (strcmp(work.buf, "util:to8.3")) {
-    canonicalise_name(args, outbuf);
+  } else if (strcmp(argv[0], "util:to8.3")) {
+    canonicalise_name(argv[1], outbuf);
     fmt = COLOUR(RED, B_GREEN);
   } else {
     msg(WARN, E_UNKENTITY, "Unknown command");
@@ -434,7 +434,7 @@ shell_f_stat:
 
 shell_clean:
   free(outbuf);
-  work.buf[wher] = safe_padding; // ok so jank way of keeping history intact
+  argv.~Split();
   return exitting; // exit normally
 }
 

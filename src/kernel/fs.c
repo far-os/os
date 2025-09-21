@@ -213,6 +213,10 @@ void read_file(char *filename, void * where) {
     return;
   }
 
+  // change atime
+  struct dos_timestamp dos = to_dostime(*curr_time);
+  f->adate = dos.dosdate;
+
   cluster_id trace = (f->first_cluster_hi << 16) | (f->first_cluster_lo);
   unsigned int bytes_left = f->size;
 
@@ -394,6 +398,7 @@ void write_file(char *filename, void *where, unsigned int new_size) {
   write_root();
 }
 
+// global buffer, just don't think about it too hard
 char attribify_buf[9] = {0};
 
 void attribify(unsigned char att) {
