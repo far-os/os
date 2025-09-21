@@ -5,7 +5,7 @@ namespace Extra {
   // shitty implementation of resizable Vec
   template <typename T>
   class Vector {
-  private:
+  protected:
     T* data;
     unsigned int capacity; // the max size, what is malloc'd basically
     unsigned int curr_size; // the reported size
@@ -13,7 +13,7 @@ namespace Extra {
     void grow(); // fix too big to fit in capacity
 
   public:
-    unsigned int len();
+    unsigned int len(); // getter for curr_size
 
     void push(T itm);
     T pop();

@@ -81,7 +81,11 @@ cluster_id next_cluster(cluster_id from) {
 }
 
 // next free
+// with_min gives a minimum to start seeking from. makes allocating more than one cluster more efficient, and avoids repetitive allocation of the same one.
 cluster_id alloc_cluster(cluster_id with_min) {
+  // 2 is the first cluster ever
+  if (with_min < 2) { with_min = 2; }
+
   // bytes per fat
   int n_clusters = bpb -> sec_per_fat * bpb -> bytes_per_sec;
   switch (FAT_TYPE) {
@@ -195,6 +199,11 @@ struct dir_entry *get_file(char *name) {
   return NULL;
 }
 
+void rename_file(char *old, char *new) {
+  struct dir_entry *f = get_file(old);
+  canonicalise_name(new, f->name);
+}
+
 void read_file(char *filename, void * where) {
   struct dir_entry *f = get_file(filename);
 
@@ -239,17 +248,59 @@ void read_file(char *filename, void * where) {
   } while ((trace & NO_NEXT_CLUSTER) != NO_NEXT_CLUSTER);
 }
 
-// TODO: create files
+struct dir_entry *create_file(char *filename) {
+  // get first unoccupied file slot
+  // TODO: fix for non-root directories, as uses n_root_entries
+  unsigned int search = 0;
+  for (; VALID_FILE(root_dir[search]); search++)
+    if (search >= bpb->n_root_entries)
+      msg(KERNERR, E_NOSTORAGE, "Root directory full");
+
+  cluster_id loc = alloc_cluster(2);
+  if (loc == -1) msg(KERNERR, E_NOSTORAGE, "Cannot allocate cluster");
+
+  struct dir_entry *f = &root_dir[search];
+
+  // write filename. done first so as to not bork the file later on
+  canonicalise_name(filename, f->name);
+
+  // stub file, let write_file deal with size
+  set_cluster(loc, NO_NEXT_CLUSTER);
+
+  f->first_cluster_lo = loc & 0xffff;
+  f->first_cluster_hi = (loc >> 16) & 0xffff;
+  
+
+  // file stuff
+  f -> attrib = A_ARCHIVE;
+
+  struct dos_timestamp dos = to_dostime(*curr_time);
+  f->cdate = dos.dosdate;
+  f->ctime = dos.dostime;
+  f->ctime_cs = dos.centisecs;
+  f->adate = dos.dosdate;
+  f->mdate = dos.dosdate;
+  f->mtime = dos.dostime;
+
+  f->size = 0;
+
+  // save changes to disk
+  write_fat();
+  write_root();
+
+  return f;
+}
 
 void write_file(char *filename, void *where, unsigned int new_size) {
   struct dir_entry *f = get_file(filename);
 
+  // create file if not exist
   if (!f || !VALID_FILE(*f)) {
-    msg(KERNERR, E_NOFILE, "Invalid file");
-    line_feed();
-    return;
+    f = create_file(filename);
   }
 
+  // if is either a volume or a directory we want it to fail
+  // so to future me, NOT A BUG
   if (f -> attrib & (A_VOLID | A_DIR)) {
     msg(KERNERR, E_NOFILE, "Not a file");
     line_feed();

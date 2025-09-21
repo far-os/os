@@ -2,7 +2,7 @@
 
 #include "kapp.hh"
 #include "extra/fromc.hh"
-#include "extra/stack.hh"
+#include "extra/vector.hh"
 
 using namespace Extra;
 

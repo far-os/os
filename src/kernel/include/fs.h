@@ -89,7 +89,10 @@ struct dir_entry *get_file(char *name);
 extern unsigned char *file_table;
 extern struct dir_entry *root_dir;
 
+// if the first byte is nonzero, then file exists
 #define VALID_FILE(f) ((*((unsigned char*) &(f))))
 
+void rename_file(char *old, char *); // technically char *new but c++ has reserved keywords (grrr)
 void read_file(char *filename, void *where);
+struct dir_entry *create_file(char *filename);
 void write_file(char *filename, void *where, unsigned int new_size);

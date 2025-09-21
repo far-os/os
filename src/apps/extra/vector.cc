@@ -1,5 +1,5 @@
 #include "../include/extra/fromc.hh"
-#include "../include/extra/stack.hh"
+#include "../include/extra/vector.hh"
 
 namespace Extra {
   template <typename T>
@@ -70,5 +70,6 @@ namespace Extra {
      in conclusion, curse you bjarne stroustrup.
    */
   template class Vector<int>;
+  template class Vector<char *>;
 }
 

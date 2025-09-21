@@ -1,5 +1,5 @@
 #include "include/calc.hh"
-#include "include/extra/stack.hh"
+#include "include/extra/vector.hh"
 
 void Calc::first_run() {
   write_str("Reverse Polish Calculator\n", COLOUR(BLACK, B_GREEN));

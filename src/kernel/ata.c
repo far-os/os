@@ -87,7 +87,8 @@ void write_pio28(void *data, lba_n lba, unsigned int len, unsigned char drv) {
   unsigned char p;
   for (unsigned int i = 0; i < len; i++) {
     // poll until ready
-    while (!((p = pbyte_in(0x1f7)) & 0x09));
+    // using a for loop, because a while loop caused mystery error in qemu
+    for (; ((p & 0x88) != 0x08) && !(p & 1); p = pbyte_in(0x1f7));
 
     if (p & 1) { // oh no bad
       msg(KERNERR, E_NOSTORAGE, "Failed to ATA WRITE28");

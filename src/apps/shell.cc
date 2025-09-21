@@ -12,10 +12,13 @@ const HelpHost::Entry comnames[] = {
   { .name = "clr", .desc = "Clears screen\xff[or shift+\23710]", .type = HelpHost::PLAIN_ENTRY },
   { .name = "exec", .desc = "Executes program\xff<u32>", .type = HelpHost::PLAIN_ENTRY },
   { .name = "f", .desc = "File I/O namespace", .type = HelpHost::PLAIN_ENTRY },
-  { .name = "edit", .desc = "Text editor\xff<filename>", .type = HelpHost::SUB_ENTRY },
   { .name = "ls", .desc = "Lists all files", .type = HelpHost::SUB_ENTRY },
-  { .name = "read", .desc = "Prints file content\xff<filename>", .type = HelpHost::SUB_ENTRY },
+  { .name = "new", .desc = "Creates file\xff<filename>", .type = HelpHost::SUB_ENTRY },
+  { .name = "ren", .desc = "Renames file\xff<filename> x2", .type = HelpHost::SUB_ENTRY },
   { .name = "stat", .desc = "Prints info about given file\xff<filename>", .type = HelpHost::SUB_ENTRY },
+  { .type = HelpHost::SUB_ENTRY | HelpHost::DIVIDER },
+  { .name = "edit", .desc = "Text editor\xff<filename>", .type = HelpHost::SUB_ENTRY },
+  { .name = "read", .desc = "Prints file content\xff<filename>", .type = HelpHost::SUB_ENTRY },
   { .name = "help", .desc = "Prints this help menu", .type = HelpHost::PLAIN_ENTRY },
   { .name = "reset", .desc = "Resets machine\xff[or ctrl+alt+del]", .type = HelpHost::PLAIN_ENTRY },
   { .name = "split", .desc = "Forms a split-screen with another open app\xff<@handle>", .type = HelpHost::PLAIN_ENTRY },
@@ -136,6 +139,7 @@ bool KShell::shexec() {
 
   unsigned char fmt = 0;
 
+  // TODO avoid schizophrenia
   // couldn't afford strtok
   int wher; // first whitespace character
   for (wher = 0; !is_whitespace(work.buf[wher]); ++wher);
@@ -177,22 +181,6 @@ bool KShell::shexec() {
     } else {
       line_feed();
     }
-  } else if (strcmp(work.buf, "f:edit")) {
-    // TODO: allow no file
-    struct dir_entry *f = NULL;
-    if (!f) {
-      f = get_file(args);
-      if (!f) goto shell_clean;
-    }
-
-    app_handle edt = instantiate(
-      new Editor(args),
-      this->app_id & 0xf,
-      true
-    );
-
-    exitting = false;
-    goto shell_clean;
   } else if (strcmp(work.buf, "f:ls")) {
     for (unsigned int search = 0; VALID_FILE(root_dir[search]); search++) {
       sane_name(root_dir[search].name, endof(outbuf));
@@ -200,23 +188,18 @@ bool KShell::shexec() {
     }
 
     fmt = COLOUR(BLACK, B_WHITE);
-  } else if (strcmp(work.buf, "f:read")) {
-    struct dir_entry *f = NULL;
-    if (!f) {
-      f = get_file(args);
-      if (!f) goto shell_clean;
+  } else if (strcmp(work.buf, "f:new")) {
+    if (!strlen(args)) {
+      msg(KERNERR, E_NOFILE, "Cannot create file with no name");
+      goto shell_clean;
     }
 
-    char *datablk = malloc(f->size);
-    read_file(
-      args,
-      datablk
-    ); // reads disk, has to get master or slave
-    write_str(datablk, COLOUR(BLACK, WHITE));
-
-    free(datablk);
-    line_feed();
+    create_file(args);
+    goto shell_f_stat;
+  } else if (strcmp(work.buf, "f:ren")) {
+    msg(INFO, 0, "No");
   } else if (strcmp(work.buf, "f:stat")) {
+shell_f_stat:
     struct dir_entry *f = NULL;
     if (!f) {
       f = get_file(args);
@@ -241,6 +224,7 @@ bool KShell::shexec() {
     char *name = malloc(13);
     sane_name(f->name, name);
 
+    // returns to a global buffer. be not confused, be horrified
     attribify(f->attrib);
 
     sprintf(outbuf, "%s\n\t%d bytes, intial cluster %3X\n\tAttributes: %s\n\tCreated  %4d-%2d-%2d %2d:%2d:%2d\n\tModified %4d-%2d-%2d %2d:%2d:%2d\n\tAccessed %4d-%2d-%2d",
@@ -268,6 +252,38 @@ bool KShell::shexec() {
     free(name);
 
     fmt = COLOUR(BLUE, B_YELLOW);
+  } else if (strcmp(work.buf, "f:edit")) {
+    // TODO: allow no file
+    struct dir_entry *f = NULL;
+    if (!f) {
+      f = get_file(args);
+      if (!f) goto shell_clean;
+    }
+
+    app_handle edt = instantiate(
+      new Editor(args),
+      this->app_id & 0xf,
+      true
+    );
+
+    exitting = false;
+    goto shell_clean;
+  } else if (strcmp(work.buf, "f:read")) {
+    struct dir_entry *f = NULL;
+    if (!f) {
+      f = get_file(args);
+      if (!f) goto shell_clean;
+    }
+
+    char *datablk = malloc(f->size);
+    read_file(
+      args,
+      datablk
+    ); // reads disk, has to get master or slave
+    write_str(datablk, COLOUR(BLACK, WHITE));
+
+    free(datablk);
+    line_feed();
   } else if (strcmp(work.buf, "help")) {
     app_handle help = instantiate(
       new HelpHost("shell builtins", comnames),

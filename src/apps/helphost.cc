@@ -20,10 +20,11 @@ void HelpHost::invoke() {
       }
       case DOWN:
       case PGDOWN: {
-        unsigned int total = this->start_ix; // find how many entries. starting from start_ix for efficiency, as we know that it's less than the last
+        int total = this->start_ix; // find how many entries. starting from start_ix for efficiency, as we know that it's less than the last
         for (; this->ents[total].type != -1; ++total);
         
-        if ((this->start_ix + 2*ENTRY_COUNT) > total) this->start_ix = total - ENTRY_COUNT;
+        if (ENTRY_COUNT > total) { /* no change */ }
+        else if ((this->start_ix + ENTRY_COUNT) > total) this->start_ix = total - ENTRY_COUNT;
         else this->start_ix += ENTRY_COUNT;
 
         this->put_entries();
@@ -83,6 +84,18 @@ void HelpHost::put_entries() {
     write_cell_cur(0xb3, COLOUR(BLUE, B_BLACK)); // left box edge
     adv_cur();
 
+    int cix; // see later, moved up here because goto
+
+    if (this->ents[ent].type & DIVIDER) {
+      if (this->ents[ent].type & SUB_ENTRY) adv_cur_by(2);
+
+      for (int i = get_cur() % VGA_WIDTH; i < (VGA_WIDTH - 2); ++i) {
+        write_cell_cur('\304', COLOUR(BLUE, B_BLACK));
+      }
+      
+      goto _helphost_post_entry;
+    }
+
     // sub entry (indent)
     if (this->ents[ent].type & SUB_ENTRY) {
       adv_cur_by(2);
@@ -92,7 +105,7 @@ void HelpHost::put_entries() {
       write_str(this->ents[ent].name, COLOUR(BLUE, YELLOW) | brightness);
     }
 
-    int cix = 0; // index of optional (if at all). i.e., end of main desc
+    cix = 0; // index of optional (if at all). i.e., end of main desc
     for (; this->ents[ent].desc[cix] && (this->ents[ent].desc[cix] != '\xff'); ++cix);
     if (this->ents[ent].desc[cix] != '\xff') { // we can't edit the string to contain a null, because it would break it for future help runs.
                                                 // don't even think about fixing it afterwards. c++ "can't edit constants" or smth
@@ -120,7 +133,7 @@ void HelpHost::put_entries() {
     } else { // sanity, at long last
       write_str(this->ents[ent].desc, COLOUR(BLUE, B_WHITE));
     }
-
+  _helphost_post_entry:
     // bottom right
     write_cell(0xb3, POS(-1, ln_nr()+1), COLOUR(BLUE, B_BLACK));
     paint_row(BLUE);

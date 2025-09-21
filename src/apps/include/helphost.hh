@@ -14,6 +14,7 @@ public:
     PLAIN_ENTRY = 0, // normal entry, nothing special
     SUB_ENTRY = 1 << 0, // indented, and preceded by a colon
     DEBUG_ENTRY = 1 << 1, // lighter text, "greyed out"
+    DIVIDER = 1 << 2, // a load of dashes
   };
 
   struct Entry {
