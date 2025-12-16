@@ -122,6 +122,26 @@ void write_cell(char ch, short pos, unsigned char style) {
   CPAGE[pos * 2 + 1] = style;
 }
 
+void write_advanced_cell(char ch, short pos, unsigned char style) {
+  switch (ch) {
+  case '\n':
+    line_feed();
+    break;
+  case '\t':
+    tab();
+    break;
+  case '\r':
+    carriage_return();
+    break;
+  case '\v':
+    v_tab();
+    break;
+  default:
+    write_cell(ch, pos, style);
+    break;
+  }
+}
+
 void adv_cur_by(short n) {
   short cur = get_cur();
   cur += n;
@@ -135,48 +155,36 @@ void write_cell_cur(char ch, unsigned char style) {
   adv_cur();
 }
 
+void write_advanced_cell_cur(char ch, unsigned char style) {
+  switch (ch) {
+  case '\n':
+    line_feed();
+    break;
+  case '\t':
+    tab();
+    break;
+  case '\r':
+    carriage_return();
+    break;
+  case '\v':
+    v_tab();
+    break;
+  default:
+    write_cell_cur(ch, style);
+    break;
+  }
+}
+
 void write_str_at(char *str, short pos, unsigned char style) {
   for (short i = 0; str[i] != 0; ++i) {
-    switch (str[i]) {
-    case '\n':
-      line_feed();
-      break;
-    case '\t':
-      tab();
-      break;
-    case '\r':
-      carriage_return();
-      break;
-    case '\v':
-      v_tab();
-      break;
-    default:
-      write_cell(str[i], pos + i, style);
-      break;
-    }
+    write_advanced_cell(str[i], pos + i, style);
   }
 }
 
 // mostly duplicate code
 void write_str(char *str, unsigned char style) {
   for (int i = 0; str[i] != 0; ++i) {
-    switch (str[i]) {
-    case '\n':
-      line_feed();
-      break;
-    case '\t':
-      tab();
-      break;
-    case '\r':
-      carriage_return();
-      break;
-    case '\v':
-      v_tab();
-      break;
-    default:
-      write_cell_cur(str[i], style);
-      break;
-    }
+    write_advanced_cell_cur(str[i], style);
   }
 }
 

@@ -18,6 +18,7 @@ extern "C" {
 #include "../../../kernel/include/kbd.h"
 #include "../../../kernel/include/memring.h"
 #include "../../../kernel/include/misc.h"
+#include "../../../kernel/include/printf.h"
 #include "../../../kernel/include/text.h"
 #include "../../../kernel/include/util.h"
 }

@@ -1,6 +1,6 @@
 #include "../include/extra/fromc.hh"
-#include "../include/extra/vector.hh"
 #include "../include/extra/split.hh"
+// Vector is already included
 
 namespace Extra {
   void Split::pop() {

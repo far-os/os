@@ -85,12 +85,6 @@ static inline char *strcat(char *out, char *in) {
   return out;
 }
 
-
-#define NOT_WAITING 0x00
-#define HAS_INTEGER 0x10
-#define AFTER_PERCENT -1
-void sprintf(char *dest, const char *fmt, ...);
-
 #define trace_ch_until(a,b) trace_ch_until_with(a,b,0)
 unsigned short trace_ch_until_with(char *str, int until, int start);
 

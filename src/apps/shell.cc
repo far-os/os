@@ -5,9 +5,6 @@
 
 #include "include/shell.hh"
 
-// TODO fix outbuf using real printf.
-// OUTBUF_LEN is a firm 160.
-
 // list of entries, Entry and EntType are children of HelpHost
 const HelpHost::Entry comnames[] = {
   { .name = "calc", .desc = "Calculator applet", .type = HelpHost::PLAIN_ENTRY },
@@ -22,6 +19,9 @@ const HelpHost::Entry comnames[] = {
   { .name = "edit", .desc = "Text editor\xff<filename>", .type = HelpHost::SUB_ENTRY },
   { .name = "read", .desc = "Prints file content\xff<filename>", .type = HelpHost::SUB_ENTRY },
   { .name = "help", .desc = "Prints this help menu", .type = HelpHost::PLAIN_ENTRY },
+  { .name = "proc", .desc = "Utilities that manage running processes", .type = HelpHost::PLAIN_ENTRY },
+  { .name = "ls", .desc = "Prints currently running processes", .type = HelpHost::SUB_ENTRY },
+  { .name = "kill", .desc = "Kills the specified process\xff<@handle>", .type = HelpHost::SUB_ENTRY },
   { .name = "reset", .desc = "Resets machine\xff[or ctrl+alt+del]", .type = HelpHost::PLAIN_ENTRY },
   { .name = "split", .desc = "Forms a split-screen with another open app\xff<@handle>", .type = HelpHost::PLAIN_ENTRY },
   { .name = "set", .desc = "Gets/Sets config variables (see sub-entries)", .type = HelpHost::PLAIN_ENTRY },
@@ -32,9 +32,6 @@ const HelpHost::Entry comnames[] = {
   { .name = "fs", .desc = "Prints file system info", .type = HelpHost::SUB_ENTRY },
   { .name = "indic", .desc = "Prints keyboard LED status", .type = HelpHost::SUB_ENTRY },
   { .name = "mem", .desc = "Prints memory info", .type = HelpHost::SUB_ENTRY },
-  { .type = HelpHost::SUB_ENTRY | HelpHost::DIVIDER },
-  { .name = "proc", .desc = "Prints currently running processes", .type = HelpHost::SUB_ENTRY },
-  { .name = "kill", .desc = "Kills the specified process\xff<@handle>", .type = HelpHost::SUB_ENTRY },
   { .name = "time", .desc = "Gets current time", .type = HelpHost::PLAIN_ENTRY },
   { .name = "util", .desc = "Utilities and tools", .type = HelpHost::PLAIN_ENTRY },
   { .name = "to8.3", .desc = "Canonicalises a filename into 8.3\xff<string>", .type = HelpHost::SUB_ENTRY },
@@ -138,9 +135,6 @@ void KShell::first_run() {
 // the meat of the shell
 bool KShell::shexec() {
   if (strlen(this->work.buf) == 0) return true;
-  outbuf = malloc(OUTBUF_LEN);
-
-  unsigned char fmt = 0;
 
   // split work.buf by spaces. returns Split, which is a type of Vector
   Extra::Split argv(work.buf, ' ');
@@ -179,12 +173,14 @@ bool KShell::shexec() {
       line_feed();
     }
   } else if (strcmp(argv[0], "f:ls")) {
+    char *name = malloc(13);
     for (unsigned int search = 0; VALID_FILE(root_dir[search]); search++) {
-      sane_name(root_dir[search].name, endof(outbuf));
-      *endof(outbuf) = '\t';
+      sane_name(root_dir[search].name, name);
+      printf("%$%s\t", COLOUR(BLACK, B_WHITE), name);
     }
+    free(name);
 
-    fmt = COLOUR(BLACK, B_WHITE);
+    line_feed();
   } else if (strcmp(argv[0], "f:new")) {
     if (argv.len() <= 1) {
       msg(PROGERR, E_ARGS, "Please provide a filename");
@@ -229,7 +225,8 @@ shell_f_stat:
     // returns to a global buffer. be not confused, be horrified
     attribify(f->attrib);
 
-    sprintf(outbuf, "%s\n\t%d bytes, intial cluster %3X\n\tAttributes: %s\n\tCreated  %4d-%2d-%2d %2d:%2d:%2d\n\tModified %4d-%2d-%2d %2d:%2d:%2d\n\tAccessed %4d-%2d-%2d",
+    printf("%$%s\n\t%d bytes, intial cluster %3X\n\tAttributes: %s\n\tCreated  %4d-%2d-%2d %2d:%2d:%2d\n\tModified %4d-%2d-%2d %2d:%2d:%2d\n\tAccessed %4d-%2d-%2d\n",
+      COLOUR(BLUE, B_YELLOW),
       name,
       f->size,
       &(f->first_cluster_lo),
@@ -252,8 +249,6 @@ shell_f_stat:
     );
 
     free(name);
-
-    fmt = COLOUR(BLUE, B_YELLOW);
   } else if (strcmp(argv[0], "f:edit")) {
     // TODO: allow no file
     struct dir_entry *f = NULL;
@@ -295,6 +290,27 @@ shell_f_stat:
 
     exitting = false;
     goto shell_clean;
+  } else if (strcmp(argv[0], "proc:ls")) {
+    for (app_handle i = 0; i < AVAILABLE_KAPPS; ++i) {
+      printf("%$@%d: %s\n", app_db[i] ? 0xa : 0xc, i, app_db[i] ? app_db[i]->app_name : "-");
+    }
+  } else if (strcmp(argv[0], "proc:kill")) {
+    if (argv[1][0] == '@') {
+      int ar = -1;
+      if (strlen(argv[1]) > 1) {
+        ar = to_uint(argv[1] + 1);
+      }
+
+      if (ar == -1) goto _kesh_proc_kill_fail;
+      else if (!app_db[ar]) goto _kesh_proc_kill_fail;
+
+      if (ar == (this->app_id & 0xf)) {
+        msg(PROGERR, E_SUICIDE, "Cannot kill current process");
+      } else terminate_app(ar);
+    } else {
+    _kesh_proc_kill_fail:
+      msg(PROGERR, E_ARGS, "No valid handle supplied");
+    }
   } else if (strcmp(argv[0], "reset")) {
     cpu_reset();
     // if you reach past here, something has gone very wrong indeed
@@ -305,15 +321,15 @@ shell_f_stat:
     }
 
     if (ar != -1) {
-      sprintf(outbuf, "was %d\nnow ", xconf -> verbosity);
+      printf("%$was %d\n%$now ", COLOUR(BLUE, B_WHITE), xconf -> verbosity, COLOUR(BLUE, B_GREEN));
       xconf->verbosity = ar;
       WRITE_CONF();
-      fmt = COLOUR(BLUE, B_GREEN);
-    } else {
-      fmt = COLOUR(BLUE, B_YELLOW);
     }
 
-    sprintf(endof(outbuf), "verbose = %d", xconf -> verbosity);
+    printf("%$verbose = %d\n",
+      ar != -1 ? COLOUR(BLUE, B_GREEN) : COLOUR(BLUE, B_YELLOW),
+      xconf -> verbosity
+    );
   } else if (strcmp(argv[0], "split")) {
     if (strcmp(argv[1], "off")) {
       split_scr(0);
@@ -334,8 +350,9 @@ shell_f_stat:
     _kesh_split_fail:
       msg(PROGERR, E_ARGS, "No valid handle supplied");
     }
-  } else if (strcmp(argv[0], "sys:ata")) { 
-    sprintf(outbuf, "IDENTIFY of disk %2xh:\n\tLBA28\t%d sectors\n\tLBA48\t%B, %l sectors\n\tUDMA\t80CC: %B, %4x",
+  } else if (strcmp(argv[0], "sys:ata")) {
+    printf("%$IDENTIFY of disk %2xh:\n\tLBA28\t%d sectors\n\tLBA48\t%B, %l sectors\n\tUDMA\t80CC: %B, %4x\n",
+      COLOUR(RED, B_GREEN),
       &(hardware -> bios_disk),
       ATA_N_LBA28,
       ATA_HAS_LBA48,
@@ -343,20 +360,18 @@ shell_f_stat:
       ATA_HAS_80CC,
       &(ATA_UDMA_MODES)
     );
-
-    fmt = COLOUR(RED, B_GREEN); // fmt 
   } else if (strcmp(argv[0], "sys:cpu")) {
-    sprintf(outbuf, "CPUID.\n\t\x10 %12s\n\tFamily %2xh, Model %2xh, Stepping %1xh\n\tBrand \"%s\"",
+    printf("%$CPUID.\n\t\x10 %12s\n\tFamily %2xh, Model %2xh, Stepping %1xh\n\tBrand \"%s\"\n",
+      COLOUR(YELLOW, B_GREEN),
       &(hardware -> vendor),
       &(hardware -> c_family), // family
       &(hardware -> c_model), // model
       &(hardware -> c_stepping), // stepping
       hardware -> cpuid_ext_leaves >= 0x80000004 ? &(hardware -> brand) : NULL // brand string
     );
-
-    fmt = COLOUR(YELLOW, B_GREEN); // fmt
-  } else if (strcmp(argv[0], "sys:fs")) { 
-    sprintf(outbuf, "%5s disk:\n\tVol. label \"%11s\"\n\tVol. ID %8X\n\tCluster size: %d sectors\n\tN. Fats: %d\n\tVolume size %dKiB",
+  } else if (strcmp(argv[0], "sys:fs")) {
+    printf("%$%5s disk:\n\tVol. label \"%11s\"\n\tVol. ID %8X\n\tCluster size: %d sectors\n\tN. Fats: %d\n\tVolume size %dKiB\n",
+      COLOUR(RED, B_YELLOW),
       &(bpb -> sys_ident),
       &(bpb -> vol_lbl),
       &(bpb -> serial_no),
@@ -364,48 +379,21 @@ shell_f_stat:
       bpb -> n_fats,
       (bpb -> n_sectors * bpb -> bytes_per_sec) >> 10
     );
-
-    fmt = COLOUR(RED, B_YELLOW); // fmt 
   } else if (strcmp(argv[0], "sys:indic")) {
     // indicators
-    sprintf(outbuf, "scroll: %d\nnum: %d\ncaps: %d",
+    printf("%$scroll: %d\nnum: %d\ncaps: %d\n",
+      COLOUR(GREEN, RED),
       bittest(&(keys -> modifs), 0),
       bittest(&(keys -> modifs), 1),
       bittest(&(keys -> modifs), 2)
     );
-
-    fmt = COLOUR(GREEN, RED);
   } else if (strcmp(argv[0], "sys:mem")) {
     void *addr = malloc(1);
-    sprintf(outbuf, "First free memory addr: %p\n\t\tout of: %p\n\nCurrently running from: %p", addr, MEM_END, rip_thunk());
+    printf("%$First free memory addr: %p\n\t\tout of: %p\n\nCurrently running from: %p\n", COLOUR(MAGENTA, B_YELLOW), addr, MEM_END, rip_thunk());
     free(addr);
-
-    fmt = COLOUR(MAGENTA, B_YELLOW); // fmt
-  } else if (strcmp(argv[0], "sys:proc")) {
-    for (app_handle i = 0; i < AVAILABLE_KAPPS; ++i) {
-      sprintf(outbuf, "@%d: %s\n", i, app_db[i] ? app_db[i]->app_name : "-");
-      write_str(outbuf, app_db[i] ? 0xa : 0xc);
-      memzero(outbuf, strlen(outbuf));
-    }
-  } else if (strcmp(argv[0], "sys:kill")) {
-    if (argv[1][0] == '@') {
-      int ar = -1;
-      if (strlen(argv[1]) > 1) {
-        ar = to_uint(argv[1] + 1);
-      }
-
-      if (ar == -1) goto _kesh_sys_kill_fail;
-      else if (!app_db[ar]) goto _kesh_sys_kill_fail;
-
-      if (ar == (this->app_id & 0xf)) {
-        msg(PROGERR, E_SUICIDE, "Cannot kill current process");
-      } else terminate_app(ar);
-    } else {
-    _kesh_sys_kill_fail:
-      msg(PROGERR, E_ARGS, "No valid handle supplied");
-    }
   } else if (strcmp(argv[0], "time")) {
-    sprintf(outbuf, "Time since kernel load: %d.%2ds\n%s%c%4d-%2d-%2d %2d:%2d:%2d",
+    printf("%$Time since kernel load: %d.%2ds\n%s%c%4d-%2d-%2d %2d:%2d:%2d\n",
+      COLOUR(RED, B_CYAN),
       countx / 100,
       countx % 100,
       curr_time -> weekday ? weekmap[curr_time -> weekday - 1] : NULL,
@@ -417,23 +405,17 @@ shell_f_stat:
       curr_time -> minute,
       curr_time -> second
     );
-
-    fmt = COLOUR(RED, B_CYAN);
   } else if (strcmp(argv[0], "util:to8.3")) {
-    canonicalise_name(argv[1], outbuf);
-    fmt = COLOUR(RED, B_GREEN);
+    char *name = malloc(13);
+    canonicalise_name(argv[1], name);
+    printf("%$%s\n", COLOUR(RED, B_GREEN), name);
+    free(name);
   } else {
     msg(WARN, E_UNKENTITY, "Unknown command");
     goto shell_clean;
   }
 
-  if (fmt) {
-    write_str(outbuf, fmt);
-    line_feed();
-  }
-
 shell_clean:
-  free(outbuf);
   argv.~Split();
   return exitting; // exit normally
 }

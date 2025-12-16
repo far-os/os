@@ -5,9 +5,6 @@
 #include "include/memring.h"
 #include "include/port.h"
 
-// not really using standard library - stdarg just provides platform-dependent defines 
-#include <stdarg.h>
-
 void idle() {
   pbyte_out(0x80, 0x0); // just passing the time (1-4 microseconds)
 }
@@ -134,113 +131,6 @@ unsigned int to_uint(char *input) {
     f += (unsigned int) x;
   }
   return f;
-}
-
-void sprintf(char *dest, const char *fmt, ...) {
-  va_list args;
-  va_start(args, fmt); // second parameter is the last arg before variadic
-  
-  // we entrust that dest has already been zero'd
-  char waiting = NOT_WAITING;
-  unsigned int length_modif = 0;
-
-  int fi, di;
-  for (fi = 0, di = 0; fmt[fi];) { // fi = fmt offset, di = dest offset
-    if (waiting == NOT_WAITING) {
-      if (fmt[fi] == '%') {
-        waiting = AFTER_PERCENT;
-        ++fi;
-        continue;
-      }
-
-      // normal operation
-      dest[di++] = fmt[fi++];
-      continue;
-    } else {
-      switch (fmt[fi]) {
-        case '0':
-        case '1':
-        case '2':
-        case '3':
-        case '4':
-        case '5':
-        case '6':
-        case '7':
-        case '8':
-        case '9':
-          waiting = HAS_INTEGER;
-          length_modif *= 10;
-          length_modif += fmt[fi] - '0';
-          break;
-        case 'b': 
-          // NOTE: lesson learnt here. ALWAYS give va_arg unsigned int, nothing shorter, because otherwise gcc will emit ud2 and will only tell you in a pathetic little "note:"
-          strcat(dest, va_arg(args, unsigned int) ? "true" : "false");
-          di = strlen(dest);
-          goto stop_waiting;
-        case 'B': 
-          strcat(dest, va_arg(args, unsigned int) ? "yes" : "no");
-          di = strlen(dest);
-          goto stop_waiting;
-        case 'd':
-          if (length_modif) {
-            to_filled_dec(va_arg(args, unsigned int), dest + di, length_modif, '0');
-          } else {
-            to_dec(va_arg(args, unsigned int), dest + di);
-          }
-          di = strlen(dest);
-          goto stop_waiting;
-        case 'l': // no filled variant, historical accident again
-          l_to_dec(va_arg(args, unsigned int), dest + di);
-          di = strlen(dest);
-          goto stop_waiting;
-        case 'X':
-          strcat(dest, "0x");
-          di += 2;
-        case 'x':
-          if (length_modif == 1) {
-            dest[di++] = nybble_to_hex(va_arg(args, unsigned int));
-            goto stop_waiting;
-          }
-
-          to_hex(va_arg(args, unsigned int), length_modif ? length_modif : 8, dest + di);
-          di = strlen(dest);
-          goto stop_waiting;
-        case 'p':
-          int val = va_arg(args, unsigned int);
-          to_hex(&val, 8, dest + di);
-          di = strlen(dest);
-          goto stop_waiting;
-        case 's':
-          char *ptr = va_arg(args, char *);
-          if (ptr) { // ie, not null
-            if (length_modif) {
-              memcpy(ptr, dest + di, length_modif);
-            } else {
-              strcpy(ptr, dest + di);
-            }
-            di = strlen(dest);
-          }
-          goto stop_waiting;
-        case 'c':
-          char c = va_arg(args, int);
-          if (c) { dest[di++] = c; }
-          goto stop_waiting;
-        case '%':
-          dest[di++] = '%';
-          goto stop_waiting;
-        default:
-          char *k = "printf: unknown format %_, ignoring";
-          k[24] = fmt[fi];
-          msg(WARN, E_PROG, k);
-
-        stop_waiting:
-          length_modif = 0;
-          waiting = NOT_WAITING;
-          break;
-      }
-      ++fi;
-    }
-  }
 }
 
 unsigned short trace_ch_until_with(char *str, int until, int start) {

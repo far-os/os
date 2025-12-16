@@ -1,4 +1,4 @@
-#include "vector.hh"
+#include "vector.inl.hh"
 
 #pragma once
 

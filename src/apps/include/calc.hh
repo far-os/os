@@ -2,7 +2,7 @@
 
 #include "kapp.hh"
 #include "extra/fromc.hh"
-#include "extra/vector.hh"
+#include "extra/vector.inl.hh"
 
 using namespace Extra;
 
@@ -15,7 +15,7 @@ struct Calc : KShell {
 
 protected:
   const char* get_prompt(); // prompt function
-  
+
   bool shexec();
 
 // - end of inheritance

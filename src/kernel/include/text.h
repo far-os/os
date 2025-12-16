@@ -127,7 +127,9 @@ void adv_cur_by(short);
 #define adv_cur() adv_cur_by(1)
 
 void write_cell(char ch, short pos, unsigned char style);
+void write_advanced_cell(char ch, short pos, unsigned char style);
 void write_cell_cur(char ch, unsigned char style);
+void write_advanced_cell_cur(char ch, unsigned char style);
 void write_str_at(char *str, short pos, unsigned char style);
 void write_str(char *str, unsigned char style);
 void write_str_into(struct inp_strbuf *dest, char *str, unsigned char style);

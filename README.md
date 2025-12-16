@@ -30,6 +30,7 @@ The kernel's source files are explained below:
 - `kernel.c`: The kernel itself.
 - `memring.c`: Memory management: malloc and free
 - `misc.c`: Definitions - structs, `#define`s, etc
+- `printf.c`: Contains `printf` and its variations. TODO: move this into a stdlib
 - `pic.c`: Utilities for initialising the PIC, masking the PIC, etc.
 - `syscall.c`: Contains code for `syscall`ing.
 - `text.c`: Code for writing to the screen.

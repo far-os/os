@@ -1,5 +1,5 @@
 #include "include/calc.hh"
-#include "include/extra/vector.hh"
+// Vector is already included
 
 void Calc::first_run() {
   write_str("Reverse Polish Calculator\n", COLOUR(BLACK, B_GREEN));
@@ -64,16 +64,12 @@ bool Calc::shexec() {
     from = to + 1;
   }
 
-  char *intbuf = malloc(16); // integer buffer
   for (unsigned int i = 0; i < this->stack.len(); i++) {
-    memzero(intbuf, 16);
-    sprintf(intbuf, "%d ", this->stack[i]); 
-    write_str(intbuf, COLOUR(
-      BLACK,
-      (i < untouched_top ? B_CYAN : B_RED)
-    ));
+    printf("%$%d ",
+      COLOUR(BLACK, (i < untouched_top ? B_CYAN : B_RED)),
+      this->stack[i]
+    );
   }
-  free(intbuf);
 
   line_feed();
   write_str(this->get_prompt(), COLOUR(BLACK, WHITE));
