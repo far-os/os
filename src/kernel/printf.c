@@ -7,8 +7,6 @@
 // not really using standard library - stdarg just provides platform-dependent defines
 #include <stdarg.h>
 
-typedef void (*putch_callback)(char ch, unsigned char style);
-
 // returns number of characters moved
 unsigned int callback_str(putch_callback put, char *str, unsigned char style, unsigned int lim) {
   unsigned int count = 0;
@@ -29,7 +27,7 @@ void printf(const char* fmt, ...) {
   va_list args;
   va_start(args, fmt); // second parameter is the last arg before variadic
 
-  vfctprintf(&write_advanced_cell_cur, fmt, args);
+  vpfctprintf(&write_advanced_cell_cur, fmt, COLOUR(BLACK, WHITE), args);
 
   va_end(args);
 }
@@ -45,18 +43,33 @@ void sprintf(char *dest, const char* fmt, ...) {
     dest[di++] = ch;
   }
 
-  vfctprintf(&cb, fmt, args);
+  vpfctprintf(&cb, fmt, 0, args); // style doesn't matter: here we've just put 0
 
   va_end(args);
 }
 
-// va_list function printf. we don't export this, it remains entirely internal
-void vfctprintf(putch_callback put, const char *fmt, va_list args) {
+void snprintf(char *dest, unsigned int n, const char* fmt, ...) {
+  va_list args;
+  va_start(args, fmt); // second parameter is the last arg before variadic
+
+  int di = 0;
+  // XXX: gcc extension to use nested functions
+  void cb(char ch, unsigned char _) {
+    if (di < n) dest[di++] = ch;
+  }
+
+  vpfctprintf(&cb, fmt, 0, args); // style doesn't matter: here we've just put 0
+
+  va_end(args);
+}
+
+// va_list painted function printf. nobody should really be using this
+void vpfctprintf(putch_callback put, const char *fmt, unsigned char start_style, va_list args) {
   // we trust that dest has already been zero'd
   char waiting = NOT_WAITING;
   unsigned int length_modif = 0;
 
-  unsigned char style = COLOUR(BLACK, WHITE);
+  unsigned char style = start_style;
   int fi;
 
   char *convbuf = NULL;

@@ -18,6 +18,7 @@ enum ERRSIG {
   E_BADADDR = 5,
   E_ARGS = 6,
   E_BOUND = 7,
+  E_MATHS = 8,
   E_ILLEGAL = 9,
   E_SUICIDE = 10,
   E_UNKENTITY = 11,
@@ -30,4 +31,4 @@ enum ERRSIG {
 
 extern char msg_symbs[5];
 
-void msg(enum MSG_TYPE type, enum ERRSIG sig, char* supp);
+void msg(enum MSG_TYPE type, enum ERRSIG sig, const char* supp, ...);

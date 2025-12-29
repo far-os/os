@@ -46,7 +46,7 @@ bool Calc::shexec() {
     SIMPLE_OPERATOR(+) else
     SIMPLE_OPERATOR(-) else
     SIMPLE_OPERATOR(*) else
-    SIMPLE_OPERATOR(/) else
+    SIMPLE_OPERATOR(/) else // TODO: when move to stdlib, divide by 0 errors will exist. just be prepared to handle them.
     SIMPLE_OPERATOR(%) else
     SIMPLE_OPERATOR(|) else
     SIMPLE_OPERATOR(&) else

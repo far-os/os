@@ -84,6 +84,7 @@ To syscall to the kernel, use `int 0x33`. The service code goes in `ah`, and the
 | `5` | Invalid address |
 | `6` | Invalid/insufficient arguments |
 | `7` | `bound` instruction failing (Program not found) |
+| `8` | Mathematical error (e.g. divide by zero) |
 | `9` | Illegal instruction (#UD exception) |
 | `10` | Cannot kill process |
 | `11` | Unknown value/command |

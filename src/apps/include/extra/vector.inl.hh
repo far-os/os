@@ -1,6 +1,7 @@
 #pragma once
 
 #include "fromc.hh"
+#include "bound.hh"
 
 namespace Extra {
 #define VECCAP_DEFAULT 16
@@ -41,10 +42,18 @@ namespace Extra {
 
     // get at index
     T& operator[](int at) {
-      if (at >= this->curr_size) {
-        msg(PROGERR, E_BUFOVERFLOW, "Attempted to access past end of Vector");
+      struct BoundPacket bound {
+        .first = this->data,
+        .last = &(this->data[this->curr_size - 1])
+      };
+
+      // TODO: when we use a program, we probably want to use some form of assertion
+      T& addr = this->data[at];
+      if (!bound.contains(&addr)) { // we check if bound contains this.
+        msg(PROGERR, E_BOUND, "Attempted access Vector with len %d at index %d", curr_size, at);
       }
-      return this->data[at];
+
+      return addr;
     }
 
     /*

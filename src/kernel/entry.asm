@@ -310,6 +310,7 @@ generic_eh:
         pop ds
 
         add esp, 8 ; restore our stack: we pushed the error code and interrupt number
+
         iretd       ; adios
 
 eh_macro    0

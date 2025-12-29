@@ -15,17 +15,34 @@ static inline void retto_progeh(struct stack_state *s) {
   }
 }
 
+// there was an exception.
+// means loads ebx as jump to if fail, IF AND ONLY IF KERNEL.
+static inline void jump_if_fail(struct cpu_state * c, struct stack_state *s) {
+  if (s -> cs == 0x08) { // if called by kernel
+    s -> eip = c -> ebx;
+  }
+}
+
 void eh_c(struct cpu_state c, unsigned int i, struct stack_state s) {
   switch (i) {
+  case 0x00: // #DE - Divide by zero error
+    // TODO: make better.
+    if (s.cs == 0x08) { // if from kernel (oh no very very bad)
+      msg(PANIC, E_MATHS, "Divide by zero in kernel at %p", s.eip);
+    } else {
+      c.eax = E_MATHS;
+    }
+    break;
   case 0x05: // #BR - Bound
-    c.eax = 7; // returns an error code, indicating the bound was not in range
+    c.eax = E_BOUND; // returns an error code, indicating the bound was not in range
     retto_progeh(&s);
+    jump_if_fail(&c, &s);
     break;
   case 0x06: // #UD - Illegal instruction
     if (s.cs == 0x08) { // if from kernel (oh no very very bad)
-      msg(PANIC, E_ILLEGAL, "Illegal instruction in kernel"); 
+      msg(PANIC, E_ILLEGAL, "Illegal instruction in kernel at %p", s.eip);
     } else {
-      c.eax = 9;
+      c.eax = E_ILLEGAL;
     }
     retto_progeh(&s);
     break;

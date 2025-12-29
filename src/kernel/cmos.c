@@ -90,7 +90,7 @@ void read_rtc(struct timestamp *ts) {
   }
 
   if (century < 19) {
-    msg(INFO, E_TIME, "Invalid century or before 1900 - assuming year 20xx");
+    msg(INFO, E_TIME, "Invalid century or before 1900 - assuming year 20%d", ts -> year);
     century = 20;
   }
 

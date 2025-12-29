@@ -26,10 +26,7 @@ app_handle instantiate(struct k_app *app, app_handle parent, char is_fg) {
   app->app_id = (parent << 4) | (found & 0xf);
   app_db[found] = app; // put app in table
 
-  char *g = malloc(32);
-  sprintf(g, "Running app on @%d", found);
-  msg(INFO, NONE, g);
-  free(g);
+  msg(INFO, NONE, "Running app on @%d", found);
   
   if (is_fg) {
     focus_app(found); // background apps dont need to do this
