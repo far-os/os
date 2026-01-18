@@ -23,7 +23,11 @@ namespace Extra {
   }
 
   Split::~Split() {
-    for (int i = 0; i < curr_size; ++i) free((*this)[i]);
-    Vector::~Vector();
+    while (curr_size) {
+      this->pop();
+    }
+//    for (unsigned i = 0; i < curr_size; ++i) free((*this)[i]);
+    // thank you c++
+//    Vector::~Vector();
   }
 }

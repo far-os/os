@@ -9,9 +9,9 @@
 #include "include/text.h"
 #include "include/memring.h"
 
-struct fat_superblock *bpb = (struct fat_superblock *) 0x7c00; // boot location, but thats where the superblock os
-unsigned char *file_table = (void *) 0x20000;
-struct dir_entry *root_dir = NULL;
+struct fat_superblock *bpb = (struct fat_superblock *) 0x7c00; // boot location, but thats where the fat superblock is
+unsigned char *file_table = (void *) 0x20000; // in-memory copy of FAT
+struct dir_entry *root_dir = NULL; // in-memory copy of root directory. XXX: stored directly after FAT.
 
 unsigned int root_dir_secs_n = 0;
 lba_n root_starts_at = 0;
@@ -32,6 +32,7 @@ lba_n get_cluster(cluster_id from) {
   return ((from - 2) * bpb -> sec_per_clust) + data_starts_at;
 }
 
+// read the fat into memory.
 void read_fat() {
   read_pio28(
     file_table,
@@ -40,11 +41,12 @@ void read_fat() {
     hardware -> boot_disk_p.dev_path[0] & 0x01
   ); // reads disk for config, has to get master or slave
 
+  // we set the address of the root_dir.
+  // XXX: this is directly after the FAT. we can't hardcode this, as the FAT could vary in size
   int n = bpb -> sec_per_fat << 9;
+  root_dir = (struct dir_entry *) (file_table + n);
 
-  root_dir = file_table + n;
-
-  if (!memcmp(file_table, file_table + n, n)) {
+  if (!memcmp(file_table, file_table + n, n)) { // check the two FATs. if they're different, file system is likely borked
     msg(KERNERR, E_NOSTORAGE, "FATs are not identical");
   }
 }
@@ -56,7 +58,7 @@ void write_fat() {
     bpb -> sec_per_fat,
     hardware -> boot_disk_p.dev_path[0] & 0x01
   ); // reads disk for config, has to get master or slave
-  
+
   // the second fat
   write_pio28(
     file_table,
@@ -151,7 +153,7 @@ void write_root() {
 // e.g. abcdefgh.xyz => ABCDEFGHXYZ
 void canonicalise_name(char *from, char *to) {
   memset(to, FAT_FILENAME_LEN, ' ');
-  unsigned char dotted = 0; // have we dotted yet?
+  unsigned char dotted = 0; // counting the number of dots. not exactly a bool
   int g = -1;
   for (int c = 0; (from[c] && dotted < 2); ++c) {
     if (from[c] == '.') {
@@ -197,6 +199,17 @@ struct dir_entry *get_file(char *name) {
   }
   msg(PROGERR, E_NOFILE, "File not found");
   return NULL;
+}
+
+// similar logic as above
+bool does_exist(char *name) {
+  char nbuf[FAT_FILENAME_LEN + 1] = {0};
+  canonicalise_name(name, nbuf);
+  for (unsigned int search = 0; VALID_FILE(root_dir[search]); search++) {
+    if (memcmp(nbuf, root_dir[search].name, FAT_FILENAME_LEN)) return true;
+  }
+
+  return false;
 }
 
 void rename_file(char *old, char *new) {
@@ -253,6 +266,11 @@ void read_file(char *filename, void * where) {
 }
 
 struct dir_entry *create_file(char *filename) {
+  if (get_file(filename)) {
+    msg(KERNERR, E_NOFILE, "File %s already exists", filename);
+    return NULL;
+  }
+
   // get first unoccupied file slot
   // TODO: fix for non-root directories, as uses n_root_entries
   unsigned int search = 0;
@@ -261,7 +279,7 @@ struct dir_entry *create_file(char *filename) {
       msg(KERNERR, E_NOSTORAGE, "Root directory full");
 
   cluster_id loc = alloc_cluster(2);
-  if (loc == -1) msg(KERNERR, E_NOSTORAGE, "Cannot allocate cluster");
+  if (loc == -1) msg(KERNERR, E_NOSTORAGE, "Failed allocate cluster");
 
   struct dir_entry *f = &root_dir[search];
 
@@ -273,7 +291,7 @@ struct dir_entry *create_file(char *filename) {
 
   f->first_cluster_lo = loc & 0xffff;
   f->first_cluster_hi = (loc >> 16) & 0xffff;
-  
+
 
   // file stuff
   f -> attrib = A_ARCHIVE;

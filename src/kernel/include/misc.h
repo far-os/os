@@ -1,5 +1,6 @@
 #pragma once
 
+// TODO: remove!
 #define PROG_LOC 0x100000
 #define adj(x) (x) + PROG_LOC
 #define badj(x) (x) - PROG_LOC
@@ -7,6 +8,8 @@
 
 #define NULL (void *) 0
 #define endof(str) (str + strlen(str))
+
+#include <stdbool.h>
 
 // where the kernel is stored
 extern void *kernel;
@@ -32,3 +35,4 @@ struct farb_header {
 #ifndef __cplusplus
 extern struct farb_header __seg_fs *prog_head;
 #endif
+

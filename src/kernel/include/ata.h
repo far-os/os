@@ -1,4 +1,5 @@
 #include "fs.h"
+#include "misc.h"
 
 #pragma once
 
@@ -9,6 +10,9 @@
 
 // TODO: in the event i wish to do multiple disks, this all needs to be revamped.
 extern unsigned short *ata_identity;
+typedef bool master_slave_selector;
+#define DISK_MASTER 0
+#define DISK_SLAVE 1
 
 // ata_identity[0] is apparently useful if disk is not a harddisk (idk how it's useful, grrrr osdev wiki)
 #define ATA_HAS_LBA48 ( ata_identity[83] & (1 << 10) )
@@ -23,6 +27,6 @@ extern unsigned short *ata_identity;
 // lo byte is supported modes, hi byte is ones in use. if using udma, hope they're equal else you'll have pqin
 #define ATA_UDMA_MODES ( ata_identity[88] )
 
-void ata_identify(void *addr, unsigned char drv);
-void read_pio28(void *addr, unsigned int lba, unsigned int len, unsigned char drv);
-void write_pio28(void *data, unsigned int lba, unsigned int len, unsigned char drv);
+void ata_identify(void *addr, master_slave_selector drv);
+void read_pio28(void *addr, unsigned int lba, unsigned int len, master_slave_selector drv);
+void write_pio28(void *data, unsigned int lba, unsigned int len, master_slave_selector drv);

@@ -1,6 +1,7 @@
 #include "include/kappldr.h"
 #include "include/err.h"
 #include "include/misc.h"
+#include "include/printf.h"
 #include "include/text.h"
 #include "include/util.h"
 #include "include/memring.h"

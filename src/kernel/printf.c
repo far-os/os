@@ -135,16 +135,18 @@ void vpfctprintf(putch_callback put, const char *fmt, unsigned char start_style,
           }
 
           convbuf = malloc(length_modif ? length_modif : 8);
-          to_hex(va_arg(args, unsigned int), length_modif ? length_modif : 8, convbuf);
+          to_hex((void *) va_arg(args, unsigned int), length_modif ? length_modif : 8, convbuf);
           callback_str(put, convbuf, style, 0);
 
           goto stop_waiting;
         case 'p':
+          // NOTE: %p is used by malloc/free for their errors, and verbose errors. we need this to be "malloc-safe" so that if
+          // something is wrong with heap, trying to tell user doesn't shit itself and lead to an OOM.
+          char emergency[9] = {0};
           int val = va_arg(args, unsigned int);
 
-          convbuf = malloc(8);
-          to_hex(&val, 8, convbuf);
-          callback_str(put, convbuf, style, 0);
+          to_hex(&val, 8, emergency);
+          callback_str(put, emergency, style, 0);
 
           goto stop_waiting;
         case 's':
@@ -172,9 +174,11 @@ void vpfctprintf(putch_callback put, const char *fmt, unsigned char start_style,
           put('%', style);
           goto stop_waiting;
         default:
+          // we do this, cause there is no point in recursive call...
           char *k = "printf: unknown format %_, ignoring";
           k[24] = fmt[fi];
-          msg(WARN, E_PROG, k);
+          msg(WARN, E_PROG, k); // (actually nevermind, it is a recursive call, just shush)
+          // if i ever decide to change %c i don't want this to be the nail that i step on
 
         stop_waiting:
           if (convbuf) { // free our conversion buffer if it's been used

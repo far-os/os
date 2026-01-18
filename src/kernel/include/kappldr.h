@@ -4,9 +4,11 @@
 
 // loading the KApp, interfacing with the c++
 
-// this is the c++ class, we define it very differently there, so we hide this one
+// this is the c++ class. we define it very differently there, so we hide this one
 #ifndef __cplusplus
-// all the virtual functions
+struct k_app; // to avoid cyclic struct resolution
+
+// all the virtual methods. take "this" as first parameter
 struct k_app_fntable {
   void (*invoke)(struct k_app *);
   void (*first_run)(struct k_app *);

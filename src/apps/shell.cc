@@ -35,7 +35,7 @@ const HelpHost::Entry comnames[] = {
   { .name = "time", .desc = "Gets current time", .type = HelpHost::PLAIN_ENTRY },
   { .name = "util", .desc = "Utilities and tools", .type = HelpHost::PLAIN_ENTRY },
   { .name = "to8.3", .desc = "Canonicalises a filename into 8.3\xff<string>", .type = HelpHost::SUB_ENTRY },
-  { .type = -1 }
+  { .type = HelpHost::TERMINATE }
 };
 
 void KShell::invoke() { // here, is effectively equivalent to comupd and curupd
@@ -126,7 +126,7 @@ dehistify:
 void KShell::first_run() {
   /*
   write_str("os ", 0x07); */
-  write_str("Kernel Executive Shell. (c) 2022-5.\n", COLOUR(BLUE, B_RED));
+  write_str("Kernel Executive Shell. (c) 2022-6.\n", COLOUR(BLUE, B_RED));
 
   // print out prompt
   write_str(get_prompt(), COLOUR(BLACK, WHITE));
@@ -187,8 +187,9 @@ bool KShell::shexec() {
       goto shell_clean;
     }
 
-    create_file(argv[1]);
-    goto shell_f_stat;
+    if (create_file(argv[1])) {
+      goto shell_f_stat;
+    }
   } else if (strcmp(argv[0], "f:ren")) {
     if (argv.len() <= 2) {
       msg(PROGERR, E_ARGS, "Please provide two source and destination filenames");
@@ -411,12 +412,12 @@ shell_f_stat:
     printf("%$%s\n", COLOUR(RED, B_GREEN), name);
     free(name);
   } else {
-    msg(WARN, E_UNKENTITY, "Unknown command");
+    msg(WARN, E_UNKENTITY, "Unknown command \"%s\"", argv[0]);
     goto shell_clean;
   }
 
 shell_clean:
-  argv.~Split();
+//  argv.~Split(); // NB: by the magic of "c++ does it for you"...
   return exitting; // exit normally
 }
 
@@ -435,6 +436,6 @@ KShell::KShell(int comlen): KApp(), work(comlen) {
 }
 
 KShell::~KShell() { // madatory cleanup
-  delete &work;
+  // delete &work; NB: already magically destructured cause it's a property (thanks c++ i guess?)
   delete histbuf;
 }

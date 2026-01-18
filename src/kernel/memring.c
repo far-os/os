@@ -11,7 +11,7 @@ void mem_init() {
 
 // checks if an address is a valid memring address (i.e. not out of bounds)
 static inline char is_memring(void *ptr) {
-  unsigned int addr = ((unsigned int) ptr / MEMBLK_SIZE) - MEMRING_LOC;
+  unsigned int addr = (unsigned int) TO_MEMRING(ptr) - MEMRING_LOC;
   return addr < MEMRING_LEN;
 }
 
@@ -48,15 +48,15 @@ void * malloc(unsigned int len) {
 
 void free(void * ptr) {
   if (!(is_memring(ptr))) {
-    msg(KERNERR, E_BADADDR, "free: invalid address\n");
+    msg(KERNERR, E_BADADDR, "free: invalid address <%p>", ptr);
     return;
   }
 
 
-  unsigned char * at_inring = (unsigned int) ptr / MEMBLK_SIZE;
+  unsigned char * at_inring = TO_MEMRING(ptr);
 
   if (!(*at_inring & BLK_START)) {
-    msg(KERNERR, E_BADADDR, "Cannot double free address");
+    msg(KERNERR, E_BADADDR, "Cannot double free address <%p>", ptr);
     return;
   }
 
@@ -65,21 +65,21 @@ void free(void * ptr) {
     ;
     !(at_inring[blocks - 1] & BLK_END);
     blocks++
-  )
-  
+  ); // beware, this semicolon being missing cost me several hours
+
   // remove the actual taking up
-  memzero((unsigned int) ptr / MEMBLK_SIZE, blocks);
+  memzero(at_inring, blocks);
 }
 
 void * realloc(void *ptr, unsigned int len) {
   // if (!(is_memring(ptr))) {
   unsigned int blocks = 1; // amount of blocks taken up
-  for (unsigned char * ptr_lc = (unsigned int) ptr / MEMBLK_SIZE; !(*(ptr_lc++) & BLK_END);)
+  for (unsigned char * ptr_lc = TO_MEMRING(ptr); !(*(ptr_lc++) & BLK_END);)
     ++blocks;
 
   unsigned int new_blk = (len / MEMBLK_SIZE) + !!(len % MEMBLK_SIZE); // new block count
 
-  unsigned int offset = (unsigned int) (ptr - MEM_LOC) / MEMBLK_SIZE;
+  unsigned int offset = TO_MEMRING(ptr - MEM_LOC);
 
   if (!(is_memring(ptr))) goto create_new;
 

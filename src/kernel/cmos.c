@@ -41,7 +41,7 @@ struct timestamp from_dostime(struct dos_timestamp dos) {
 }
 
 struct dos_timestamp to_dostime(struct timestamp ts) {
-  struct dos_timestamp dos;
+  struct dos_timestamp dos = {};
   if ((ts.year - 1980) & 0xffffff80) {
     msg(INFO, E_TIME, "Cannot convert to dostime: year out of range");
     return dos;

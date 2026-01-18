@@ -15,6 +15,7 @@ public:
     SUB_ENTRY = 1 << 0, // indented, and preceded by a colon
     DEBUG_ENTRY = 1 << 1, // lighter text, "greyed out"
     DIVIDER = 1 << 2, // a load of dashes
+    TERMINATE = -1,
   };
 
   struct Entry {
@@ -32,6 +33,6 @@ private:
   void put_entries();
 
 public:
-  HelpHost(char* what, Entry* loads);
+  HelpHost(char* what, const Entry* loads);
   ~HelpHost();
 };

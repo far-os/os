@@ -44,12 +44,17 @@ void msg(enum MSG_TYPE type, enum ERRSIG sig, const char* supp, ...) {
   adv_cur();
 
   if (xconf -> verbosity >= SHOW_STACKTRACE) {
-    printf("%$<%p> \xae <%p>", msg_style & 0xf7, __builtin_return_address(0), __builtin_return_address(1));
+    printf(
+      "%$<%p> \xae <%p>",
+      msg_style & 0xf7,
+      __builtin_return_address(0),
+      __builtin_return_address(1)
+    );
   }
 
   if (sig && (type != PANIC)) {
     char sigbuf[16] = {0}; // can't malloc, becuase malloc may call this
-    snprintf("%c %d", 15, 0x0f, sig);
+    to_dec(sig, sigbuf); // DO NOT use printf, cause that calls malloc too
     short pos = ((get_cur() / VGA_WIDTH) + 1) * VGA_WIDTH;
     pos -= strlen(sigbuf);
     write_str_at(sigbuf, pos, msg_style);

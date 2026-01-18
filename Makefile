@@ -13,7 +13,7 @@ export DISK_OFFSET := 0
 # Also used to determine load location in memory (loaded at 0x80_000 - KERN_SIZE{in bytes}. done so that it resides in the highest possible region in 640k that's not possible hoarded by bios).
 export KERN_SIZE := 108
 
-CFLAGS := -falign-functions=1 -fno-stack-protector -ffreestanding -m32 -march=i686 -Wall -Werror=return-type -fpermissive -D"KERN_LEN=$(KERN_SIZE)"
+CFLAGS := -falign-functions=1 -fno-stack-protector -ffreestanding -m32 -march=i686 -Wall -Wextra -Werror=return-type -fpermissive -D"KERN_LEN=$(KERN_SIZE)"
 CPPFLAGS := -fno-exceptions -fno-rtti -nostdinc++ $(CFLAGS)
 # -static-libgcc. contains some long long arithmetic stuff
 

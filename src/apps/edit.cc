@@ -7,12 +7,12 @@ const HelpHost::Entry keyb_shortcuts[] = {
   { .name = "alt+K", .desc = "Clear line", .type = HelpHost::PLAIN_ENTRY },
   { .name = "<Esc>", .desc = "Quit", .type = HelpHost::PLAIN_ENTRY },
   { .name = "alt+Q", .desc = "Throw away unsaved changes", .type = HelpHost::SUB_ENTRY },
-  { .type = -1 }
+  { .type = HelpHost::TERMINATE }
 };
 
 void Editor::invoke() {
-  if (dirty < 2) {
-    if (this->key_q[0]) dirty = 1;
+  if (dirty < SHOW_EXIT_MODAL) {
+    if (this->key_q[0]) dirty = CHANGES;
     while (this->write_keys_to_buf(&this->contents) < 0) {
       this->contents.resize_by(128);
     }
@@ -34,15 +34,15 @@ void Editor::invoke() {
         break;
       }
       case ALT(K): {
-        int index = 0;
-        for (int piece = 1; piece < this->contents.ix; piece++) {
+        unsigned index = 0;
+        for (unsigned int piece = 1; piece < this->contents.ix; piece++) {
           if (index < piece && this->contents.buf[piece] == '\n') {
             index = piece + 1;
           }
         }
 
         do {
-          dirty = 1;
+          dirty = CHANGES;
           this->contents.delchar_at(index);
         } while (this->contents.buf[index] && this->contents.buf[index] != '\n');
         this->contents.delchar_at(index);
@@ -51,7 +51,7 @@ void Editor::invoke() {
         break;
       }
       case ALT(Q): {
-        if (dirty == 2) {
+        if (dirty == SHOW_EXIT_MODAL) {
           terminate_app(this->app_id & 0xf);
           return;
         } else {
@@ -59,11 +59,11 @@ void Editor::invoke() {
         }
       }
       case ESC:
-        if (dirty == 2) {
-          dirty = 1;
+        if (dirty == SHOW_EXIT_MODAL) {
+          dirty = CHANGES;
           break;
-        } else if (dirty == 1) {
-          dirty = 2;
+        } else if (dirty == CHANGES) {
+          dirty = SHOW_EXIT_MODAL;
           break;
         } else {
           terminate_app(this->app_id & 0xf);
@@ -71,7 +71,7 @@ void Editor::invoke() {
         }
       case BACKSPACE:
       case DEL: {
-        dirty = true;
+        dirty = CHANGES;
         int offset = this->ctrl_q[i] - BACKSPACE; // 0 if backspace, 1 if delete (naive)
         this->contents.delchar_at(this->contents.ix + offset - 1);
         break;
@@ -81,7 +81,7 @@ void Editor::invoke() {
         break;
       }
       case RIGHT: {
-        if (this->contents.ix < strlen(this->contents.buf)) this->contents.ix++;
+        if (this->contents.ix < (unsigned int) strlen(this->contents.buf)) this->contents.ix++;
         break;
       }
       case PGUP: {
@@ -109,7 +109,7 @@ void Editor::first_run() {
   memcpy(header.buf, addr_of_loc(POS(0, VP_HEIGHT - 1)), header.len);
   set_cur(trace_ch_until(contents.buf, contents.ix)); // trace character
 
-  if (dirty == 2) {
+  if (dirty == SHOW_EXIT_MODAL) {
     memset(addr_of_loc(POS((80 - 66) / 2, (VP_HEIGHT / 2) - 1)), modal.len, 0x11);
     memcpy(modal.buf, addr_of_loc(POS((80 - 66) / 2, (VP_HEIGHT / 2))), modal.len);
     memset(addr_of_loc(POS((80 - 66) / 2, (VP_HEIGHT / 2) + 1)), modal.len, 0x11);
@@ -125,7 +125,7 @@ void Editor::read() {
 };
 
 void Editor::save() {
-  this->dirty = 0; // clean. see .hh
+  this->dirty = State::CLEAN; // clean. see .hh
   write_file(
     filename,
     contents.buf,
@@ -134,7 +134,7 @@ void Editor::save() {
 };
 
 // constructor
-Editor::Editor(char *which) : KApp(), header(VGA_WIDTH * 2), modal(66 * 2), dirty(0), contents(get_file(which)->size + 128) {
+Editor::Editor(char *which) : KApp(), header(VGA_WIDTH * 2), modal(66 * 2), dirty(State::CLEAN), contents(get_file(which)->size + 128) {
   config_flags = 0; // no flags - we want enter to appear as a real key
 
   app_name = "edit";
@@ -166,6 +166,8 @@ Editor::Editor(char *which) : KApp(), header(VGA_WIDTH * 2), modal(66 * 2), dirt
 }
 
 Editor::~Editor() {
-  header.~inp_strbuf();
-  contents.~inp_strbuf();
+  // NOTE: by the magic of c++ already doing shit for you behind your back...
+
+  //header.~inp_strbuf();
+  //contents.~inp_strbuf();
 }

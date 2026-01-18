@@ -1,6 +1,9 @@
 #pragma once
 
 #define MEMBLK_SIZE 16
+#define TO_MEMADDR(ptr) ((void *) ((unsigned int) (ptr) * MEMBLK_SIZE))
+#define TO_MEMRING(ptr) ((void *) ((unsigned int) (ptr) / MEMBLK_SIZE))
+
 #define MEMRING_LOC 0x12000
 #define MEM_LOC (MEMRING_LOC * MEMBLK_SIZE)
 // 64k of mem free. don't try and increase this, youll prob wind up overwriting the os itself

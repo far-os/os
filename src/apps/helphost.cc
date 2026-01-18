@@ -20,9 +20,9 @@ void HelpHost::invoke() {
       }
       case DOWN:
       case PGDOWN: {
-        int total = this->start_ix; // find how many entries. starting from start_ix for efficiency, as we know that it's less than the last
+        unsigned total = this->start_ix; // find how many entries. starting from start_ix for efficiency, as we know that it's less than the last
         for (; this->ents[total].type != -1; ++total);
-        
+
         if (ENTRY_COUNT > total) { /* no change */ }
         else if ((this->start_ix + ENTRY_COUNT) > total) this->start_ix = total - ENTRY_COUNT;
         else this->start_ix += ENTRY_COUNT;
@@ -33,7 +33,7 @@ void HelpHost::invoke() {
       default: break;
     }
 
-    ctrl_q[i] = 0;
+    ctrl_q[i] = NO_CTRL;
   }
 
   if (this -> key_q[0]) { // press any key to continue...
@@ -112,7 +112,7 @@ void HelpHost::put_entries() {
       cix = -1;
     }
 
-    set_cur(POS(furthest + (this->ents[ent].type & SUB_ENTRY) << 1, (ent - start_ix) + 1));
+    set_cur(POS((furthest + (this->ents[ent].type & SUB_ENTRY) << 1), (ent - start_ix) + 1));
     write_str("- ", COLOUR(BLUE, WHITE));
 
     if (cix != -1) {
@@ -162,7 +162,7 @@ void HelpHost::put_entries() {
   adv_cur_by(-1);
 }
 
-HelpHost::HelpHost(char* what, HelpHost::Entry* loads): ents(loads), name(what) {
+HelpHost::HelpHost(char* what, const HelpHost::Entry* loads): ents(loads), name(what) {
   // bitflags, or as many together as need be
   config_flags = 0; // enter can exit too alright, so we dont want it as a CTRL code
 

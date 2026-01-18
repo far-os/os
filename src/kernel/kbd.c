@@ -74,17 +74,46 @@ char alt_code_buf[4];
 int xgg = 0;
 
 #define KEY 0
-#define CTRL 1
-// put chatacter
-void putch(char vf, unsigned char where) {
-  // where = 1 => ctrl; = 0 => key
-  char *curr_buf = where ? app_db[curr_kapp]->ctrl_q : app_db[curr_kapp]->key_q;
+// have to call it CTRL_CODE, as CTRL(letter) is already defined
+#define CTRL_CODE 1
 
-  int len = strlen(curr_buf);
-  if (len + 1 >= QUEUE_LEN) {
-    return; // key dropped
+// put character
+union to_put {
+  char ch;
+  enum ctrl_char ctrl;
+};
+#define CHECK_QUEUE(vv, what) if (vv >= QUEUE_LEN) { what; }
+
+void putch(unsigned int putting, unsigned char where) {
+  // where = 1 => ctrl; = 0 => key
+
+  // pointer shit to make use of function a little less shite
+  union to_put next = *((union to_put *) &putting);
+
+  // IMPORTANT: these two buffers are of different widths.
+  switch (where) { // TRUE
+    case KEY: {
+      char *buf = app_db[curr_kapp] -> key_q;
+
+      int len = strlen(buf);
+      CHECK_QUEUE(len + 1, return); // drop key
+      buf[len] = next.ch;
+      break;
+    }
+    case CTRL_CODE: {
+      enum ctrl_char *buf = app_db[curr_kapp] -> ctrl_q;
+
+      int len = 0;
+      while (buf[len] && len + 1 < QUEUE_LEN) { len++; }
+      CHECK_QUEUE(len + 1, return); // drop key
+      buf[len] = next.ctrl;
+      break;
+    }
+    default:
+      break; // XXX unreachable!();
   }
-  curr_buf[len] = vf;
+
+  // roundabout c way of app_db[curr_kapp].invoke()
   (*app_db[curr_kapp]->virts->invoke)(app_db[curr_kapp]);
 }
 
@@ -99,13 +128,13 @@ void read_kbd() {
     }
     switch (scan) {
     case 0x01:
-      putch(ESC, CTRL);
+      putch(ESC, CTRL_CODE);
       break;
     case 0x0e:
-      putch(BACKSPACE, CTRL);
+      putch(BACKSPACE, CTRL_CODE);
       break;
     case 0x1c: // enter key
-      if (app_db[curr_kapp]->config_flags & NEEDS_ENTER_CTRLCODE) putch(ENTER, CTRL);
+      if (app_db[curr_kapp]->config_flags & NEEDS_ENTER_CTRLCODE) putch(ENTER, CTRL_CODE);
       else putch('\n', KEY);
 
       break;
@@ -153,7 +182,7 @@ void read_kbd() {
     case 0x58: 
       putch(
         (scan % 18) - 4 + (keys -> modifs & (1 << 3) ? SHIFT_FN_BASE : FN_BASE),
-        CTRL
+        CTRL_CODE
       );
       break;
 
@@ -187,31 +216,31 @@ void read_kbd() {
       if (!(keys -> modifs & (1 << 1)) || keys -> modifs & (1 << 7)) {
         if (scan == 0x48) {
           // up
-          putch(UP, CTRL);
+          putch(UP, CTRL_CODE);
         } else if (scan == 0x4b) {
           // left
-          putch(LEFT, CTRL);
+          putch(LEFT, CTRL_CODE);
         } else if (scan == 0x50) {
           // down
-          putch(DOWN, CTRL);
+          putch(DOWN, CTRL_CODE);
         } else if (scan == 0x4d) {
           // right
-          putch(RIGHT, CTRL);
+          putch(RIGHT, CTRL_CODE);
         } else if (scan == 0x53) {
           // del
-          putch(DEL, CTRL);
+          putch(DEL, CTRL_CODE);
         } else if (scan == 0x47) {
           // home
-          putch(HOME, CTRL);
+          putch(HOME, CTRL_CODE);
         } else if (scan == 0x4f) {
           // end
-          putch(END, CTRL);
+          putch(END, CTRL_CODE);
         } else if (scan == 0x49) {
           // pgup
-          putch(PGUP, CTRL);
+          putch(PGUP, CTRL_CODE);
         } else if (scan == 0x51) {
           // pgdown
-          putch(PGDOWN, CTRL);
+          putch(PGDOWN, CTRL_CODE);
         }
         break;
       }
@@ -225,12 +254,12 @@ void read_kbd() {
       }
 
       if (keys -> modifs & (1 << 4) && is_letter) { // ctrl key sequence (^A, ^B, etc)
-        putch(scan_map_en_UK[scan] - 0x60 + CTRL_BASE, CTRL);
+        putch(scan_map_en_UK[scan] - 0x60 + CTRL_BASE, CTRL_CODE);
         break;
       }
 
       if (keys -> modifs & (1 << 6) && is_letter) { // alt key sequence (*A, *B, etc)
-        putch(scan_map_en_UK[scan] - 0x60 + ALT_BASE, CTRL);
+        putch(scan_map_en_UK[scan] - 0x60 + ALT_BASE, CTRL_CODE);
         break;
       }
 

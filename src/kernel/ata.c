@@ -4,13 +4,13 @@
 #include "include/port.h"
 
 // see TODO in header file
-unsigned short *ata_identity = 0xd000;
+unsigned short *ata_identity = (unsigned short *) 0xd000;
 
 static inline void ata_cache_flush() {
   pbyte_out(0x1f7, CACHE_FLUSH);
 }
 
-void ata_identify(void *addr, unsigned char drv) {
+void ata_identify(void *addr, master_slave_selector drv) {
   // disk select: A0 for master or B0 for slave
   pbyte_out(0x1f6, 0xa0 | (drv << 4));
 
@@ -39,7 +39,7 @@ void ata_identify(void *addr, unsigned char drv) {
   rep_insw(0x1f0, 1 << 8, addr);
 }
 
-void read_pio28(void *addr, lba_n lba, unsigned int len, unsigned char drv) {
+void read_pio28(void *addr, lba_n lba, unsigned int len, master_slave_selector drv) {
   // id: high nybble is E for master or F for slave - low nybble in highest nybble of LBA
   pbyte_out(0x1f6, 0xe0 | (drv << 4) | ((lba >> 24) & 0x0f));
 
@@ -72,7 +72,7 @@ void read_pio28(void *addr, lba_n lba, unsigned int len, unsigned char drv) {
   }
 }
 
-void write_pio28(void *data, lba_n lba, unsigned int len, unsigned char drv) {
+void write_pio28(void *data, lba_n lba, unsigned int len, master_slave_selector drv) {
   // same as above 
 
   pbyte_out(0x1f6, 0xe0 | (drv << 4) | ((lba >> 24) & 0x0f));

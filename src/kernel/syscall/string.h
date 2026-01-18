@@ -44,7 +44,7 @@ void sys_0(struct cpu_state *c, unsigned char rout) {
   // Write string at cursor
   case 0x05:
     fmt = c -> ebx & 0xff;
-    void *address = c -> esi;
+    void *address = (void *) c -> esi;
     write_str(adj(address), fmt);
     break;
 
@@ -72,7 +72,7 @@ void sys_0(struct cpu_state *c, unsigned char rout) {
   // Write string at specific location
   case 0x0a:
     fmt = c -> ebx & 0xff;
-    address = c -> esi;
+    address = (void *) c -> esi;
     write_str_at(adj(address), c -> ecx & 0xffff, fmt);
     break;
 

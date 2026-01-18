@@ -175,14 +175,14 @@ void write_advanced_cell_cur(char ch, unsigned char style) {
   }
 }
 
-void write_str_at(char *str, short pos, unsigned char style) {
+void write_str_at(const char *str, short pos, unsigned char style) {
   for (short i = 0; str[i] != 0; ++i) {
     write_advanced_cell(str[i], pos + i, style);
   }
 }
 
 // mostly duplicate code
-void write_str(char *str, unsigned char style) {
+void write_str(const char *str, unsigned char style) {
   for (int i = 0; str[i] != 0; ++i) {
     write_advanced_cell_cur(str[i], style);
   }
@@ -194,7 +194,7 @@ void write_cell_into(struct inp_strbuf *dest, char ch, unsigned char style) {
   dest->ix++;
 }
 
-void write_str_into(struct inp_strbuf *dest, char *str, unsigned char style) {
+void write_str_into(struct inp_strbuf *dest, const char *str, unsigned char style) {
   for (int i = 0; str[i] != 0; ++i) {
     write_cell_into(dest, str[i], style);
   }

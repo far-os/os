@@ -14,7 +14,7 @@ namespace Extra {
     unsigned int curr_size; // the reported size
 
     void grow() { // grow: fixes too big to fit in capacity
-      this->data = realloc(this->data, (this->capacity *= 2) * sizeof(T));
+      this->data = (T *) realloc(this->data, (this->capacity *= 2) * sizeof(T));
     }
 
   public:
@@ -50,7 +50,7 @@ namespace Extra {
       // TODO: when we use a program, we probably want to use some form of assertion
       T& addr = this->data[at];
       if (!bound.contains(&addr)) { // we check if bound contains this.
-        msg(PROGERR, E_BOUND, "Attempted access Vector with len %d at index %d", curr_size, at);
+        msg(PROGERR, E_BOUND, "Cannot access Vector with len %d at index %d", curr_size, at);
       }
 
       return addr;
@@ -68,11 +68,13 @@ namespace Extra {
 
     Vector(unsigned int w_capacity): capacity(w_capacity) {
       this->curr_size = 0;
-      this->data = malloc(w_capacity * sizeof(T));
+      this->data = (T *) malloc(w_capacity * sizeof(T));
     }
 
     ~Vector() {
-      delete data;
+      free(data);
+      data = NULL;
+      //delete data;
     }
   };
 

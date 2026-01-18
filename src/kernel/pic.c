@@ -1,5 +1,6 @@
 #include "include/pic.h"
 #include "include/port.h"
+#include "include/util.h"
 
 void pic_init() {
   pbyte_out(P1_COM, 0x11); // init with ICW4
