@@ -46,4 +46,10 @@ static inline void rep_outsw(unsigned short port, unsigned int length, void *src
    : "memory", "cc");
 }
 
-extern void fake_outsw(unsigned short, unsigned int, void *);
+static inline void real_outsw(unsigned short port, unsigned int length, unsigned short *src) {
+  for (unsigned int ix = 0; ix < length; ++ix) {
+    pword_out(port, src[ix]);
+  }
+}
+
+//extern void fake_outsw(unsigned short, unsigned int, void *);

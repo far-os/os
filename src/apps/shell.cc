@@ -11,6 +11,7 @@ const HelpHost::Entry comnames[] = {
   { .name = "clr", .desc = "Clears screen\xff[or shift+\23710]", .type = HelpHost::PLAIN_ENTRY },
   { .name = "exec", .desc = "Executes program\xff<u32>", .type = HelpHost::PLAIN_ENTRY },
   { .name = "f", .desc = "File I/O namespace", .type = HelpHost::PLAIN_ENTRY },
+  { .name = "del", .desc = "Deletes file\xff<filename> x2", .type = HelpHost::SUB_ENTRY },
   { .name = "ls", .desc = "Lists all files", .type = HelpHost::SUB_ENTRY },
   { .name = "new", .desc = "Creates file\xff<filename>", .type = HelpHost::SUB_ENTRY },
   { .name = "ren", .desc = "Renames file\xff<filename> x2", .type = HelpHost::SUB_ENTRY },
@@ -128,6 +129,37 @@ void KShell::first_run() {
   write_str("os ", 0x07); */
   write_str("Kernel Executive Shell. (c) 2022-6.\n", COLOUR(BLUE, B_RED));
 
+  { // XXX: 15 characters right now. could make it dynamic with printf perhaps??
+    set_cur(POS(-15, 1));
+
+    printf("%$f%$a%$r%$OS v%d.%d.%d%$:%2x",
+      0x0a,
+      0x0c,
+      0x0e,
+      COLOUR(BLACK, B_WHITE),
+      curr_ver -> major,
+      curr_ver -> minor,
+      curr_ver -> patch,
+      COLOUR(BLACK, B_BLACK),
+      &(curr_ver -> build)
+    );
+
+    set_cur(POS(0, 1));
+  }
+
+  {
+    struct dos_timestamp dos = to_dostime(*curr_time);
+
+    // dostime has this wonderful quirk that sequential dates are in numeric order
+    if (xconf -> motd_last_shown_at < dos.dosdate) {
+      printf("%$Tip of the day: %$%s\n", COLOUR(BLACK, B_BLUE), COLOUR(BLACK, WHITE), this->motd_msg());
+
+      xconf -> motd_last_shown_at = dos.dosdate;
+      WRITE_CONF();
+    }
+  }
+
+
   // print out prompt
   write_str(get_prompt(), COLOUR(BLACK, WHITE));
 }
@@ -172,11 +204,20 @@ bool KShell::shexec() {
     } else {
       line_feed();
     }
+  } else if (strcmp(argv[0], "f:del")) {
+    if (argv.len() <= 1) {
+      msg(PROGERR, E_ARGS, "Please provide a filename");
+      goto shell_clean;
+    }
+
+    delete_file(argv[1]);
   } else if (strcmp(argv[0], "f:ls")) {
     char *name = malloc(13);
-    for (unsigned int search = 0; VALID_FILE(root_dir[search]); search++) {
-      sane_name(root_dir[search].name, name);
-      printf("%$%s\t", COLOUR(BLACK, B_WHITE), name);
+    for (unsigned int search = 0; EXISTS_FILE(root_dir[search]); search++) {
+      if (VALID_FILE(root_dir[search])) {
+        sane_name(root_dir[search].name, name);
+        printf("%$%s\t", COLOUR(BLACK, B_WHITE), name);
+      }
     }
     free(name);
 
@@ -273,15 +314,19 @@ shell_f_stat:
       if (!f) goto shell_clean;
     }
 
-    char *datablk = malloc(f->size);
-    read_file(
-      argv[1],
-      datablk
-    ); // reads disk, has to get master or slave
-    write_str(datablk, COLOUR(BLACK, WHITE));
+    if (f->size == 0) {
+      msg(WARN, E_NOFILE, "%s is zero bytes", argv[1]);
+    } else {
+      char *datablk = malloc(f->size);
+      read_file(
+        argv[1],
+        datablk
+      );
+      write_str(datablk, COLOUR(BLACK, WHITE));
 
-    free(datablk);
-    line_feed();
+      free(datablk);
+      line_feed();
+    }
   } else if (strcmp(argv[0], "help")) {
     app_handle help = instantiate(
       new HelpHost("shell builtins", comnames),
@@ -395,8 +440,8 @@ shell_f_stat:
   } else if (strcmp(argv[0], "time")) {
     printf("%$Time since kernel load: %d.%2ds\n%s%c%4d-%2d-%2d %2d:%2d:%2d\n",
       COLOUR(RED, B_CYAN),
-      countx / 100,
-      countx % 100,
+      uptime / 100,
+      uptime % 100,
       curr_time -> weekday ? weekmap[curr_time -> weekday - 1] : NULL,
       curr_time -> weekday ? ' ' : 0,
       curr_time -> year,
@@ -407,6 +452,11 @@ shell_f_stat:
       curr_time -> second
     );
   } else if (strcmp(argv[0], "util:to8.3")) {
+    if (argv.len() <= 1) {
+      msg(PROGERR, E_ARGS, "Please provide a filename");
+      goto shell_clean;
+    }
+
     char *name = malloc(13);
     canonicalise_name(argv[1], name);
     printf("%$%s\n", COLOUR(RED, B_GREEN), name);
@@ -423,6 +473,19 @@ shell_clean:
 
 const char * KShell::get_prompt() {
   return "\r\x13> ";
+}
+
+#define MOTD_COUNT 5
+const char * _motds[MOTD_COUNT] = {
+  "Type help for help!",
+  "Type help to see help menu.",
+  "Faster than Windows!",
+  "Commands are split into namespaces for ease of use!",
+  "Type calc to try the calculator!"
+};
+
+const char * KShell::motd_msg() {
+  return _motds[curr_time->second % MOTD_COUNT];
 }
 
 // comlen has a default, check .hh

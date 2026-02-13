@@ -47,7 +47,7 @@ void eh_c(struct cpu_state c, unsigned int i, struct stack_state s) {
     retto_progeh(&s);
     break;
   case 0x20: // timer
-    if (!(++countx % 100)) {
+    if (!(++uptime % 100)) {
       adv_time(curr_time);
     } // increment centisecond counter
     break;

@@ -71,7 +71,7 @@ void main() {
 
   query_cpuid();
 
-  ata_identify(
+   ata_identify(
     ata_identity,
     hardware -> boot_disk_p.dev_path[0] & 0x01
   );
@@ -88,26 +88,7 @@ void main() {
 
   // run shell, TODO: further separate, and make it its own file (will need a decent syscall library tho)
   app_handle shell = instantiate(mk_shell(32), -1, 1);
-
-  { // XXX: 15 characters right now. could make it dynamic with printf perhaps??
-    set_cur(POS(-15, 1));
-
-    printf("%$f%$a%$r%$OS v%d.%d.%d%$:%2x",
-      0x0a,
-      0x0c,
-      0x0e,
-      COLOUR(BLACK, B_WHITE),
-      curr_ver -> major,
-      curr_ver -> minor,
-      curr_ver -> patch,
-      COLOUR(BLACK, B_BLACK),
-      &(curr_ver -> build)
-    );
-
-    set_cur(POS(0, 1));
-    (*app_db[shell]->virts->invoke)(app_db[shell]);
-  }
-
+  (*app_db[shell]->virts->invoke)(app_db[shell]);
 
   // stop. just stop.
   for (;;) {

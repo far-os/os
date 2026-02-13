@@ -13,6 +13,7 @@ protected: // hidden fields (only for internal use)
   struct inp_strbuf work; // the buffer in which we work
 
   virtual const char* get_prompt(); // prompt function
+  virtual const char* motd_msg(); // motd message
   virtual bool shexec();
 
 private:

@@ -3,3 +3,5 @@ ata0-master: type=disk, path=build/os.img, mode=flat, cylinders=($DISK_SIZE_HM),
 boot: disk
 display_library: x, options=nokeyrepeat
 clock: sync=realtime
+magic_break: enabled=1
+

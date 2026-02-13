@@ -150,16 +150,17 @@ fake_outsw:
         mov ecx, [ebp + 0xc] ; length
         mov esi, [ebp + 0x10] ; startpoint
 
-        dec ecx
+        ; the cause of literally all my problems
+        ;dec ecx
 
   fake_outsw_lp:
-        outsw
+        lodsw
+        out dx, ax
 
         jmp $+2 ; timewaster, the reason we can't use rep
         nop
 
-        dec ecx
-        jns fake_outsw_lp
+        loop fake_outsw_lp
 
         popad
         leave

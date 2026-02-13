@@ -3,10 +3,17 @@
 !magic
 
 block flags
-  ## 
+  ##
     0 => no verbosity
     1 => show msg(INFO) calls
     2 => show stacktraces in all msg() calls
   ##
   int8 verbosity : 1;
+
+  ##
+    when the motd was last shown, as dosdate
+    0 is NULL date
+    TODO: add a dosdate type
+  ##
+  int16 motd_last_shown : 0x0000;
 endblock

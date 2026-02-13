@@ -30,17 +30,21 @@ struct timestamp {
 } __attribute__((packed));
 
 extern struct timestamp *curr_time;
-extern unsigned int countx;
+extern unsigned int uptime;
 extern char *weekmap[7];
 
 void read_rtc(struct timestamp *ts);
 void time(void *tbuf);
 
+bool validate_time(const struct timestamp *ts);
 void adv_time(struct timestamp *ts);
 
+typedef unsigned short dosdate_t;
+typedef unsigned short dostime_t;
+
 struct dos_timestamp {
-  unsigned short dostime;
-  unsigned short dosdate;
+  dosdate_t dostime;
+  dostime_t dosdate;
   unsigned char centisecs;
 } __attribute__((packed));
 

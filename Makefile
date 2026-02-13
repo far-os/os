@@ -74,7 +74,7 @@ build/os.img: build/boot.kern.bin build/emptyfat.qi build/xconfig.qi build/prog.
 	chmod +w $@
 
 qemu: build/os.img
-	$@-system-i386 -hda $< -boot c
+	$@-system-i386 -s -hda $< -boot c -M pc
 
 bochs: build/os.img .bochsrc
 	$@ -q

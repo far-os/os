@@ -7,7 +7,7 @@
 struct timestamp *curr_time = (struct timestamp *) 0xc7f0;
 
 // centisec (100ths of sec) since load
-unsigned int countx = 0;
+unsigned int uptime = 0;
 char *weekmap[7] = {
   "Sun",
   "Mon",
@@ -36,6 +36,15 @@ struct timestamp from_dostime(struct dos_timestamp dos) {
 
   ts.second += (dos.centisecs >= 100);
   ts.centisec = dos.centisecs % 100;
+
+  if (!validate_time(&ts)) { // default date: 1st jan 0ce
+    ts.second = 0;
+    ts.minute = 0;
+    ts.hour = 0;
+    ts.date = 1;
+    ts.month = 1;
+    ts.year = 0;
+  }
 
   return ts;
 }
@@ -121,6 +130,17 @@ void time(void *tbuf) {
 #define IS_LEAP_YR(yr) (!(yr % 4) && (!(yr % 400) || (yr % 100)))
 unsigned char days_per_mo[13] = {29, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
 
+// valiDATE *badum tsss*
+bool validate_time(const struct timestamp *ts) {
+  return !(
+    (ts->second >= 60) ||
+    (ts->minute >= 60) ||
+    (ts->hour >= 24) ||
+    (ts->month >= 12) ||
+    (ts->date >= days_per_mo[ts -> month == 2 ? !IS_LEAP_YR(ts -> year) * 2 : ts -> month])
+  );
+}
+
 void adv_time(struct timestamp *ts) {
   // unholy horrors
   if (++ts -> second >= 60) {
@@ -129,7 +149,7 @@ void adv_time(struct timestamp *ts) {
       ts -> minute = 0;
       if (++ts -> hour >= 24) {
         ts -> hour = 0;
-        if (ts -> weekday) {
+        if (ts -> weekday) { // TODO doomsday algorithm
           ts -> weekday = (ts -> weekday % 7) + 1;
         }
         if (++ts -> date > days_per_mo[ts -> month == 2 ? !IS_LEAP_YR(ts -> year) * 2 : ts -> month]) {

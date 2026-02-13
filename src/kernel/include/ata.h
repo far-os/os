@@ -3,6 +3,19 @@
 
 #pragma once
 
+#define ATA_REG_DATA 0x1f0
+// error is on read, feature is on write
+#define ATA_REG_ERROR 0x1f1
+#define ATA_REG_FEATURE 0x1f1
+#define ATA_REG_SECTOR_COUNT 0x1f2
+#define ATA_REG_LBA_LO 0x1f3
+#define ATA_REG_LBA_MID 0x1f4
+#define ATA_REG_LBA_HI 0x1f5
+#define ATA_REG_DRIVE 0x1f6
+// status is on read, command is on write
+#define ATA_REG_STATUS 0x1f7
+#define ATA_REG_CMD 0x1f7
+
 #define READ_SECTORS 0x20
 #define WRITE_SECTORS 0x30
 #define CACHE_FLUSH 0xe7
@@ -28,5 +41,5 @@ typedef bool master_slave_selector;
 #define ATA_UDMA_MODES ( ata_identity[88] )
 
 void ata_identify(void *addr, master_slave_selector drv);
-void read_pio28(void *addr, unsigned int lba, unsigned int len, master_slave_selector drv);
-void write_pio28(void *data, unsigned int lba, unsigned int len, master_slave_selector drv);
+void read_pio28(void *addr, unsigned int lba, unsigned char len, master_slave_selector drv);
+void write_pio28(void *data, unsigned int lba, unsigned char len, master_slave_selector drv);

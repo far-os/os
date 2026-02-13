@@ -47,7 +47,7 @@ void read_fat() {
   root_dir = (struct dir_entry *) (file_table + n);
 
   if (!memcmp(file_table, file_table + n, n)) { // check the two FATs. if they're different, file system is likely borked
-    msg(KERNERR, E_NOSTORAGE, "FATs are not identical");
+    msg(KERNERR, E_NOSTORAGE, "FATs are not identical (%x, %x)", file_table, file_table + n);
   }
 }
 
@@ -107,7 +107,7 @@ cluster_id alloc_cluster(cluster_id with_min) {
   }
 
   // TODO: out of space
-  return -1;
+  return NO_NEXT_CLUSTER; // 0 is a fake invalid cluster
 }
 
 // follow chain
@@ -150,36 +150,63 @@ void write_root() {
   ); // reads disk for config, has to get master or slave
 }
 
+// shitty macro that converts di so that di can stay at 0
+// dots is just true_di multiplied by 8
+#define TRUE_DI ((dots << 3) | (di & 7))
+
 // e.g. abcdefgh.xyz => ABCDEFGHXYZ
-void canonicalise_name(char *from, char *to) {
+void canonicalise_name(const char *from, char *to) {
+  // pad with spaces
   memset(to, FAT_FILENAME_LEN, ' ');
-  unsigned char dotted = 0; // counting the number of dots. not exactly a bool
-  int g = -1;
-  for (int c = 0; (from[c] && dotted < 2); ++c) {
-    if (from[c] == '.') {
-      dotted++;
-      g = 0;
+
+  unsigned char dots = 0; // counting the number of dots. not exactly a bool
+  int si = 0;
+  int di = 0; // set immediately to 8 when dot
+
+  // si = 0; special checks for first character
+  switch (from[si]) {
+  case FILE_F_UNUSED:
+  case FILE_F_DELETED:
+  case FILE_F_DIRECTORY:
+    msg(KERNERR, E_NOFILE, "Bad filename \"%s\"", from);
+    return;
+  case FILE_F_ACTUALLY_E5: // so if you really want to put an 0xe5 in your filename, have a 0x05 instead
+    to[di++] = 0xe5; // TODO add function for this in a "decanonicalise" function
+    break;
+  default:
+    to[di++] = to_upper(from[si++]);
+  }
+
+  // loop through the rest of the characters
+  for (; TRUE_DI < 11; si++) { // si++ is up here to ensure it is always called
+    if (!from[si]) break; // null terminator found
+
+    if (from[si] == '.') {
+      di = 0;
+      dots++;
       continue;
     }
 
-    if (dotted == 0) {
-      if (c < 8) {
-        to[c] = to_upper(from[c]);
-      }
-    } else { // dotted == 1, can't be 2, as that's in for loop condition
-      to[8 + g++] = to_upper(from[c]);
-      if (g >= 3) {
-        break;
-      }
+    if (di >= 8) {
+      continue; // NB: ignores ALL characters after index 8.
+                // TODO: `~1` nonsense after LFN support
     }
+
+    // NOT incrementing si, as that is done in for loop body
+    to[TRUE_DI] = to_upper(from[si]);
+    di++;
   }
 }
 
 // opposite of above. because LFN may not make sense later on (TODO), i'm keeping it uppercase
-void sane_name(char *from, char *to) {
+void sane_name(const char *from, char *to) {
   memzero(to, FAT_FILENAME_LEN);
   for (int c = 0; (c < 8 && from[c] != ' '); ++c) {
     to[c] = from[c];
+  }
+
+  if (to[0] == FILE_F_ACTUALLY_E5) {
+    to[0] = 0xe5;
   }
 
   if (from[8] != ' ') {
@@ -191,7 +218,7 @@ void sane_name(char *from, char *to) {
   }
 }
 
-struct dir_entry *get_file(char *name) {
+struct dir_entry *get_file(const char *name) {
   char nbuf[FAT_FILENAME_LEN + 1] = {0};
   canonicalise_name(name, nbuf);
   for (unsigned int search = 0; VALID_FILE(root_dir[search]); search++) {
@@ -202,7 +229,7 @@ struct dir_entry *get_file(char *name) {
 }
 
 // similar logic as above
-bool does_exist(char *name) {
+bool does_exist(const char *name) {
   char nbuf[FAT_FILENAME_LEN + 1] = {0};
   canonicalise_name(name, nbuf);
   for (unsigned int search = 0; VALID_FILE(root_dir[search]); search++) {
@@ -212,12 +239,12 @@ bool does_exist(char *name) {
   return false;
 }
 
-void rename_file(char *old, char *new) {
+void rename_file(const char *old, const char *new) {
   struct dir_entry *f = get_file(old);
   canonicalise_name(new, f->name);
 }
 
-void read_file(char *filename, void * where) {
+void read_file(const char *filename, void * where) {
   struct dir_entry *f = get_file(filename);
 
   if (!f || !VALID_FILE(*f)) {
@@ -265,8 +292,8 @@ void read_file(char *filename, void * where) {
   } while ((trace & NO_NEXT_CLUSTER) != NO_NEXT_CLUSTER);
 }
 
-struct dir_entry *create_file(char *filename) {
-  if (get_file(filename)) {
+struct dir_entry *create_file(const char *filename) {
+  if (does_exist(filename)) {
     msg(KERNERR, E_NOFILE, "File %s already exists", filename);
     return NULL;
   }
@@ -279,7 +306,7 @@ struct dir_entry *create_file(char *filename) {
       msg(KERNERR, E_NOSTORAGE, "Root directory full");
 
   cluster_id loc = alloc_cluster(2);
-  if (loc == -1) msg(KERNERR, E_NOSTORAGE, "Failed allocate cluster");
+  if (loc == NO_NEXT_CLUSTER) msg(KERNERR, E_NOSTORAGE, "Failed allocate cluster");
 
   struct dir_entry *f = &root_dir[search];
 
@@ -313,7 +340,35 @@ struct dir_entry *create_file(char *filename) {
   return f;
 }
 
-void write_file(char *filename, void *where, unsigned int new_size) {
+void delete_file(const char *filename) {
+  struct dir_entry *f = get_file(filename);
+
+  if (f -> attrib & A_READONLY) {
+    msg(KERNERR, E_NOFILE, "Cannot delete %s; is readonly.", filename);
+    return;
+  }
+
+  // empty fat chain
+  cluster_id trace = (f->first_cluster_hi << 16) | (f->first_cluster_lo);
+  do {
+    cluster_id trace_old = trace;
+    trace = next_cluster(trace);
+    set_cluster(trace_old, 0); // empty last cluster.
+    // trace is the pointer to the next cluster, and it will eventually be the terminating 0xff8, so we don't touch it
+  } while ((trace & NO_NEXT_CLUSTER) != NO_NEXT_CLUSTER);
+
+  // zeroise directory entry
+  memzero(f, sizeof(struct dir_entry));
+
+  // mark file as deleted
+  *((unsigned char *) f) = FILE_F_DELETED;
+
+  // save changes to disk
+  write_fat();
+  write_root();
+}
+
+void write_file(const char *filename, void *where, unsigned int new_size) {
   struct dir_entry *f = get_file(filename);
 
   // create file if not exist
@@ -324,14 +379,12 @@ void write_file(char *filename, void *where, unsigned int new_size) {
   // if is either a volume or a directory we want it to fail
   // so to future me, NOT A BUG
   if (f -> attrib & (A_VOLID | A_DIR)) {
-    msg(KERNERR, E_NOFILE, "Not a file");
-    line_feed();
+    msg(KERNERR, E_NOFILE, "%s is not a file", filename);
     return;
   }
 
   if (f -> attrib & A_READONLY) {
-    msg(KERNERR, E_NOFILE, "Cannot write to file; is readonly.");
-    line_feed();
+    msg(KERNERR, E_NOFILE, "Cannot write to %s; is readonly.", filename);
     return;
   }
 
@@ -345,14 +398,14 @@ void write_file(char *filename, void *where, unsigned int new_size) {
   cluster_id trace = (f->first_cluster_hi << 16) | (f->first_cluster_lo);
   cluster_id t_init = trace; // we do this twice (i am stupid)
 
-  for (int i = 0; i < old_n_clusts; ++i) {
+  for (unsigned int i = 0; i < old_n_clusts; ++i) {
     traces[i] = next_cluster(i ? traces[i - 1] : t_init);
   }
 
   if (old_n_clusts < new_n_clusts) { // growth
     // e.g. 3 => 5: [2] 3 4 ! _ _ => [2] 3 4 5 6 !
     cluster_id with_min = 2;
-    for (int z_growth = old_n_clusts - 1; z_growth < (new_n_clusts - 1); ++z_growth) {
+    for (unsigned int z_growth = old_n_clusts - 1; z_growth < (new_n_clusts - 1); ++z_growth) {
       with_min =
         traces[z_growth] = alloc_cluster(with_min);
     }
@@ -360,12 +413,12 @@ void write_file(char *filename, void *where, unsigned int new_size) {
   } else if (old_n_clusts > new_n_clusts) { // shrinkage
     // e.g. 5 => 3: [2] 3 4 5 6 ! => [2] 3 4 ! _ _
     traces[new_n_clusts - 1] = NO_NEXT_CLUSTER;
-    for (int z_shrink = new_n_clusts; z_shrink < old_n_clusts; ++z_shrink) {
+    for (unsigned int z_shrink = new_n_clusts; z_shrink < old_n_clusts; ++z_shrink) {
       traces[z_shrink] = 0;
     }
   }
 
-  for (int i = 0; i < MAX(new_n_clusts, old_n_clusts); ++i) {
+  for (unsigned int i = 0; i < MAX(new_n_clusts, old_n_clusts); ++i) {
     set_cluster(t_init, traces[i]);
     t_init = traces[i];
   }

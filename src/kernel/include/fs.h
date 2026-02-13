@@ -63,6 +63,12 @@ struct dir_entry {
 
 #define FAT_FILENAME_LEN 11
 
+// special first characters
+#define FILE_F_UNUSED 0x00
+#define FILE_F_DELETED 0xe5
+#define FILE_F_ACTUALLY_E5 0x05
+#define FILE_F_DIRECTORY 0x2e
+
 typedef unsigned short cluster_id;
 typedef unsigned int lba_n;
 
@@ -77,22 +83,25 @@ void write_fat();
 void read_root();
 void write_root();
 
-void canonicalise_name(char *from, char *to);
-void sane_name(char *from, char *to);
+void canonicalise_name(const char *from, char *to);
+void sane_name(const char *from, char *to);
 lba_n get_cluster(cluster_id from);
 
 extern char attribify_buf[9];
 void attribify(unsigned char att);
 
-struct dir_entry *get_file(char *name);
+struct dir_entry *get_file(const char *name);
 
 extern unsigned char *file_table;
 extern struct dir_entry *root_dir;
 
 // if the first byte is nonzero, then file exists, i.e. if the file has a name
-#define VALID_FILE(f) ((*((unsigned char*) &(f))))
+#define SPECIAL_FILE(f) ((*((unsigned char*) &(f))))
+#define EXISTS_FILE(f) (SPECIAL_FILE(f) != FILE_F_UNUSED)
+#define VALID_FILE(f) (EXISTS_FILE(f) && (SPECIAL_FILE(f) != FILE_F_DELETED) && (SPECIAL_FILE(f) != FILE_F_DIRECTORY))
 
-void rename_file(char *old, char *); // technically char *new but c++ has reserved keywords (grrr)
-void read_file(char *filename, void *where);
-struct dir_entry *create_file(char *filename);
-void write_file(char *filename, void *where, unsigned int new_size);
+void rename_file(const char *old, const char *); // technically char *new but c++ has reserved keywords (grrr)
+void read_file(const char *filename, void *where);
+struct dir_entry *create_file(const char *filename);
+void delete_file(const char *filename);
+void write_file(const char *filename, void *where, unsigned int new_size);
