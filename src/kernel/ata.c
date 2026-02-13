@@ -31,8 +31,7 @@ bool ata_busy_wait(const char * command, bool skip_drq) {
     }
 
     if (uptime > wait_until) {
-      msg(WARN, E_NOSTORAGE, "Disk stuck <%2x> after %d ticks, whilst %s", &status, uptime - wait_since, command);
-//      ata_soft_reset();
+      msg(WARN, E_NOSTORAGE, "Disk stuck <%2x> after %d ticks, aborting %s", &status, uptime - wait_since, command);
       return false;
     }
   }
@@ -60,10 +59,10 @@ static inline void ata_cache_flush() {
 void ata_identify(void *addr, master_slave_selector drv) {
   // disk select: A0 for master or B0 for slave
   pbyte_out(0x1f6, 0xa0 | (drv << 4));
-  ata_400ns();
+  ata_busy_wait("IDENTIFY", true);
 
   // is optional and wastes time
-  pbyte_out(0x1f1, 0x00);
+  // pbyte_out(0x1f1, 0x00);
 
   // the great zero
   pbyte_out(0x1f2, 0);
@@ -85,10 +84,10 @@ void ata_identify(void *addr, master_slave_selector drv) {
 void read_pio28(void *addr, lba_n lba, unsigned char len, master_slave_selector drv) {
   // id: high nybble is E for master or F for slave - low nybble in highest nybble of LBA
   pbyte_out(0x1f6, 0xe0 | (drv << 4) | ((lba >> 24) & 0x0f));
-  ata_400ns();
+  ata_busy_wait("READ28", true);
 
   // is optional and wastes time
-  pbyte_out(0x1f1, 0x00);
+  // pbyte_out(0x1f1, 0x00);
 
   // sector count
   pbyte_out(0x1f2, len);
@@ -118,15 +117,13 @@ void read_pio28(void *addr, lba_n lba, unsigned char len, master_slave_selector 
 
 void write_pio28(void *data, lba_n lba, unsigned char len, master_slave_selector drv) {
   // same as above
-  //msg(INFO, 0, "Writing %d from %p to %d", len, data, lba);
   pbyte_out(0x1f6, 0xe0 | (drv << 4) | ((lba >> 24) & 0x0f));
-  ata_400ns();
+  ata_busy_wait("WRITE28", true); // THIS. THIS ONE RIGHT HERE.
 
-  pbyte_out(0x1f1, 0x00);
+  //pbyte_out(0x1f1, 0x00);
+
   pbyte_out(0x1f2, len);
-  //msg(INFO, 0, "unfinished business: %d thought", pbyte_in(0x1f3));
   pbyte_out(0x1f3, lba & 0xff);
-  //msg(INFO, 0, "%d sectors but %d thought", lba, pbyte_in(0x1f3));
   pbyte_out(0x1f4, (lba >> 8) & 0xff);
   pbyte_out(0x1f5, (lba >> 16) & 0xff);
   // writing this time
@@ -137,15 +134,9 @@ void write_pio28(void *data, lba_n lba, unsigned char len, master_slave_selector
 
     // rep outsw is too fast, so we just have a fake outsw function
     fake_outsw(0x1f0, 1 << 8, data + (i << 9));
-
-    ata_400ns();
   }
 
-  ata_400ns();
-
   ata_busy_wait("WRITE28", true);
-
-  pbyte_in(0x1f7);
 
   ata_cache_flush();
 }

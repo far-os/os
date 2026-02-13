@@ -140,32 +140,6 @@ a20_test:
         popad
         ret
 
-[global fake_outsw]
-fake_outsw:
-        push ebp
-        mov ebp, esp
-        ; outsw function, but manual loops instead of rep
-        pushad
-        mov dx, [ebp + 0x8] ; port
-        mov ecx, [ebp + 0xc] ; length
-        mov esi, [ebp + 0x10] ; startpoint
-
-        ; the cause of literally all my problems
-        ;dec ecx
-
-  fake_outsw_lp:
-        lodsw
-        out dx, ax
-
-        jmp $+2 ; timewaster, the reason we can't use rep
-        nop
-
-        loop fake_outsw_lp
-
-        popad
-        leave
-        ret
-
 [global rip_thunk]
 rip_thunk:
         pop eax
