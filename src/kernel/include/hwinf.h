@@ -33,25 +33,44 @@ struct drv_param {
 
 struct hwinf {
   unsigned char bios_disk; // 0xcc00
-  struct drv_param boot_disk_p; // 0xcc01
+  unsigned char mem_ents; // 0xcc01
+  struct drv_param boot_disk_p; // 0xcc02
   
-  unsigned int cpuid_leaves; // 0xcc43
-  unsigned int cpuid_ext_leaves; // 0xcc47
+  unsigned int cpuid_leaves; // 0xcc44
+  unsigned int cpuid_ext_leaves; // 0xcc48
 
-  char vendor[12]; // 0xcc4b
-  char brand[48]; // 0xcc57
+  char vendor[12]; // 0xcc4c
+  char brand[48]; // 0xcc58
 
-  unsigned char c_family; // 0xcc87
-  unsigned char c_model; // 0xcc88
-  unsigned char c_stepping; // 0xcc89
+  unsigned char c_family; // 0xcc88
+  unsigned char c_model; // 0xcc89
+  unsigned char c_stepping; // 0xcc8a
 
-  unsigned int apic_pc_brand; // 0xcc8a
+  unsigned int apic_pc_brand; // 0xcc8b
 
-  unsigned int f_flags_edx; // 0xcc8e
-  unsigned int f_flags_ecx; // 0xcc92
-                            // 0xcc96
+  unsigned int f_flags_edx; // 0xcc8f
+  unsigned int f_flags_ecx; // 0xcc93
+                            // 0xcc97
 } __attribute__((packed));
 
+enum mem_entry_type {
+  USABLE = 1,
+  RESERVED,
+  ACPI_RECLAIMABLE,
+  ACPI_NVS,
+  BAD,
+};
+
+struct mem_entry {
+  unsigned long long base;
+  unsigned long long len;
+  enum mem_entry_type type;
+  unsigned int ignore: 1; // this is terrible, because ignore is if this bit is low
+  unsigned int non_volatile: 1;
+  unsigned int : 0; // force pad out
+} __attribute__((packed));
+
+extern struct mem_entry* mem_table;
 extern struct hwinf *hardware;
 
 extern char check_cpuid_avail();

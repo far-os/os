@@ -5,8 +5,14 @@
 [org 0x7c00]
 %define OFFSET 0x80000 - (%!KERN_SIZE << 9) ; the offset at which our kernel is loaded
 
+%define MEMTAB_OFFS 0x8000
+%define MEMTAB_MAX_ENTS 256 ; cannot have 256 or more entries, as that rolls over the one byte MEM_ENTS
+%define MEMTAB_ENT_SIZE 24 ; entry size is 24 bytes. it does ask how many bytes we want for ome reason, so here is the number
+%define CONFIG_OFFS 0xcc00
+
 %define BOOT_DRV 0x0 ; the boot drive location, from gs
-%define DRV_PARAM 0x1 ; the boot drive parameter bock location, from gs
+%define MEM_ENTS 0x1 ; the number of memory entries
+%define DRV_PARAM 0x2 ; the boot drive parameter bock location, from gs. this is very very long, anything short should go before
 %define KERN_LEN %!KERN_SIZE - 1 ; the kernel length. this changes quite frequently. MUST BE `4n-1`, as the FAT aftwerwards needs to be cluster-aligned. i decided 4 sectors per cluster
 
 %define GDT_LEN 4
@@ -41,7 +47,7 @@ __start:
         mov es, cx
         mov ss, cx
 
-        mov cx, 0xcc0 ; 0xcc00 is where the data will be stored
+        mov cx, (CONFIG_OFFS >> 4) ; 0xcc00 is where the data will be stored
         mov gs, cx
 
         mov bp, 0x6000 ; stack, remember it grows down
@@ -52,9 +58,13 @@ __start:
 
         mov si, string ; log a message
         call print_16
+        
+        call mem ; deal with mem
 
         call load_krn
         
+        ; fat_n_sectors is 16bit field, but if it's 0 look at the _extended field.
+        ; for consistency's sake, we always make it zero and put it in _extended in runtime.
         movzx eax, word [fat_n_sectors]
         test ax, ax
         jz _after_sector_move
@@ -99,10 +109,47 @@ print_16:
         jnz char_16 ; if not continue string
         popa
         ret
- 
+
+mem:
+        mov cx, (MEMTAB_OFFS >> 4) ; segment 0x8000 where we want to put the memory
+        mov es, cx
+        mov di, 0 ; = 0x8000
+        xor ebx, ebx
+      .mem_loop:
+        cmp di, (MEMTAB_ENT_SIZE * MEMTAB_MAX_ENTS) ; have we hit 256 entries? this is our maximum at which point we stop reading
+        jae .mem_done ; we do this here as cmp trashes carry flag
+
+        mov edx, "PAMS" ; SMAP. backwards because little endian
+        mov eax, 0x0000e820 ; routine number
+        mov ecx, MEMTAB_ENT_SIZE ; we copy 24 bytes.
+        int 0x15 ; interrupt.
+
+        test di, di ; check if this is the first time
+        jnz .mem_after_first ; if we aren't first, skip preliminary checks
+        jc  .mem_fail ; if carry flag set, fail
+        cmp eax, "PAMS" ; is magic set?
+        jne .mem_fail
+      .mem_after_first:
+        jcxz .mem_after_inc ; if we got no bytes out, don't bother incrementing di
+        lea di, [di + MEMTAB_ENT_SIZE] ; advance di without changing carry (as we want to examine it later)
+      .mem_after_inc:
+        test ebx, ebx ; two terminating conditions: ebx=0, or cf=1 (hardware dependent)
+        jna .mem_done ; !a == (cf=1) || (zf=1)
+        jmp .mem_loop
+      .mem_fail:
+        ; do nothing, di is already 0
+        ; can't set -1 here, as divide overflow throws #DE
+      .mem_done:
+        mov ax, di ; divide di by 24
+        mov bl, 24
+        div bl ; al = quotient
+        mov [gs:MEM_ENTS], al ; load the length
+        ret
+
+
 load_krn:
         mov si, kernel_in_progress ; kernel boot message
-        call print_16 
+        call print_16
 
         mov cx, (OFFSET >> 4) ; writes to the address
         mov es, cx ; puts the address in es, which is where the read interrupt looks
@@ -157,7 +204,7 @@ read:
 
         jc disk_fail ; in the event of failure
 
-        call write_disk_error
+;        call write_disk_error ; no longer have print_hx
 
         mov cx, gs ; put gs in ds
         mov ds, cx
@@ -173,27 +220,24 @@ read:
         xor cx, cx ; clean ds
         mov ds, cx
 
-  write_disk_error:
-        mov esi, 0xd15c0000 ; blank out bx, add a "d15c" (for disk) so that we know it's the disk code
-        movzx si, ah ; move the return status into bl
-
         ret
 
   disk_fail:
         mov si, disk_error
         call print_16
-        jmp write_disk_error
+        ret
+;        jmp write_disk_error
   disk_error:
-        db "Disk read error!",0xd,0xa,0
+        db "! Disk read error",0xd,0xa,0
 
 string:
-        db "Starting in Real Mode...",0xd,0xa,0
+        db "+ Starting",0xd,0xa,0
 kernel_in_progress:
-        db "Loading external kernel...",0xd,0xa,0
+        db "+ Loading kernel",0xd,0xa,0
 hdd_test:
-        db "Reading from hard disk...",0xd,0xa,0
+        db "+ Reading disk",0xd,0xa,0
 invalid_diskette:
-        db 0xd,0xa,"FATAL: No complatible FarOS install found",0xd,0xa,0x0 
+        db 0xd,0xa,"! FarOS not found",0xd,0xa,0x0
 dap_packet:
         dap_len: db 0x10 ; length of DAP
         reserved: db 0 ; is zero

@@ -435,8 +435,21 @@ shell_f_stat:
     );
   } else if (strcmp(argv[0], "sys:mem")) {
     void *addr = malloc(1);
-    printf("%$First free memory addr: %p\n\t\tout of: %p\n\nCurrently running from: %p\n", COLOUR(MAGENTA, B_YELLOW), addr, MEM_END, rip_thunk());
+    printf("%$First free memory addr: %p\n\t\tout of: %p\n\nCurrently running from: %p\n\n", COLOUR(MAGENTA, B_YELLOW), addr, MEM_END, rip_thunk());
     free(addr);
+
+    for (unsigned int ent_id = 0; ent_id < (hardware->mem_ents); ent_id++) {
+      printf("%$Entry %d: from %16x, len %16x, type %d\n%$\tignore? %B\tnon_volatile? %B\n",
+        COLOUR(BLUE, B_GREEN),
+        ent_id,
+        &(mem_table[ent_id].base),
+        &(mem_table[ent_id].len),
+        mem_table[ent_id].type,
+        COLOUR(BLUE, CYAN),
+        mem_table[ent_id].ignore,
+        mem_table[ent_id].non_volatile
+      );
+    }
   } else if (strcmp(argv[0], "time")) {
     printf("%$Time since kernel load: %d.%2ds\n%s%c%4d-%2d-%2d %2d:%2d:%2d\n",
       COLOUR(RED, B_CYAN),

@@ -1,5 +1,6 @@
 #pragma once
 #include "fs.h"
+#include "misc.h"
 
 #define RTC_SEC  0x00
 #define RTC_MIN  0x02

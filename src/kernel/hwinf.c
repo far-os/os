@@ -1,6 +1,7 @@
 #include "include/hwinf.h"
 #include "include/util.h"
 
+struct mem_entry* mem_table = (struct mem_entry *) 0x8000;
 struct hwinf *hardware = (struct hwinf *) 0xcc00;
 
 static inline int chk_cflag (unsigned char feat) {

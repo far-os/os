@@ -134,7 +134,7 @@ void vpfctprintf(putch_callback put, const char *fmt, unsigned char start_style,
             goto stop_waiting;
           }
 
-          convbuf = malloc(length_modif ? length_modif : 8);
+          convbuf = malloc((length_modif ? length_modif : 8) + 1); // +1 to include null byte
           to_hex((void *) va_arg(args, unsigned int), length_modif ? length_modif : 8, convbuf);
           callback_str(put, convbuf, style, 0);
 

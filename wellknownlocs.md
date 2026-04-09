@@ -4,6 +4,7 @@ A list of all (predetermined) locations of objects in memory.
 struct keystates *keys = &((struct keystates) { .states_high = 0x0, .states_low = 0x0, .modifs = 0b00000000 });
 
 struct fatfs_superblock *bpb = (struct csdfs_superblock *) 0x7c00; // until 0x7e00
+struct mem_table[] = (struct mem_table *) 0x8000;
 struct timestamp *curr_time = (struct timestamp *) 0xc7f0;
 struct xconf_qi *xconf = (struct config_qi *) 0xc800;
 struct hwinf *hardware = (struct hwinf *) 0xcc00;
