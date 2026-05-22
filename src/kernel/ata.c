@@ -2,6 +2,7 @@
 #include "include/err.h"
 #include "include/fs.h"
 #include "include/port.h"
+#include "include/sched.h"
 
 // see TODO in header file
 unsigned short *ata_identity = (unsigned short *) 0xd000;

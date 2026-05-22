@@ -32,6 +32,7 @@ The kernel's source files are explained below:
 - `misc.c`: Definitions - structs, `#define`s, etc
 - `printf.c`: Contains `printf` and its variations. TODO: move this into a stdlib
 - `pic.c`: Utilities for initialising the PIC, masking the PIC, etc.
+- `sched.c`: Contains code for the kernel scheduler for kapps.
 - `syscall.c`: Contains code for `syscall`ing.
 - `text.c`: Code for writing to the screen.
 - `timer.c`: Code to control the PIT.

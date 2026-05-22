@@ -120,7 +120,7 @@ void cur_on_with(unsigned char, unsigned char);
 
 void set_page(unsigned char pg);
 
-void paint_row(unsigned char);
+void paint_row(unsigned char colour);
 
 extern unsigned char is_split;
 void split_scr(int);

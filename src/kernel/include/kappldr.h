@@ -1,4 +1,5 @@
 #include "text.h"
+#include "misc.h"
 
 #pragma once
 
@@ -30,7 +31,7 @@ struct k_app {
 #define AVAILABLE_KAPPS 8
 typedef int app_handle;
 
-app_handle instantiate(struct k_app *, app_handle parent, char is_fg);
+app_handle instantiate(struct k_app *, app_handle parent, bool is_fg);
 void focus_app(app_handle which);
 void terminate_app(app_handle which);
 

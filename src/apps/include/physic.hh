@@ -14,6 +14,8 @@ struct Physic : KApp {
   void first_run();
 
 private:
+  unsigned int frame; // frame number
+
   // linear addresses of current pieces
   curpos_t linear[N_PIECES];
 
@@ -35,6 +37,7 @@ private:
   bool paused; // true if paused
 
   void tick_and_draw();
+  void title();
 
   /* external asm functions. static as they don't reference this pointer, so don't need to be passed it */
   static void init(unsigned int ticks_per_frame, short gravity, short tilt);

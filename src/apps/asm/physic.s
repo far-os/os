@@ -165,7 +165,7 @@ _ZN6Physic6deinitEv:
 
 .section .rodata
   __physic_data_bounds: # dimensions of the screen, in the positiong cells: | 80 | 25 | 0 | 0 |
-    .word 25 # height
+    .word 24 # height - reduced to 24 to make way for bottom bar
     .word 80 # width
     .word 0 # not needed, as get_linear operates one at a time. TODO maybe?
     .word 0

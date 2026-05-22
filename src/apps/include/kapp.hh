@@ -32,4 +32,7 @@ extern "C" struct KApp { // struct != class, class is everything's private by de
 protected: // only visible to this and children
   // write keys util function, see kapp.cc for more info
   int write_keys_to_buf(struct inp_strbuf *);
+
+  // bad sleep function. basically trigger invoke again after a set amount of time to keep alive, but not hogging computer with busy wait
+  void invoke_after_centisecs(unsigned int delta);
 };
