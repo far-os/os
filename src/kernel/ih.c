@@ -6,6 +6,7 @@
 #include "include/cmos.h"
 #include "include/misc.h"
 #include "include/pic.h"
+#include "include/sched.h"
 
 unsigned char quitting_prog = 0;
 
@@ -50,6 +51,7 @@ void eh_c(struct cpu_state c, unsigned int i, struct stack_state s) {
     if (!(++uptime % 100)) {
       adv_time(curr_time);
     } // increment centisecond counter
+    tick_focused_timed_invoke(); // tick program if available
     break;
   case 0x21: // PS/2 keyboard
     read_kbd(); // send to the keyboard

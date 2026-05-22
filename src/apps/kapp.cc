@@ -11,6 +11,7 @@
 #include "include/edit.hh"
 #include "include/shell.hh"
 #include "include/calc.hh"
+#include "include/err.h"
 
 KApp::KApp() {
   memzero(&key_q, QUEUE_LEN);
@@ -23,7 +24,7 @@ int KApp::write_keys_to_buf(struct inp_strbuf *to) {
   // if we'll be past the end of the buffer's allocation (comlen)
   // it'll error anyway, no point in putting characters
   char n_to_put = strlen(this->key_q);
-  if (!n_to_put) return; // nothing to do beyond this point
+  if (!n_to_put) return strlen(to->buf); // nothing to do beyond this point
 
   int targ_len = strlen(to->buf) + n_to_put;
   if (targ_len >= to->len) {
@@ -42,6 +43,11 @@ int KApp::write_keys_to_buf(struct inp_strbuf *to) {
 
   return targ_len;
 }
+
+// bad wait function: wrapper around set_timed_invoke
+void KApp::invoke_after_centisecs(unsigned int delta) {
+  set_timed_invoke(this->app_id & 0xf, delta);
+};
 
 // we dont technically need to destruct anything, but out children might (but if we don't know they're a child we need virtuality)
 KApp::~KApp() {};

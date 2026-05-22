@@ -31,7 +31,6 @@ struct timestamp {
 } __attribute__((packed));
 
 extern struct timestamp *curr_time;
-extern unsigned int uptime;
 extern char *weekmap[7];
 
 void read_rtc(struct timestamp *ts);

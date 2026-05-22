@@ -39,35 +39,69 @@ extern void __physic_deinit();
 
 // 4/128sec in 9.7 fixed point. see above
 #define TICKS_PER_FRAME 4
-#define CS_PER_FRAME 3
+#define CENTISEC_PER_FRAME 3
 
 // approximation of -0.0981 hm/s^2 in 9.7 fixed point.
 // -0.0981hm/s^2 * 128 = 12.552515...
 #define GRAVITY -12
 
 void Physic::invoke() {
-  for (int i = 0; i < QUEUE_LEN && !!this->ctrl_q[i]; ++i) { // loop over each arrow key
-    switch (this -> ctrl_q[i]) {
-      default: break;
+  for (int i = 0; i < QUEUE_LEN && !!this->key_q[i]; ++i) { // loop over each arrow key
+    switch (this -> key_q[i]) {
+    case 'H': // tilt left
+    case 'h':
+      this->tilt--;
+      goto reset;
+    case 'J': // set gravity down
+    case 'j':
+      if (this->gravity > 0) gravity = -gravity;
+      goto reset;
+    case 'K': // set gravity up
+    case 'k':
+      if (this->gravity < 0) gravity = -gravity;
+      goto reset;
+    case 'L': // tilt right
+    case 'l':
+      this->tilt++;
+      goto reset;
+    case ' ': // space to pause
+      this->paused = !paused;
+      this->title(); // update pause indicator
+      break;
+    default:
+      break;
+    reset: // call init again with new settings
+      this->init(TICKS_PER_FRAME, gravity, tilt);
     }
 
-    ctrl_q[i] = NO_CTRL;
+    key_q[i] = NO_CTRL;
   }
 
-  if (this -> key_q[0]) { // press any key to continue...
+  if (this -> ctrl_q[0]) { // press any control key to continue...
     terminate_app(this->app_id & 0xf);
+    return;
   }
 
   this->tick_and_draw();
+  this->invoke_after_centisecs(CENTISEC_PER_FRAME);
 }
 
-void Physic::first_run() { this->tick_and_draw(); }
+void Physic::first_run() {
+  this->invoke(); // trigger tick and loop
+}
 
 void Physic::tick_and_draw() {
   // do nothing if paused
   if (paused) return;
 
+  this->frame++;
+
   this->compute_pair(this->pos, this->vel);
+
+  // every other frame, calculate velocity
+  if (this->frame & 1) {
+    this->euclidean_norm(this->vel, this->vel_norm);
+  }
 
   // over each piece
   for (int piece = 0; piece < N_PIECES; ++piece) {
@@ -80,6 +114,33 @@ void Physic::tick_and_draw() {
     // write piece
     write_cell_packet(linear[piece], pieces[piece], false);
   }
+
+  this->title();
+}
+
+void Physic::title() {
+  set_cur(POS(0, 24));
+  printf("\r%$%~: (%2d,%2d) %u \xeb/s \xb3 %~: (%2d,%2d) %u \xeb/s %$\xb3 T: %~ %u, G: %~ \xb3 %$ ^H = help %$",
+    COLOUR(BLACK, B_WHITE),
+    pieces[0],
+    linear[0] % 80,
+    linear[0] / 80,
+    vel_norm[0],
+    pieces[1],
+    linear[1] % 80,
+    linear[1] / 80,
+    vel_norm[1],
+    COLOUR(BLACK, WHITE),
+    (struct char_packet) {tilt > 0 ? '\x1a' : tilt == 0 ? '\xf9' : '\x1b', COLOUR(BLACK, B_CYAN)},
+    tilt > 0 ? tilt : -tilt,
+    (struct char_packet) { gravity > 0 ? '\x18' : gravity == 0 ? '\xf9' : '\x19', COLOUR(BLACK, B_GREEN)},
+    COLOUR(RED, B_YELLOW),
+    COLOUR(BLACK, WHITE)
+  );
+  for (curpos_t cur = get_cur(); cur < (VGA_WIDTH * VGA_HEIGHT); ++cur) {
+    write_cell(0, cur, 0); // empty rest of line
+  }
+  write_cell(paused ? '\xfe' : '\xff', POS(VGA_WIDTH - 2, VGA_HEIGHT - 1), COLOUR(B_BLACK, B_RED));
 }
 
 Physic::Physic() {
@@ -90,6 +151,8 @@ Physic::Physic() {
 
   // setup
   {
+    frame = 0;
+
     pos[0] = 0xc000'7fff; // (20, 0)
     vel[0] = 0x0080'0000; // [0.15625, 0]
 

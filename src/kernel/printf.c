@@ -177,6 +177,10 @@ void vpfctprintf(putch_callback put, const char *fmt, unsigned char start_style,
             style = va_arg(args, unsigned int) & 0xff;
           }
           goto stop_waiting;
+        case '~': // character packet
+          struct char_packet pack = va_arg(args, struct char_packet);
+          put(pack.ch, pack.style);
+          goto stop_waiting;
         case '%':
           put('%', style);
           goto stop_waiting;

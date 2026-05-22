@@ -7,8 +7,6 @@
 
 struct timestamp *curr_time = (struct timestamp *) 0xc7f0;
 
-// centisec (100ths of sec) since load
-unsigned int uptime = 0;
 char *weekmap[7] = {
   "Sun",
   "Mon",

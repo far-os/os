@@ -5,11 +5,12 @@
 #include "include/text.h"
 #include "include/util.h"
 #include "include/memring.h"
+#include "include/sched.h"
 
 struct k_app *app_db[AVAILABLE_KAPPS];
 app_handle curr_kapp = -1;
 
-app_handle instantiate(struct k_app *app, app_handle parent, char is_fg) {
+app_handle instantiate(struct k_app *app, app_handle parent, bool is_fg) {
   app_handle found = -1;
   for (app_handle i = 0; i < AVAILABLE_KAPPS; ++i) {
     if (!app_db[i]) {
@@ -49,11 +50,16 @@ void focus_app(app_handle which) {
   }
   curr_kapp = which;
 //  (*app_db[curr_kapp]->virts->invoke)(app_db[curr_kapp]);
+
+  // if the program has a waiting invoke, do so
+  tick_focused_timed_invoke();
   
   set_page(which); // move to the page on which app is operating
 }
 
 void terminate_app(app_handle which) {
+  clear_timed_invokes(which);
+
   app_handle parent = app_db[which]->app_id >> 4;
   kapp_destroy(app_db[which]);
   app_db[which] = NULL; // no switching back
