@@ -11,9 +11,9 @@ export DISK_OFFSET := 0
 
 # Size allocated to kernel in sectors. This must be able to fit boot.kern.bin, otherwise bad things will happen
 # Also used to determine load location in memory (loaded at 0x80_000 - KERN_SIZE{in bytes}. done so that it resides in the highest possible region in 640k that's not possible hoarded by bios).
-export KERN_SIZE := 112
+export KERN_SIZE := 116
 
-CFLAGS := -falign-functions=1 -fno-stack-protector -ffreestanding -m32 -march=i686 -Wall -Wextra -Werror=return-type -fpermissive -D"KERN_LEN=$(KERN_SIZE)"
+CFLAGS := -falign-functions=1 -fno-stack-protector -ffreestanding -m32 -march=i686 -Wall -Wextra -Werror=return-type -fpermissive -no-pie -D"KERN_LEN=$(KERN_SIZE)"
 CPPFLAGS := -fno-exceptions -fno-rtti -nostdinc++ $(CFLAGS)
 # -static-libgcc. contains some long long arithmetic stuff
 
@@ -23,8 +23,9 @@ build/boot.bin: src/boot.asm
 build/entry.o: src/kernel/entry.asm
 	nasm $^ -f elf -o $@
 
-build/apps.a: $(wildcard src/apps/*.cc) $(wildcard src/apps/extra/*.cc) $(wildcard src/apps/include/*.hh) $(wildcard src/apps/include/extra/*.hh)
+build/apps.a: src/apps/asm/physic.s $(wildcard src/apps/*.cc) $(wildcard src/apps/extra/*.cc) $(wildcard src/apps/include/*.hh) $(wildcard src/apps/include/extra/*.hh)
 	mkdir -p build/apps.obj
+	as $< --32 -o build/apps.obj/physic.asm.o
 	cd build/apps.obj && g++ $(CPPFLAGS) -c ../../src/apps/*.cc
 	cd build/apps.obj && g++ $(CPPFLAGS) -c ../../src/apps/extra/*.cc
 	ar rv $@ build/apps.obj/*.o

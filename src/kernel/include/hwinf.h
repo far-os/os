@@ -52,7 +52,9 @@ struct hwinf {
 
   unsigned int f_flags_edx; // 0xcc8f
   unsigned int f_flags_ecx; // 0xcc93
-                            // 0xcc97
+
+  bool has_sse; // 0xcc97
+                // 0xcc98 (or 0xcc9b? who knows?)
 } __attribute__((packed));
 
 enum mem_entry_type {

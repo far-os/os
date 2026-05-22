@@ -26,6 +26,7 @@ struct idtr_contents {
 } __attribute__((packed));
 
 extern void *eh_list[];
+extern bool sse_enable();
 
 void main() {
 //  clear_scr();
@@ -55,6 +56,9 @@ void main() {
   }
 
   asm volatile ("lidt %0" : : "m"(idtr)); // load idt
+
+  // enable sse
+  hardware->has_sse = sse_enable();
 
   pic_init(); // pic
   
