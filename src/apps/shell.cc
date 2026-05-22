@@ -4,6 +4,7 @@
 #include "include/extra/split.hh"
 
 #include "include/shell.hh"
+#include "include/physic.hh"
 
 // list of entries, Entry and EntType are children of HelpHost
 const HelpHost::Entry comnames[] = {
@@ -20,6 +21,7 @@ const HelpHost::Entry comnames[] = {
   { .name = "edit", .desc = "Text editor\xff<filename>", .type = HelpHost::SUB_ENTRY },
   { .name = "read", .desc = "Prints file content\xff<filename>", .type = HelpHost::SUB_ENTRY },
   { .name = "help", .desc = "Prints this help menu", .type = HelpHost::PLAIN_ENTRY },
+  { .name = "physic", .desc = "Launches a SIMD physics simulator", .type = HelpHost::PLAIN_ENTRY },
   { .name = "proc", .desc = "Utilities that manage running processes", .type = HelpHost::PLAIN_ENTRY },
   { .name = "ls", .desc = "Prints currently running processes", .type = HelpHost::SUB_ENTRY },
   { .name = "kill", .desc = "Kills the specified process\xff<@handle>", .type = HelpHost::SUB_ENTRY },
@@ -330,6 +332,15 @@ shell_f_stat:
   } else if (strcmp(argv[0], "help")) {
     app_handle help = instantiate(
       new HelpHost("shell builtins", comnames),
+      this->app_id & 0xf,
+      true
+    );
+
+    exitting = false;
+    goto shell_clean;
+  } else if (strcmp(argv[0], "physic")) {
+    app_handle edt = instantiate(
+      new Physic(),
       this->app_id & 0xf,
       true
     );

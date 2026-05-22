@@ -164,6 +164,34 @@ print_32:
         popad ; popa but 32bit
         ret
 
+[global sse_enable]
+sse_enable: ; enable sse
+        mov eax, 0x1 ; cpuid leaf 1
+        cpuid ; get cpuid
+        test edx, (1 << 25) ; bit 25 of edx => sse
+
+        clc ; clear carry flag (false)
+        jz .sse_end
+
+        ; enable sse, taken from osdev wiki (q.v.)
+        mov eax, cr0 ; get cr0
+        and ax, 0xfffb ; clear bit 2
+        or ax, 0x2     ; set bit 1
+        mov cr0, eax ; save cr0
+
+        mov eax, cr4 ; get cr4
+        or ax, 0x0600 ; set bits 9 and 10
+        mov cr4, eax ; save cr4
+
+        stc ; set carry flag (true)
+
+  .sse_end:
+        setc cl
+        movzx eax, cl
+
+        ret
+
+
 protected:
         db "Successfully moved into Protected Mode!",0
 
