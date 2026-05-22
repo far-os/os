@@ -166,12 +166,13 @@ void canonicalise_name(const char *from, char *to) {
   // si = 0; special checks for first character
   switch (from[si]) {
   case FILE_F_UNUSED:
-  case FILE_F_DELETED:
+  case FILE_F_ACTUALLY_E5: // if you want to have 0x05 (club symbol) at the start of your filename, unfortunately not possible (see below)
   case FILE_F_DIRECTORY:
     msg(KERNERR, E_NOFILE, "Bad filename \"%s\"", from);
     return;
-  case FILE_F_ACTUALLY_E5: // so if you really want to put an 0xe5 in your filename, have a 0x05 instead
-    to[di++] = 0xe5; // TODO add function for this in a "decanonicalise" function
+  case ((signed char) FILE_F_DELETED): // 0xe5 (oh dear). this is a prohibited character.
+    to[di++] = FILE_F_ACTUALLY_E5; // workaround: store 0x05 instead. this was a hack
+    si++; // advance si too
     break;
   default:
     to[di++] = to_upper(from[si++]);
@@ -221,7 +222,9 @@ void sane_name(const char *from, char *to) {
 struct dir_entry *get_file(const char *name) {
   char nbuf[FAT_FILENAME_LEN + 1] = {0};
   canonicalise_name(name, nbuf);
-  for (unsigned int search = 0; VALID_FILE(root_dir[search]); search++) {
+  for (unsigned int search = 0; EXISTS_DIRENT(root_dir[search]); search++) {
+    if (!VALID_DIRENT(root_dir[search])) continue;
+
     if (memcmp(nbuf, root_dir[search].name, FAT_FILENAME_LEN)) return &root_dir[search];
   }
   msg(PROGERR, E_NOFILE, "File not found");
@@ -232,7 +235,9 @@ struct dir_entry *get_file(const char *name) {
 bool does_exist(const char *name) {
   char nbuf[FAT_FILENAME_LEN + 1] = {0};
   canonicalise_name(name, nbuf);
-  for (unsigned int search = 0; VALID_FILE(root_dir[search]); search++) {
+  for (unsigned int search = 0; EXISTS_DIRENT(root_dir[search]); search++) {
+    if (!VALID_DIRENT(root_dir[search])) continue;
+
     if (memcmp(nbuf, root_dir[search].name, FAT_FILENAME_LEN)) return true;
   }
 
@@ -242,12 +247,15 @@ bool does_exist(const char *name) {
 void rename_file(const char *old, const char *new) {
   struct dir_entry *f = get_file(old);
   canonicalise_name(new, f->name);
+
+  // save changes to disk
+  write_root();
 }
 
 void read_file(const char *filename, void * where) {
   struct dir_entry *f = get_file(filename);
 
-  if (!f || !VALID_FILE(*f)) {
+  if (!f || !VALID_DIRENT(*f)) {
     msg(KERNERR, E_NOFILE, "Invalid file");
     line_feed();
     return;
@@ -301,7 +309,7 @@ struct dir_entry *create_file(const char *filename) {
   // get first unoccupied file slot
   // TODO: fix for non-root directories, as uses n_root_entries
   unsigned int search = 0;
-  for (; VALID_FILE(root_dir[search]); search++)
+  for (; VALID_DIRENT(root_dir[search]); search++) // VALID_ is what we want
     if (search >= bpb->n_root_entries)
       msg(KERNERR, E_NOSTORAGE, "Root directory full");
 
@@ -372,7 +380,7 @@ void write_file(const char *filename, void *where, unsigned int new_size) {
   struct dir_entry *f = get_file(filename);
 
   // create file if not exist
-  if (!f || !VALID_FILE(*f)) {
+  if (!f || !VALID_DIRENT(*f)) {
     f = create_file(filename);
   }
 

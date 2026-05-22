@@ -58,3 +58,14 @@ void query_cpuid() {
     memcpy(brandbuf, &(hardware -> brand), 48);
   }
 }
+
+// get sum of length
+unsigned int total_bytes_mem_of_type(enum mem_entry_type type) {
+  unsigned int running_total = 0;
+  for (unsigned int i = 0; i < hardware->mem_ents; ++i) {
+    if (mem_table[i].type == type) {
+      running_total += mem_table[i].len;
+    }
+  }
+  return running_total;
+}

@@ -14,7 +14,7 @@ kernel_entry:
         call print_32
 
         call a20_test
-        
+
         push 0
         call clear_pag
         sub esp, 4
@@ -29,7 +29,7 @@ clear_pag: ; clear screen
         push ebp ; c calling convention
         mov ebp, esp
         push edi
-        
+
         mov edx, [ebp+8] ; page nr
         shl edx, 12
 
@@ -49,7 +49,7 @@ clear_pag_ln: ; void clear_pag_ln(unsigned char p, int lnr);
         push ebp ; c calling convention
         mov ebp, esp
         push edi
-        
+
         mov edx, [ebp+12] ; load argument
 
         shl edx, 5 ; times by 32 - below it is times by 5 overall multiplying by 160
@@ -64,7 +64,7 @@ clear_pag_ln: ; void clear_pag_ln(unsigned char p, int lnr);
 
         cld
         rep stosw
-        
+
         pop edi
         leave
         ret
@@ -102,11 +102,12 @@ check_cpuid_avail:
         popfd          ; store eflags with changed bit
 
         pushfd         ; move eflags into eax
-        pop eax        
+        pop eax
 
-        cmp eax, edx   ; has the eflags changed since the backup?
-        setne al      ; if so, return 1
-        
+        cmp eax, edx  ; has the eflags changed since the backup?
+        setne cl      ; if so, return 1
+        movzx eax, cl ; pad out to an entire word, as sizeof(_Bool) need not be 1
+
         ret
 
 
@@ -116,7 +117,7 @@ a20_test:
         mov edi, 0x10200c ; odd address, if no A20 should be the same as even address
 
         mov [esi], esi ; put different values at each address
-        mov [edi], edi 
+        mov [edi], edi
 
         cmpsd ; are they the values the same (only the case if no A20)
         jne a20_ret
@@ -134,7 +135,7 @@ a20_test:
         call idle
         mov al, 0xdf
         out 0x60, al
-        
+
         call idle
   a20_ret:
         popad
@@ -234,7 +235,7 @@ eh_%1:
 prog:
         push ebp
         mov ebp, esp
-        
+
         mov dx, fs
         mov ds, dx
         mov es, dx
@@ -265,7 +266,7 @@ prog:
  program_succ:
         leave
         ret
-        
+
 
 [extern eh_c]
 generic_eh:

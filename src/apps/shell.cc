@@ -32,7 +32,7 @@ const HelpHost::Entry comnames[] = {
   { .name = "cpu", .desc = "Prints CPU info", .type = HelpHost::SUB_ENTRY },
   { .name = "fs", .desc = "Prints file system info", .type = HelpHost::SUB_ENTRY },
   { .name = "indic", .desc = "Prints keyboard LED status", .type = HelpHost::SUB_ENTRY },
-  { .name = "mem", .desc = "Prints memory info", .type = HelpHost::SUB_ENTRY },
+  { .name = "mem", .desc = "Prints memory info\xff-v \x1a verbose", .type = HelpHost::SUB_ENTRY },
   { .name = "time", .desc = "Gets current time", .type = HelpHost::PLAIN_ENTRY },
   { .name = "util", .desc = "Utilities and tools", .type = HelpHost::PLAIN_ENTRY },
   { .name = "to8.3", .desc = "Canonicalises a filename into 8.3\xff<string>", .type = HelpHost::SUB_ENTRY },
@@ -132,7 +132,7 @@ void KShell::first_run() {
   { // XXX: 15 characters right now. could make it dynamic with printf perhaps??
     set_cur(POS(-15, 1));
 
-    printf("%$f%$a%$r%$OS v%d.%d.%d%$:%2x",
+    printf("%$f%$a%$r%$OS v%u.%u.%u%$:%2x",
       0x0a,
       0x0c,
       0x0e,
@@ -213,8 +213,8 @@ bool KShell::shexec() {
     delete_file(argv[1]);
   } else if (strcmp(argv[0], "f:ls")) {
     char *name = malloc(13);
-    for (unsigned int search = 0; EXISTS_FILE(root_dir[search]); search++) {
-      if (VALID_FILE(root_dir[search])) {
+    for (unsigned int search = 0; EXISTS_DIRENT(root_dir[search]); search++) {
+      if (VALID_DIRENT(root_dir[search])) {
         sane_name(root_dir[search].name, name);
         printf("%$%s\t", COLOUR(BLACK, B_WHITE), name);
       }
@@ -267,7 +267,7 @@ shell_f_stat:
     // returns to a global buffer. be not confused, be horrified
     attribify(f->attrib);
 
-    printf("%$%s\n\t%d bytes, intial cluster %3X\n\tAttributes: %s\n\tCreated  %4d-%2d-%2d %2d:%2d:%2d\n\tModified %4d-%2d-%2d %2d:%2d:%2d\n\tAccessed %4d-%2d-%2d\n",
+    printf("%$%s\n\t%u bytes, intial cluster %3X\n\tAttributes: %s\n\tCreated  %4d-%2d-%2d %2d:%2d:%2d\n\tModified %4d-%2d-%2d %2d:%2d:%2d\n\tAccessed %4d-%2d-%2d\n",
       COLOUR(BLUE, B_YELLOW),
       name,
       f->size,
@@ -338,7 +338,7 @@ shell_f_stat:
     goto shell_clean;
   } else if (strcmp(argv[0], "proc:ls")) {
     for (app_handle i = 0; i < AVAILABLE_KAPPS; ++i) {
-      printf("%$@%d: %s\n", app_db[i] ? 0xa : 0xc, i, app_db[i] ? app_db[i]->app_name : "-");
+      printf("%$@%u: %s\n", app_db[i] ? 0xa : 0xc, i, app_db[i] ? app_db[i]->app_name : "-");
     }
   } else if (strcmp(argv[0], "proc:kill")) {
     if (argv[1][0] == '@') {
@@ -367,12 +367,12 @@ shell_f_stat:
     }
 
     if (ar != -1) {
-      printf("%$was %d\n%$now ", COLOUR(BLUE, B_WHITE), xconf -> verbosity, COLOUR(BLUE, B_GREEN));
+      printf("%$was %u\n%$now ", COLOUR(BLUE, B_WHITE), xconf -> verbosity, COLOUR(BLUE, B_GREEN));
       xconf->verbosity = ar;
       WRITE_CONF();
     }
 
-    printf("%$verbose = %d\n",
+    printf("%$verbose = %u\n",
       ar != -1 ? COLOUR(BLUE, B_GREEN) : COLOUR(BLUE, B_YELLOW),
       xconf -> verbosity
     );
@@ -397,7 +397,7 @@ shell_f_stat:
       msg(PROGERR, E_ARGS, "No valid handle supplied");
     }
   } else if (strcmp(argv[0], "sys:ata")) {
-    printf("%$IDENTIFY of disk %2xh:\n\tLBA28\t%d sectors\n\tLBA48\t%B, %l sectors\n\tUDMA\t80CC: %B, %4x\n",
+    printf("%$IDENTIFY of disk %2xh:\n\tLBA28\t%u sectors\n\tLBA48\t%B, %l sectors\n\tUDMA\t80CC: %B, %4x\n",
       COLOUR(RED, B_GREEN),
       &(hardware -> bios_disk),
       ATA_N_LBA28,
@@ -416,7 +416,7 @@ shell_f_stat:
       hardware -> cpuid_ext_leaves >= 0x80000004 ? &(hardware -> brand) : NULL // brand string
     );
   } else if (strcmp(argv[0], "sys:fs")) {
-    printf("%$%5s disk:\n\tVol. label \"%11s\"\n\tVol. ID %8X\n\tCluster size: %d sectors\n\tN. Fats: %d\n\tVolume size %dKiB\n",
+    printf("%$%5s disk:\n\tVol. label \"%11s\"\n\tVol. ID %8X\n\tCluster size: %u sectors\n\tN. Fats: %u\n\tVolume size %uKiB\n",
       COLOUR(RED, B_YELLOW),
       &(bpb -> sys_ident),
       &(bpb -> vol_lbl),
@@ -427,7 +427,7 @@ shell_f_stat:
     );
   } else if (strcmp(argv[0], "sys:indic")) {
     // indicators
-    printf("%$scroll: %d\nnum: %d\ncaps: %d\n",
+    printf("%$scroll: %B\nnum: %B\ncaps: %B\n",
       COLOUR(GREEN, RED),
       bittest(&(keys -> modifs), 0),
       bittest(&(keys -> modifs), 1),
@@ -438,17 +438,29 @@ shell_f_stat:
     printf("%$First free memory addr: %p\n\t\tout of: %p\n\nCurrently running from: %p\n\n", COLOUR(MAGENTA, B_YELLOW), addr, MEM_END, rip_thunk());
     free(addr);
 
-    for (unsigned int ent_id = 0; ent_id < (hardware->mem_ents); ent_id++) {
-      printf("%$Entry %d: from %16x, len %16x, type %d\n%$\tignore? %B\tnon_volatile? %B\n",
-        COLOUR(BLUE, B_GREEN),
-        ent_id,
-        &(mem_table[ent_id].base),
-        &(mem_table[ent_id].len),
-        mem_table[ent_id].type,
-        COLOUR(BLUE, CYAN),
-        mem_table[ent_id].ignore,
-        mem_table[ent_id].non_volatile
-      );
+    // verbose mode
+    if (argv.len() > 1 && strcmp(argv[1], "-v")) {
+      for (unsigned int ent_id = 0; ent_id < (hardware->mem_ents); ent_id++) {
+        printf("%$Entry %u: from %16x, len %16x, type %d\n%$\tignore? %B\tnon_volatile? %B\n",
+          COLOUR(BLUE, B_GREEN),
+          ent_id,
+          &(mem_table[ent_id].base),
+          &(mem_table[ent_id].len),
+          mem_table[ent_id].type,
+          COLOUR(BLUE, CYAN),
+          mem_table[ent_id].ignore,
+          mem_table[ent_id].non_volatile
+        );
+      }
+    } else { // non verbose mode
+      // c++ can't add enums... grrr
+      for (int typ = USABLE; typ <= BAD; typ++) {
+        printf("%$type %d: %u bytes\n",
+          COLOUR(BLUE, B_GREEN),
+          typ,
+          total_bytes_mem_of_type((enum mem_entry_type) typ)
+        );
+      }
     }
   } else if (strcmp(argv[0], "time")) {
     printf("%$Time since kernel load: %d.%2ds\n%s%c%4d-%2d-%2d %2d:%2d:%2d\n",

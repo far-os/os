@@ -129,6 +129,10 @@ void HelpHost::put_entries() {
         set_cur(POS(VGA_WIDTH - 8 - strlen(this->ents[ent].desc + cix + 1), (ent - start_ix) + 1));
         write_str("args: ", COLOUR(BLUE, RED));
         write_str(this->ents[ent].desc + cix + 1, COLOUR(BLUE, B_RED));
+      } else if (this->ents[ent].desc[cix+1] == '-') { // options, take bright yellow
+        set_cur(POS(VGA_WIDTH - 11 - strlen(this->ents[ent].desc + cix + 1), (ent - start_ix) + 1));
+        write_str("options: ", COLOUR(BLUE, YELLOW));
+        write_str(this->ents[ent].desc + cix + 1, COLOUR(BLUE, B_YELLOW));
       }
     } else { // sanity, at long last
       write_str(this->ents[ent].desc, COLOUR(BLUE, B_WHITE));

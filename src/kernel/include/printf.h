@@ -6,6 +6,7 @@
 
 // not really using standard library - stdarg just provides platform-dependent defines
 #include <stdarg.h>
+#include "text.h"
 
 typedef void (*putch_callback)(char ch, unsigned char style);
 

@@ -21,4 +21,4 @@ extern struct xconfig_qi *xconf;
 
 #define WRITE_CONF() write_file("xconfig.qi", xconf, sizeof(struct xconfig_qi))
 
-#define BOCHS_DEBUGGER asm volatile ("xchgw %bx, %bx")
+#define BOCHS_DEBUGGER asm volatile ("xchgw %%bx, %%bx")

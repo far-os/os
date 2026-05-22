@@ -3,15 +3,15 @@
 #include "include/port.h"
 #include "include/util.h"
 
-char *vram = (char *) 0xb8000;
+struct char_packet *vram = (struct char_packet *) 0xb8000;
 unsigned char page = 0;
-short page_curloc_cache[PAGE_COUNT]; 
+curpos_t page_curloc_cache[PAGE_COUNT];
 unsigned char is_split = 0;
 
 #pragma GCC push_options
 #pragma GCC optimize "O3"
 
-void set_cur(short pos) {
+void set_cur(curpos_t pos) {
   if (pos >= (VGA_WIDTH * VP_HEIGHT)) {
     pos -= VGA_WIDTH;
     scroll_scr();
@@ -24,10 +24,10 @@ void set_cur(short pos) {
   pbyte_out(VRAM_DATA_PORT, (pos & 0x00ff)); // the low eight bits
 }
 
-short get_cur() {
-  short pos = 0;
+curpos_t get_cur() {
+  curpos_t pos = 0;
   pbyte_out(VRAM_CTRL_PORT, 0xe); // we are getting the high 8 bits of position
-  pos |= ((short) pbyte_in(VRAM_DATA_PORT)) << 8; // the high eight bits
+  pos |= ((curpos_t) pbyte_in(VRAM_DATA_PORT)) << 8; // the high eight bits
   pbyte_out(VRAM_CTRL_PORT, 0xf); // we are getting the low 8 bits of position
   pos |= pbyte_in(VRAM_DATA_PORT); // the low eight bits
   return pos & 0x7ff;
@@ -85,109 +85,64 @@ void split_scr(app_handle app) {
 }
 #pragma GCC pop_options
 
-void paint_row(unsigned char colr) {
+void paint_row(unsigned char colour) {
   int ln = ln_nr();
   for (int k = 0; k < VGA_WIDTH; ++k) {
-    CPAGE[POS(k, ln) * 2 + 1] &= 0xf;
-    CPAGE[POS(k, ln) * 2 + 1] |= colr << 4;
+    CPAGE[POS(k, ln)].style &= 0xf;
+    CPAGE[POS(k, ln)].style |= colour << 4;
   }
 }
 
-short ln_nr() {
+curpos_t ln_nr() {
   return get_cur() / VGA_WIDTH;
 }
 
-void line_feed() {
-  short i = ln_nr();
-  set_cur(++i * VGA_WIDTH);
-}
+curpos_t write_cell_packet(curpos_t pos, struct char_packet pack, bool advanced) {
+  // if we're not advanced, we ignore all the case arms, and jump straight to the default behaviour
+  if (!advanced) goto plain_putch;
 
-void carriage_return() {
-  short i = ln_nr();
-  set_cur(i * VGA_WIDTH);
-}
-
-void tab() {
-  short i = get_cur() / 8;
-  set_cur((i + 1) * 8);
-}
-
-void v_tab() {
-  short i = get_cur();
-  set_cur(i + VGA_WIDTH);
-}
-
-void write_cell(char ch, short pos, unsigned char style) {
-  CPAGE[pos * 2] = ch;
-  CPAGE[pos * 2 + 1] = style;
-}
-
-void write_advanced_cell(char ch, short pos, unsigned char style) {
-  switch (ch) {
+  switch (pack.ch) {
   case '\n':
-    line_feed();
+    pos = (pos / VGA_WIDTH + 1) * VGA_WIDTH;
     break;
   case '\t':
-    tab();
+    pos = ((pos / 8) + 1) * 8;
     break;
   case '\r':
-    carriage_return();
+    pos = (pos / VGA_WIDTH) * VGA_WIDTH;
     break;
   case '\v':
-    v_tab();
+    pos += VGA_WIDTH;
     break;
+  plain_putch:
   default:
-    write_cell(ch, pos, style);
+    CPAGE[pos++] = pack;
     break;
   }
+
+  return pos;
 }
 
-void adv_cur_by(short n) {
-  short cur = get_cur();
+void adv_cur_by(curpos_t n) {
+  curpos_t cur = get_cur();
   cur += n;
   set_cur(cur);
 }
 
+void write_str_at(const char *str, curpos_t pos, unsigned char style) {
+  bool is_cur = (pos == -1); // is cursor
+  if (is_cur) pos = get_cur();
 
-void write_cell_cur(char ch, unsigned char style) {
-  short cur = get_cur();
-  write_cell(ch, cur, style);
-  adv_cur();
-}
-
-void write_advanced_cell_cur(char ch, unsigned char style) {
-  switch (ch) {
-  case '\n':
-    line_feed();
-    break;
-  case '\t':
-    tab();
-    break;
-  case '\r':
-    carriage_return();
-    break;
-  case '\v':
-    v_tab();
-    break;
-  default:
-    write_cell_cur(ch, style);
-    break;
+  for (unsigned int i = 0; str[i] != 0; ++i) {
+    // write changed pos to running pos
+    pos = write_advanced_cell(str[i], pos, style);
   }
+
+  // if cursor, set cursor to final position. avoids having to constantly set the cursor after every char
+  if (is_cur) set_cur(pos);
 }
 
-void write_str_at(const char *str, short pos, unsigned char style) {
-  for (short i = 0; str[i] != 0; ++i) {
-    write_advanced_cell(str[i], pos + i, style);
-  }
-}
-
-// mostly duplicate code
-void write_str(const char *str, unsigned char style) {
-  for (int i = 0; str[i] != 0; ++i) {
-    write_advanced_cell_cur(str[i], style);
-  }
-}
-
+// uses different logic to above. TODO: fix with generics for inp_strbuf
 void write_cell_into(struct inp_strbuf *dest, char ch, unsigned char style) {
   dest->buf[dest->ix * 2] = ch;
   dest->buf[dest->ix * 2 + 1] = style;

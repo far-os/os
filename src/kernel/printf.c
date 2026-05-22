@@ -27,7 +27,7 @@ void printf(const char* fmt, ...) {
   va_list args;
   va_start(args, fmt); // second parameter is the last arg before variadic
 
-  vpfctprintf(&write_advanced_cell_cur, fmt, COLOUR(BLACK, WHITE), args);
+  vpfctprintf(&__wrapper_write_advanced_cell_cur, fmt, COLOUR(BLACK, WHITE), args);
 
   va_end(args);
 }
@@ -38,7 +38,7 @@ void sprintf(char *dest, const char* fmt, ...) {
   va_start(args, fmt); // second parameter is the last arg before variadic
 
   int di = 0;
-  // XXX: gcc extension to use nested functions
+  // XXX: gcc extension to use nested functions for callback (cb)
   void cb(char ch, unsigned char _) {
     dest[di++] = ch;
   }
@@ -111,18 +111,25 @@ void vpfctprintf(putch_callback put, const char *fmt, unsigned char start_style,
         case 'd':
           if (length_modif) {
             convbuf = malloc(length_modif + 1);
-            to_filled_dec(va_arg(args, unsigned int), convbuf, length_modif, '0');
+            to_filled_dec(va_arg(args, int), convbuf, length_modif, '0');
           } else {
             convbuf = malloc(16);
-            to_dec(va_arg(args, unsigned int), convbuf);
+            to_dec(va_arg(args, int), convbuf);
           }
+
+          // convbuf is guaranteed to be defined.
+          callback_str(put, convbuf, style, 0);
+          goto stop_waiting;
+        case 'u': // unsigned int, no filled variant
+          convbuf = malloc(16);
+          l_to_dec((unsigned long long) va_arg(args, unsigned int), convbuf);
 
           // convbuf is guaranteed to be defined.
           callback_str(put, convbuf, style, 0);
           goto stop_waiting;
         case 'l': // no filled variant, historical accident again
           convbuf = malloc(32); // is freed later
-          l_to_dec(va_arg(args, unsigned int), convbuf);
+          l_to_dec(va_arg(args, long long), convbuf);
 
           callback_str(put, convbuf, style, 0);
           goto stop_waiting;

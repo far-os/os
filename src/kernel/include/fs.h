@@ -96,9 +96,9 @@ extern unsigned char *file_table;
 extern struct dir_entry *root_dir;
 
 // if the first byte is nonzero, then file exists, i.e. if the file has a name
-#define SPECIAL_FILE(f) ((*((unsigned char*) &(f))))
-#define EXISTS_FILE(f) (SPECIAL_FILE(f) != FILE_F_UNUSED)
-#define VALID_FILE(f) (EXISTS_FILE(f) && (SPECIAL_FILE(f) != FILE_F_DELETED) && (SPECIAL_FILE(f) != FILE_F_DIRECTORY))
+#define SPECIAL_DIRENT(f) ((*((unsigned char*) &(f))))
+#define EXISTS_DIRENT(f) (SPECIAL_DIRENT(f) != FILE_F_UNUSED)
+#define VALID_DIRENT(f) (EXISTS_DIRENT(f) && (SPECIAL_DIRENT(f) != FILE_F_DELETED) && (SPECIAL_DIRENT(f) != FILE_F_DIRECTORY))
 
 void rename_file(const char *old, const char *); // technically char *new but c++ has reserved keywords (grrr)
 void read_file(const char *filename, void *where);

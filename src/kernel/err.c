@@ -39,7 +39,7 @@ void msg(enum MSG_TYPE type, enum ERRSIG sig, const char* supp, ...) {
   adv_cur();
 
   // this is technically a formatted msg, so we need raw access
-  vpfctprintf(&write_advanced_cell_cur, supp, msg_style, args);
+  vpfctprintf(&__wrapper_write_advanced_cell_cur, supp, msg_style, args);
   va_end(args); // no longer need args, get out!
   adv_cur();
 

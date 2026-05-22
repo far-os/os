@@ -23,11 +23,24 @@
 #define VGA_WIDTH 80
 #define VGA_HEIGHT 25
 
+// position type
+typedef short curpos_t;
+
+struct char_packet {
+  char ch;
+  unsigned char style;
+} __attribute__((packed));
+
+#define PAGE_COUNT 8
+extern struct char_packet *vram;
+extern unsigned char page;
+extern curpos_t page_curloc_cache[PAGE_COUNT]; 
+
 // viewport
 #define VP_HEIGHT (is_split ? 12 : VGA_HEIGHT)
 
 #define COLOUR(back, fore) (unsigned char) ((back << 4) + fore)
-#define POS(x, y) ((short) (y) * VGA_WIDTH + (x))
+#define POS(x, y) ((curpos_t) (y) * VGA_WIDTH + (x))
 
 #define VRAM_CTRL_PORT 0x3d4
 #define VRAM_DATA_PORT 0x3d5
@@ -85,15 +98,10 @@ enum ctrl_char {
   // alt+A = 0x41 ... alt+Z = 0x5a
 };
 
-#define PAGE_COUNT 8
-extern char *vram;
-extern unsigned char page;
-extern short page_curloc_cache[PAGE_COUNT]; 
 
-
-#define PAGE(p) (vram + (p << 12))
+#define PAGE(p) (vram + (p << 11))
 #define CPAGE PAGE(page)
-#define addr_of_loc(pos) CPAGE + (pos * 2)
+#define addr_of_loc(pos) CPAGE + (pos)
 
 extern void clear_pag(unsigned char p);
 extern void clear_pag_ln(unsigned char p, int lnr);
@@ -103,8 +111,8 @@ extern void scroll_pag(unsigned char p);
 #define clear_ln(lnr) clear_pag_ln(page, lnr)
 #define scroll_scr() scroll_pag(page)
 
-void set_cur(short pos);
-short get_cur();
+void set_cur(curpos_t pos);
+curpos_t get_cur();
 void cur_off();
 void cur_on_with(unsigned char, unsigned char);
 
@@ -117,20 +125,32 @@ void paint_row(unsigned char);
 extern unsigned char is_split;
 void split_scr(int);
 
-short ln_nr();
-void line_feed();
-void carriage_return();
-void tab();
-void v_tab();
-void adv_cur_by(short);
+curpos_t ln_nr();
+void adv_cur_by(curpos_t);
 
 #define adv_cur() adv_cur_by(1)
 
-void write_cell(char ch, short pos, unsigned char style);
-void write_advanced_cell(char ch, short pos, unsigned char style);
-void write_cell_cur(char ch, unsigned char style);
-void write_advanced_cell_cur(char ch, unsigned char style);
-void write_str_at(const char *str, short pos, unsigned char style);
-void write_str(const char *str, unsigned char style);
+curpos_t write_cell_packet(curpos_t pos, struct char_packet pack, bool advanced);
+
+#define write_cell(x_ch, x_pos, x_style) write_cell_packet(x_pos, (struct char_packet){ x_ch, x_style }, false)
+#define write_advanced_cell(x_ch, x_pos, x_style) write_cell_packet(x_pos, (struct char_packet){ x_ch, x_style }, true)
+
+#define write_cell_cur(x_ch, x_style) set_cur(write_cell(x_ch, get_cur(), x_style))
+#define write_advanced_cell_cur(x_ch, x_style) set_cur(write_advanced_cell(x_ch, get_cur(), x_style))
+
+#define line_feed()       write_advanced_cell_cur('\n', 0)
+#define carriage_return() write_advanced_cell_cur('\r', 0)
+#define tab()             write_advanced_cell_cur('\t', 0)
+#define v_tab()           write_advanced_cell_cur('\v', 0)
+
+void write_str_at(const char *str, curpos_t pos, unsigned char style);
+#define write_str(x_str, x_style) write_str_at(x_str, -1, x_style);
+
 void write_cell_into(struct inp_strbuf *dest, char ch, unsigned char style);
 void write_str_into(struct inp_strbuf *dest, const char *str, unsigned char style);
+
+// wrapper around write_advanced_cell_cur
+static inline void __wrapper_write_advanced_cell_cur(char ch, unsigned char style) {
+  // this is actually a macro, so we need a wrapper function
+  write_advanced_cell_cur(ch, style);
+}
