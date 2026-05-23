@@ -1,14 +1,14 @@
 .section .text
 
-# these are the mangled names for each function, which are static methods.
+# these are the mangled names for each function, which are static methods in Physic.
 .globl _ZN6Physic4initEjss
 .globl _ZN6Physic12compute_pairEPjS0_
-.globl _ZN6Physic10get_linearEj
-.globl _ZN6Physic14euclidean_normEPjPt
+.globl _ZN6Physic10get_linearEjb
+.globl _ZN6Physic14euclidean_normEPKjPt
 .globl _ZN6Physic6deinitEv
 
 # performs packed euclidean norm of vectors
-_ZN6Physic14euclidean_normEPjPt: # mm* velocity vectors, u16* norm vector
+_ZN6Physic14euclidean_normEPKjPt: # mm* velocity vectors, u16* norm vector
   movl 4(%esp), %edx # load ptr into edx
 
   movq (%edx),  %mm2 # load vectors into mm2
@@ -96,9 +96,10 @@ _ZN6Physic12compute_pairEPjS0_: # mm* position vectors, mm* velocity vectors
   popl %esi
   ret # eax is now linear coordinate
 
-_ZN6Physic10get_linearEj: # get_linear(u32 pos)
+_ZN6Physic10get_linearEjb: # get_linear(u32 pos, bool is_squashed)
   # now, we get new position offsets to our draw function
   movd 4(%esp), %mm0
+  movl 8(%esp), %ecx # take whether it is squashed (i.e. in splitscreen, so vp is halved) as a bool
   pxor (__physic_data_invert_mask), %mm0 # our mask.
         # this mask inverts top bits, to shift signed into unsigned
         # (as we've been saturating signedly), and also inverts again the whole of y axis
@@ -109,6 +110,13 @@ _ZN6Physic10get_linearEj: # get_linear(u32 pos)
     # we do this by multiplying them by the desired width, and only take the high 16 of each.
 
   movd %mm0, %edx  # edx is now valid coordinates (x, y), with x taking up high 16
+
+  test %ecx, %ecx
+  jz .after_squash
+
+  shrb $1, %dl # halve y axis if squashing is necessary
+
+.after_squash:
 
   movb $80, %al    # multiply y by 80 to get linear coordinate, and put it in al
   mulb %dl

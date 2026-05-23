@@ -1,6 +1,7 @@
 #include "include/physic.hh"
 
 #include "include/extra/fromc.hh"
+#include "include/helphost.hh"
 
 /*
 extern void __physic_init(unsigned int ticks_per_frame, short gravity, short tilt);
@@ -37,6 +38,16 @@ extern void __physic_deinit();
     end
 */
 
+const HelpHost::Entry help_data[] = {
+  { .name = "<Esc>", .desc = "Quit", .type = HelpHost::PLAIN_ENTRY },
+  { .name = "^H", .desc = "Show this help menu", .type = HelpHost::PLAIN_ENTRY },
+  { .name = "[HJKL]", .desc = "Control gravity", .type = HelpHost::PLAIN_ENTRY },
+  { .name = "J/K", .desc = "Set gravity to point down/up", .type = HelpHost::SUB_ENTRY },
+  { .name = "H/L", .desc = "Increase left/right tilt by one", .type = HelpHost::SUB_ENTRY },
+  { .name = "Space", .desc = "Play/pause", .type = HelpHost::PLAIN_ENTRY },
+  { .type = HelpHost::TERMINATE }
+};
+
 // 4/128sec in 9.7 fixed point. see above
 #define TICKS_PER_FRAME 4
 #define CENTISEC_PER_FRAME 3
@@ -72,17 +83,39 @@ void Physic::invoke() {
       break;
     reset: // call init again with new settings
       this->init(TICKS_PER_FRAME, gravity, tilt);
+      this->title(); // fix title
     }
 
     key_q[i] = NO_CTRL;
   }
 
-  if (this -> ctrl_q[0]) { // press any control key to continue...
-    terminate_app(this->app_id & 0xf);
-    return;
+  bool drawing = true;
+
+  for (int i = 0; i < QUEUE_LEN && !!this->ctrl_q[i]; ++i) { // loop over each arrow key
+    switch (this -> ctrl_q[i]) {
+      case NO_CTRL: break; // already dealt with, should never happen
+      case CTRL(H): {
+        app_handle help = instantiate(
+          new HelpHost("physics simulator", help_data),
+          this->app_id & 0xf,
+          true
+        );
+        drawing = false;
+        break;
+      }
+      case ESC: {
+        terminate_app(this->app_id & 0xf);
+        return;
+      }
+      default: break; // nothing else
+    }
+
+    ctrl_q[i] = NO_CTRL;
   }
 
-  this->tick_and_draw();
+  if (drawing) this->tick_and_draw();
+
+  next_step:
   this->invoke_after_centisecs(CENTISEC_PER_FRAME);
 }
 
@@ -106,41 +139,52 @@ void Physic::tick_and_draw() {
   // over each piece
   for (int piece = 0; piece < N_PIECES; ++piece) {
     // wipe old location. style = 0.
-    write_cell(' ', linear[piece], 0);
+    write_cell(' ', linear[piece] + VGA_WIDTH, 0);
 
     // get new linear location
-    linear[piece] = this->get_linear(pos[piece]);
+    linear[piece] = this->get_linear(pos[piece], (VP_HEIGHT < VGA_HEIGHT));
 
     // write piece
-    write_cell_packet(linear[piece], pieces[piece], false);
+    write_cell_packet(linear[piece] + VGA_WIDTH, pieces[piece], false);
   }
 
   this->title();
 }
 
+// helper function to paint piece
+struct char_packet Physic::paint_piece(struct char_packet piece, unsigned char bg) {
+  struct char_packet mod = piece;
+  mod.style &= 0xf;
+  mod.style |= bg << 4;
+  return mod;
+}
+
 void Physic::title() {
-  set_cur(POS(0, 24));
-  printf("\r%$%~: (%2d,%2d) %u \xeb/s \xb3 %~: (%2d,%2d) %u \xeb/s %$\xb3 T: %~ %u, G: %~ \xb3 %$ ^H = help %$",
-    COLOUR(BLACK, B_WHITE),
-    pieces[0],
+  set_cur(POS(0, 0));
+  printf("\r%$ %~: (%2d,%2d) %u \xeb/s \xb3 %~: (%2d,%2d) %u \xeb/s %$\xb3 T: %~ %u, G: %~ \xb3 %$^H %$= help",
+    COLOUR(BLUE, B_WHITE),
+    this->paint_piece(pieces[0], BLUE),
     linear[0] % 80,
     linear[0] / 80,
     vel_norm[0],
-    pieces[1],
+    this->paint_piece(pieces[1], BLUE),
     linear[1] % 80,
     linear[1] / 80,
     vel_norm[1],
-    COLOUR(BLACK, WHITE),
-    (struct char_packet) {tilt > 0 ? '\x1a' : tilt == 0 ? '\xf9' : '\x1b', COLOUR(BLACK, B_CYAN)},
+    COLOUR(BLUE, WHITE),
+    (struct char_packet) { tilt > 0 ? '\x1a' : tilt == 0 ? '\xf9' : '\x1b', COLOUR(BLUE, B_CYAN) },
     tilt > 0 ? tilt : -tilt,
-    (struct char_packet) { gravity > 0 ? '\x18' : gravity == 0 ? '\xf9' : '\x19', COLOUR(BLACK, B_GREEN)},
-    COLOUR(RED, B_YELLOW),
-    COLOUR(BLACK, WHITE)
+    (struct char_packet) { gravity > 0 ? '\x18' : gravity == 0 ? '\xf9' : '\x19', COLOUR(BLUE, B_GREEN)},
+    COLOUR(BLUE, B_CYAN),
+    COLOUR(BLUE, CYAN)
   );
-  for (curpos_t cur = get_cur(); cur < (VGA_WIDTH * VGA_HEIGHT); ++cur) {
-    write_cell(0, cur, 0); // empty rest of line
+
+  for (curpos_t cur = get_cur(); cur < VGA_WIDTH; ++cur) {
+    write_cell(0, cur, COLOUR(BLUE, BLUE)); // empty rest of line
   }
-  write_cell(paused ? '\xfe' : '\xff', POS(VGA_WIDTH - 2, VGA_HEIGHT - 1), COLOUR(B_BLACK, B_RED));
+
+  // flashing red square when paused, otherwise blank (doesn't work too well on qemu)
+  write_cell(paused ? '\xfe' : '\xff', POS(VGA_WIDTH - 2, 0), COLOUR(B_BLUE, B_RED));
 }
 
 Physic::Physic() {

@@ -39,11 +39,14 @@ private:
   void tick_and_draw();
   void title();
 
+  // helper function to paint piece
+  static struct char_packet paint_piece(struct char_packet piece, unsigned char bg);
+
   /* external asm functions. static as they don't reference this pointer, so don't need to be passed it */
   static void init(unsigned int ticks_per_frame, short gravity, short tilt);
   static void compute_pair(packet_t *pos_packet, packet_t *vel_packet);
-  static curpos_t get_linear(packet_t pos);
-  static void euclidean_norm(packet_t *vel_packet, unsigned short *norms);
+  static curpos_t get_linear(packet_t pos, bool is_squashed);
+  static void euclidean_norm(const packet_t *vel_packet, unsigned short *norms);
   static void deinit();
 
 public:
