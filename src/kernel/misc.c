@@ -4,8 +4,8 @@
 struct far_ver * curr_ver = &((struct far_ver) {
   .major =    0,
   .minor =    0,
-  .patch =    5,
-  .build = 0x0d, // minor changes + hotfixes
+  .patch =    6,
+  .build = 0x00, // minor changes + hotfixes
 });
 
 struct farb_header __seg_fs *prog_head = 0;

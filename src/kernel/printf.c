@@ -32,6 +32,22 @@ void printf(const char* fmt, ...) {
   va_end(args);
 }
 
+void nprintf(unsigned int n, const char* fmt, ...) {
+  va_list args;
+  va_start(args, fmt); // second parameter is the last arg before variadic
+
+  int di = 0;
+  // XXX: gcc extension to use nested functions
+  void cb(char ch, unsigned char style) {
+    if (di < n) __wrapper_write_advanced_cell_cur(ch, style);
+    di++;
+  }
+
+  vpfctprintf(&cb, fmt, 0, args); // style doesn't matter: here we've just put 0
+
+  va_end(args);
+}
+
 // thin wrapper
 void sprintf(char *dest, const char* fmt, ...) {
   va_list args;

@@ -94,6 +94,16 @@ void HelpHost::put_entries() {
       }
       
       goto _helphost_post_entry;
+    } else if (this -> ents[ent].type & SYNOPSIS) { // write just plain text.
+      if (strlen(this->ents[ent].desc) > (VGA_WIDTH - 4)) { // if overboard
+        // minus 7 to make room for ellipsis
+        nprintf(VGA_WIDTH - 7, "%$%s", COLOUR(BLUE, B_WHITE), this->ents[ent].desc);
+        write_str("...", COLOUR(BLUE, WHITE));
+      } else {
+        write_str(this->ents[ent].desc, COLOUR(BLUE, B_WHITE));
+      }
+
+      goto _helphost_post_entry;
     }
 
     // sub entry (indent)

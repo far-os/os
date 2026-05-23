@@ -41,10 +41,17 @@ extern void __physic_deinit();
 const HelpHost::Entry help_data[] = {
   { .name = "<Esc>", .desc = "Quit", .type = HelpHost::PLAIN_ENTRY },
   { .name = "^H", .desc = "Show this help menu", .type = HelpHost::PLAIN_ENTRY },
+  { .name = "^W", .desc = "Reset screen (if some pieces stuck)", .type = HelpHost::PLAIN_ENTRY },
+  { .type = HelpHost::DIVIDER },
   { .name = "[HJKL]", .desc = "Control gravity", .type = HelpHost::PLAIN_ENTRY },
   { .name = "J/K", .desc = "Set gravity to point down/up", .type = HelpHost::SUB_ENTRY },
   { .name = "H/L", .desc = "Increase left/right tilt by one", .type = HelpHost::SUB_ENTRY },
   { .name = "Space", .desc = "Play/pause", .type = HelpHost::PLAIN_ENTRY },
+  { .type = HelpHost::DIVIDER },
+  { .desc = "Topbar shows co-ords and speed (in 65536ths of arena, i.e. \xeb) of each piece,", .type = HelpHost::SYNOPSIS },
+  { .desc = "and then shows the current tilt factor, then whether gravity is up or down.", .type = HelpHost::SYNOPSIS },
+  { .desc = "Tilt can be changed and gravity can be flipped with HJKL, as above.", .type = HelpHost::SYNOPSIS },
+  { .desc = "A flashing red \xfe indicates paused, and the frame number is in the top left.", .type = HelpHost::SYNOPSIS },
   { .type = HelpHost::TERMINATE }
 };
 
@@ -101,6 +108,10 @@ void Physic::invoke() {
           true
         );
         drawing = false;
+        break;
+      }
+      case CTRL(W): {
+        clear_scr(); // clear screen
         break;
       }
       case ESC: {
@@ -161,7 +172,10 @@ struct char_packet Physic::paint_piece(struct char_packet piece, unsigned char b
 
 void Physic::title() {
   set_cur(POS(0, 0));
-  printf("\r%$ %~: (%2d,%2d) %u \xeb/s \xb3 %~: (%2d,%2d) %u \xeb/s %$\xb3 T: %~ %u, G: %~ \xb3 %$^H %$= help",
+  printf("\r%$ %u %$\xb3%$ %~: (%2d,%2d) %u \xeb/s \xb3 %~: (%2d,%2d) %u \xeb/s %$\xb3 T: %~ %u, G: %~ \xb3 %$^H %$= help",
+    COLOUR(BLUE, B_RED),
+    frame,
+    COLOUR(BLUE, WHITE),
     COLOUR(BLUE, B_WHITE),
     this->paint_piece(pieces[0], BLUE),
     linear[0] % 80,
