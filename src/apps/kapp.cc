@@ -11,7 +11,6 @@
 #include "include/edit.hh"
 #include "include/shell.hh"
 #include "include/calc.hh"
-#include "include/err.h"
 
 KApp::KApp() {
   memzero(&key_q, QUEUE_LEN);
