@@ -146,6 +146,11 @@ rip_thunk:
         pop eax
         jmp eax
 
+[global get_tsc_thunk]
+get_tsc_thunk: ; unsigned long long get_tsc_thunk();
+        rdtsc ; read time-stamp-counter into edx:eax
+        ret   ; return. as an unsigned long long, gcc already expects it to be here
+
 print_32:
         pushad ; pusha but 32bit this time
 

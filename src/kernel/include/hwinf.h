@@ -81,3 +81,47 @@ extern bool check_cpuid_avail();
 extern unsigned int total_bytes_mem_of_type(enum mem_entry_type);
 
 void query_cpuid();
+
+// helper macros
+#define REG_EAX 0
+#define REG_ECX 1
+#define REG_EDX 2
+#define REG_EBX 3
+// we want arithmetic shift left, to preserve high bit
+#define CPUID_LEAF(num, reg) (((signed) num << 2) | reg)
+
+// cpu feature flags
+enum cpuid_01h_edx {
+  CPUID_01H_EDX_FPU   = (1 <<  0), // is there an x87
+  CPUID_01H_EDX_VME   = (1 <<  1), // v8086 enhancements
+  CPUID_01H_EDX_DE    = (1 <<  2), // debugging extensions
+  CPUID_01H_EDX_PSE   = (1 <<  3), // big pages
+  CPUID_01H_EDX_TSC   = (1 <<  4), // time stamp counter
+  CPUID_01H_EDX_MSR   = (1 <<  5), // RDMSR and WRMSR
+  CPUID_01H_EDX_PAE   = (1 <<  6), // physical address extension
+  CPUID_01H_EDX_MCE   = (1 <<  7), // machine check exception
+  CPUID_01H_EDX_CX8   = (1 <<  8), // CMPXCHG8
+  CPUID_01H_EDX_APIC  = (1 <<  9), // on-chip APIC
+  /* reserved */
+  CPUID_01H_EDX_SEP   = (1 << 11), // SYSENTER and SYSEXIT
+  CPUID_01H_EDX_MTRR  = (1 << 12), // memory type range registers
+  CPUID_01H_EDX_PGE   = (1 << 13), // page global bit
+  CPUID_01H_EDX_MCA   = (1 << 14), // machine check architecture
+  CPUID_01H_EDX_CMOV  = (1 << 15), // CMOVcc and FCOM{I,V}
+  CPUID_01H_EDX_PAT   = (1 << 16), // page attribute table
+  CPUID_01H_EDX_PSE36 = (1 << 17), // 36bit page size extension
+  CPUID_01H_EDX_PSN   = (1 << 18), // processor serial number is enabled (most often isn't, smth smth security)
+  CPUID_01H_EDX_CFLSH = (1 << 19), // CLFLUSH
+  /* reserved */
+  CPUID_01H_EDX_DS    = (1 << 21), // debug store
+  CPUID_01H_EDX_ACPI  = (1 << 22), // ACPI temperature and clock facilities
+  CPUID_01H_EDX_MMX   = (1 << 23), // MMX technology
+  CPUID_01H_EDX_FXSR  = (1 << 24), // FXSAVE and FXRSTOR
+  CPUID_01H_EDX_SSE   = (1 << 25), // SSE instruction set
+  CPUID_01H_EDX_SSE2  = (1 << 26), // SSE2 instruction set
+  CPUID_01H_EDX_SS    = (1 << 27), // self-snoop
+  CPUID_01H_EDX_HTT   = (1 << 28), // max APIC IDs field is valid
+  CPUID_01H_EDX_TM    = (1 << 29), // thermal monitor
+  /* reserved */
+  CPUID_01H_EDX_PBE   = (1 << 31)  // pending break enable
+};

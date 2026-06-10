@@ -7,6 +7,7 @@
 #include "include/misc.h"
 #include "include/pic.h"
 #include "include/sched.h"
+#include "include/hwinf.h"
 
 unsigned char quitting_prog = 0;
 
@@ -48,7 +49,16 @@ void eh_c(struct cpu_state c, unsigned int i, struct stack_state s) {
     retto_progeh(&s);
     break;
   case 0x20: // timer
-    if (!(++uptime % 100)) {
+    ++uptime;
+    // will work both if it zero and if it is resuming
+    if ((uptime >= next_calc) && (next_calc != 0 || tsc_per_tick == 0)) {
+      // if tsc supported
+      if (hardware -> f_flags_edx & CPUID_01H_EDX_TSC) {
+        calc_tsc_per_tick(TICK_COUNT_TSC_LOG2);
+      }
+    }
+
+    if (!(uptime % 100)) {
       adv_time(curr_time);
     } // increment centisecond counter
     tick_focused_timed_invoke(); // tick program if available

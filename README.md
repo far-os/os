@@ -90,6 +90,7 @@ To syscall to the kernel, use `int 0x33`. The service code goes in `ah`, and the
 | `10` | Cannot kill process |
 | `11` | Unknown value/command |
 | `12` | Time error (e.g. invalid timezone, incorrect RTC values) |
+| `13` | Unsupported program |
 | `15` | Program loading error, e.g. not a binary file |
 | `18` | Error in configuration |
 | `23` | Buffer space exceeded (Command too long) |

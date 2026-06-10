@@ -36,7 +36,7 @@ _ZN6Physic4initEjss: # u16 tick, i16 gravity, i16 wind
   rep stosw # write tick to every word
   popl %edi
 
-  # create acceleration word. e.g. | 0 | -9.81 | 0 | 0 |
+  # create acceleration word. e.g. | 0 | -9.81 | 0 | -9.81 |
   /*
     what we want to do:
       movw 8(%esp), (acceleration + 4) # y-axis acceleration, needs to be low 16
@@ -46,19 +46,21 @@ _ZN6Physic4initEjss: # u16 tick, i16 gravity, i16 wind
 
   # load both parameters. this yields | 0 | a_x | 0 | a_y |
   # | 0 | a_x | 0 | a_y | => | a_x | a_y | a_x | a_y |.
-  # we move this to higher using movd, as pshuf can't output to address
+  # we move this to higher using movq, as pshuf can't output to address
   # packsswb isnt used as we then can't do memory magic
   pshufw $0b10001000, 8(%esp), %mm6
   movq %mm6, (__physic_data_acceleration)
 
   ret
 
-# each object is represented by a packet of | v_x | v_y | x | y |
+# this takes in a pair of packets, like so:
+#   pos = | s1_x | s1_y | s0_x | s0_y |
+#   vel = | v1_x | v1_y | v0_x | v0_y |
 # where each cell is a 16-bit fixed point (9.7) number, representing position.
 # 8000 and 7fff are the edges of the screen, so we can use signed saturation.
-# must be signed as we are decreasing.
-# v_x, v_y is the velocity vector.
-# x, y is the position vector
+# must be signed as we are decreasing (velocity can be negative, and this will break unsigned saturation)
+# v_x, v_y are the velocity vector's components, and
+# s_x, s_y are the position vector's components.
 _ZN6Physic12compute_pairEPjS0_: # mm* position vectors, mm* velocity vectors
   movq (__physic_data_acceleration), %mm5 # mm5 <- a
   pmullw (__physic_data_tick), %mm5 # mm5 = a * t. needed for both equations
@@ -67,12 +69,18 @@ _ZN6Physic12compute_pairEPjS0_: # mm* position vectors, mm* velocity vectors
   movq2dq %mm5, %xmm1 # xmm1 <- at
   psraw $1, %xmm1 # xmm1 = .5at. needed for s = ut + .5at^2
 
+  # save esi and edi. we would like to use them for pos and vel respectively.
+  # we could in theory use any registers, the free ones (eax, ecx, edx) included, but
+  # edi especially is necessary for vel because of maskmovq later on. esi just then makes sense
   pushl %esi
   pushl %edi
 
   movl 12(%esp), %esi # position vector ptr. 12 because we pushed esi and edi
   movl 16(%esp), %edi # velocity vector ptr. 16 because ditto
+
   # load velocity vector into low bytes of xmm
+  # has to be done with a movq, we can't do it directly, as there is no guarantee that %edi will be properly byte-aligned.
+  # only sse has this problem, mmx does not
   movq (%edi), %xmm0 # load velocity vector into low bytes of xmm
 
   # calculating s = ut + .5at^2.
@@ -84,6 +92,7 @@ _ZN6Physic12compute_pairEPjS0_: # mm* position vectors, mm* velocity vectors
   packssdw %xmm1, %xmm1 # squash back down into 16bit words. we use itself cause we don't care about high 32
   movdq2q %xmm1, %mm4 # mm4 = Ds packet
 
+  # we can't add a register to a memory location, so we do it viceversa
   paddsw (%edi), %mm5 # add Dv packet. .5at is already saved, so we don't care
   paddsw (%esi), %mm4 # add Ds packet.
   # save them
@@ -146,7 +155,7 @@ __physic_bounce_post_save:
       # best way to negate and multiply.
       pmulhrsw (%edi), %mm4 # multiply velocity packet by scale factors.
                             # mm4 is now the scaled "bounced" velocity.
-    not possible, as pmulhrsw is ssse3 only.
+    not possible, as pmulhrsw is ssse3 only, so not overly portable for our target of "pentium4"
     this is bad, because we can only now store coefficients down to -0.5 in 16 bits.
     we thus keep our coefficients equal (halving them), then shl by 1 to account for inaccuracy
   */
@@ -159,12 +168,14 @@ __physic_bounce_post_save:
 
   ret
 
+# this is called in Physic's destructor. this clears the mmx registers 'mmx-ness' state
+# TODO: kernel should prob do that on context switch
 _ZN6Physic6deinitEv:
   emms
   ret
 
 .section .bss
-.align 16 # xmm pmaddwd chokes if it's not aligned (my guess is it throws out the bottom few bits)
+.align 16 # xmm pmaddwd chokes if it's not aligned (my guess is it throws out the bottom few bits of the address)
   __physic_data_tick: # xmm word, as it used for pmaddwd
     .octa 0
 
@@ -173,11 +184,13 @@ _ZN6Physic6deinitEv:
 
 .section .rodata
   __physic_data_bounds: # dimensions of the screen, in the positiong cells: | 80 | 25 | 0 | 0 |
-    .word 24 # height - reduced to 24 to make way for bottom bar
+    .word 24 # height - reduced from 80 to 24 to make way for top bar
     .word 80 # width
     .word 0 # not needed, as get_linear operates one at a time. TODO maybe?
     .word 0
 
+  # in theory, one should check against |0x8000|x4 and then |0x7fff|x4, but to save space we can reuse the inversion mask and interleave them, by using |0x8000|0x7fff|x2 and vice-versa.
+  # the comparisons are consecutive and or'd together anyway, so it doesn't matter either way
   __physic_data_edge_check_1: # edge checking in bounce code. like this so that we can reuse the start of invert_mask
     .word 0x8000
 

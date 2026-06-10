@@ -48,6 +48,23 @@ void KApp::invoke_after_centisecs(unsigned int delta) {
   set_timed_invoke(this->app_id & 0xf, delta);
 };
 
+bool KApp::can_have_feature(signed leaf_reg, unsigned flags) {
+  unsigned int data = 0; // data that we compare to
+
+  switch (leaf_reg) { // only supporting edx/ecx leaves for now
+  case CPUID_LEAF(01, REG_EDX):
+    data = hardware -> f_flags_edx;
+    break;
+  case CPUID_LEAF(01, REG_ECX):
+    data = hardware -> f_flags_ecx;
+    break;
+  default:
+    return false; // otherwise feature prob doesn't exist anyway
+  }
+
+  return (data & flags) == flags;
+}
+
 // we dont technically need to destruct anything, but out children might (but if we don't know they're a child we need virtuality)
 KApp::~KApp() {};
 

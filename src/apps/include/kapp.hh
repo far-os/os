@@ -35,4 +35,7 @@ protected: // only visible to this and children
 
   // bad sleep function. basically trigger invoke again after a set amount of time to keep alive, but not hogging computer with busy wait
   void invoke_after_centisecs(unsigned int delta);
+
+  // can have feature
+  bool can_have_feature(signed leaf_reg, unsigned flags);
 };

@@ -12,8 +12,7 @@ extern void __physic_deinit();
 */
 
 // all numbers are in 9.7 fixed point.
-// the integer part is supposed to be hectometres, which means the arena is 51.2x51.2km wide, but also making one single unit about 78cm.
-// this is quite ridiculous, but we need to zoom out as otherwise the gravity is too fast to appreciate.
+// the integer part is supposed to be centimetres, which means the arena is 5.12mx5.12m wide, but also making one single unit about 78um (i.e. cm >> 7), which I shall call 1 delta.
 // this is also somewhat distorted into a 720x400 text mode screen, but it still doesn't look too strange.
 
 // the smallest unit of time that can be represented in 9.7fix is 1/128sec, which i shall call 1 tick.
@@ -38,6 +37,18 @@ extern void __physic_deinit();
     end
 */
 
+// deltas and ticks are the base units here, as otherwise shifts would be annoying and lose precision.
+// one delta/tick actually cancels down to be equivalent to one cm/s.
+// however, acceleration gets a little trickier, as that is in delta/tick/tick.
+// -9.81m/s/s = -981 cm/s/s = -981 delta/tick/s = -981 delta/tick/s * 1/128 tick/s
+// = -981/128 = -7.6640625 delta/tick/tick. (with a more accurate g, it's -7.6614453)
+// this rounds to -8. working backwards, this actually means we have -10.24m/s/s gravity
+#define GRAVITY -8
+
+// 4/128sec in 9.7 fixed point. see above
+#define TICKS_PER_FRAME 4
+#define CENTISEC_PER_FRAME 3
+
 const HelpHost::Entry help_data[] = {
   { .name = "<Esc>", .desc = "Quit", .type = HelpHost::PLAIN_ENTRY },
   { .name = "^H", .desc = "Show this help menu", .type = HelpHost::PLAIN_ENTRY },
@@ -48,22 +59,21 @@ const HelpHost::Entry help_data[] = {
   { .name = "H/L", .desc = "Increase left/right tilt by one", .type = HelpHost::SUB_ENTRY },
   { .name = "Space", .desc = "Play/pause", .type = HelpHost::PLAIN_ENTRY },
   { .type = HelpHost::DIVIDER },
-  { .desc = "Topbar shows co-ords and speed (in 65536ths of arena, i.e. \xeb) of each piece,", .type = HelpHost::SYNOPSIS },
+  { .desc = "Topbar shows co-ords and speed (in 65536ths of arena, i.e. \xeb) of each piece,", .type = HelpHost::SYNOPSIS }, // 0xeb is the lowercase delta, representing the delta
   { .desc = "and then shows the current tilt factor, then whether gravity is up or down.", .type = HelpHost::SYNOPSIS },
   { .desc = "Tilt can be changed and gravity can be flipped with HJKL, as above.", .type = HelpHost::SYNOPSIS },
   { .desc = "A flashing red \xfe indicates paused, and the frame number is in the top left.", .type = HelpHost::SYNOPSIS },
   { .type = HelpHost::TERMINATE }
 };
 
-// 4/128sec in 9.7 fixed point. see above
-#define TICKS_PER_FRAME 4
-#define CENTISEC_PER_FRAME 3
-
-// approximation of -0.0981 hm/s^2 in 9.7 fixed point.
-// -0.0981hm/s^2 * 128 = 12.552515...
-#define GRAVITY -12
-
 void Physic::invoke() {
+  if (has_failed) { // if has failed.
+    if (this -> key_q[0] || this->ctrl_q[0]) {
+      terminate_app(this->app_id & 0xf);
+    }
+    return;
+  }
+
   for (int i = 0; i < QUEUE_LEN && !!this->key_q[i]; ++i) { // loop over each arrow key
     switch (this -> key_q[i]) {
     case 'H': // tilt left
@@ -131,6 +141,37 @@ void Physic::invoke() {
 }
 
 void Physic::first_run() {
+  if (!this->can_have_feature(
+    CPUID_LEAF(01, REG_EDX),
+    CPUID_01H_EDX_MMX | CPUID_01H_EDX_SSE | CPUID_01H_EDX_SSE2
+  )) {
+    msg(PROGERR, E_UNSUPPORT, "%s requires MMX, SSE, and SSE2 to run.", this->app_name);
+    write_str("\n\tPress any key to exit...", COLOUR(BLACK, B_RED));
+
+    has_failed = true;
+  } else { // setup. needs to be else as if statement could break it
+    frame = 0;
+
+    pos[0] = 0xc000'7fff; // (20, 0)
+    vel[0] = 0x0080'0000; // [0.15625, 0]
+
+    pos[1] = 0x4000'5fff; // (60, 10)
+    vel[1] = 0xff00'f000; // [-0.3125, -1.5625]
+
+    // yellow hash and pick asterisk
+    pieces[0] = { '#', COLOUR(BLACK, B_YELLOW) };
+    pieces[1] = { '*', COLOUR(BLACK, B_MAGENTA) };
+
+    // set accelerations
+    tilt = 0;
+    gravity = GRAVITY;
+
+    paused = false;
+
+    //__physic_init(TICKS_PER_FRAME, gravity, tilt); // init data
+    this->init(TICKS_PER_FRAME, gravity, tilt); // init data
+  }
+
   this->invoke(); // trigger tick and loop
 }
 
@@ -206,30 +247,6 @@ Physic::Physic() {
   config_flags = 0; // we frankly don't care about enter, so its flag is just your favourite bit
 
   app_name = "physic";
-
-  // setup
-  {
-    frame = 0;
-
-    pos[0] = 0xc000'7fff; // (20, 0)
-    vel[0] = 0x0080'0000; // [0.15625, 0]
-
-    pos[1] = 0x4000'5fff; // (60, 10)
-    vel[1] = 0xff00'f000; // [-0.3125, -1.5625]
-
-    // yellow hash and pick asterisk
-    pieces[0] = { '#', COLOUR(BLACK, B_YELLOW) };
-    pieces[1] = { '*', COLOUR(BLACK, B_MAGENTA) };
-
-    // set accelerations
-    tilt = 0;
-    gravity = GRAVITY;
-
-    paused = false;
-  }
-
-  //__physic_init(TICKS_PER_FRAME, gravity, tilt); // init data
-  this->init(TICKS_PER_FRAME, gravity, tilt); // init data
 }
 
 Physic::~Physic() {

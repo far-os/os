@@ -14,6 +14,7 @@ struct Physic : KApp {
   void first_run();
 
 private:
+  bool has_failed;
   unsigned int frame; // frame number
 
   // linear addresses of current pieces

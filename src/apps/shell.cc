@@ -474,7 +474,7 @@ shell_f_stat:
       }
     }
   } else if (strcmp(argv[0], "time")) {
-    printf("%$Time since kernel load: %d.%2ds\n%s%c%4d-%2d-%2d %2d:%2d:%2d\n",
+    printf("%$Time since kernel load: %d.%2ds\n%s%c%4d-%2d-%2d %2d:%2d:%2d\n\n%l TSC ticks (%l/centisec)\n",
       COLOUR(RED, B_CYAN),
       uptime / 100,
       uptime % 100,
@@ -485,7 +485,9 @@ shell_f_stat:
       curr_time -> date,
       curr_time -> hour,
       curr_time -> minute,
-      curr_time -> second
+      curr_time -> second,
+      get_tsc_thunk(),
+      tsc_per_tick
     );
   } else if (strcmp(argv[0], "util:to8.3")) {
     if (argv.len() <= 1) {

@@ -1,6 +1,7 @@
 #pragma once
 #include "fs.h"
 #include "misc.h"
+#include "sched.h"
 
 #define RTC_SEC  0x00
 #define RTC_MIN  0x02
@@ -35,6 +36,18 @@ extern char *weekmap[7];
 
 void read_rtc(struct timestamp *ts);
 void time(void *tbuf);
+
+typedef unsigned long long tsc_t;
+extern tsc_t get_tsc_thunk();
+
+// how many ticks to measure (log2)
+#define TICK_COUNT_TSC_LOG2 1
+// total tscs per tick (current best estimate)
+extern unsigned long long tsc_per_tick;
+// waiting for next calculation tick
+extern tick_t next_calc;
+
+void calc_tsc_per_tick(unsigned int tick_count);
 
 bool validate_time(const struct timestamp *ts);
 void adv_time(struct timestamp *ts);

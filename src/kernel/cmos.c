@@ -7,6 +7,11 @@
 
 struct timestamp *curr_time = (struct timestamp *) 0xc7f0;
 
+// see header file
+unsigned long long tsc_per_tick = 0;
+tick_t next_calc = 0;
+
+
 char *weekmap[7] = {
   "Sun",
   "Mon",
@@ -103,6 +108,42 @@ void read_rtc(struct timestamp *ts) {
   }
 
   ts -> year += century * 100;
+}
+
+// this is not the first time i have to do this.
+// check the ticks between two adjecent tsc reads with a function
+void calc_tsc_per_tick(unsigned int tick_count_log2) {
+  /*
+    static value, designed to be run twice in a row, on each tick. this is because operation is very expensive
+
+    ==0 : measurement finished/unstarted
+    !=0 : first measurement done
+  */
+
+  // initially set to 0 by default, because of c standard.
+  static unsigned long long waiting_measure;
+
+  // we have to use a power of 2. because we can't divide ulls in nostd.
+  // trust me, this is best solution
+  static unsigned past_tick_log2;
+
+  if (!waiting_measure) {
+    waiting_measure = get_tsc_thunk();
+
+    next_calc = uptime + (1 << tick_count_log2); // if first run
+
+    past_tick_log2 = tick_count_log2; // save it for good measure
+
+  } else {
+    // get changed data
+    waiting_measure = get_tsc_thunk() - waiting_measure;
+
+    // set the value.
+    tsc_per_tick = waiting_measure >> past_tick_log2;
+
+    waiting_measure = 0;
+    next_calc = 0;
+  }
 }
 
 void time(void *tbuf) {

@@ -78,7 +78,7 @@ void HelpHost::put_entries() {
   }
   // total is len(this->ents)
 
-  // for each entry (only show a set few
+  // for each entry (only show a set few)
   for (unsigned int ent = start_ix; ent < (start_ix + ENTRY_COUNT) && this->ents[ent].type != -1; ++ent) {
     unsigned char brightness = this->ents[ent].type & DEBUG_ENTRY ? BLACK : B_BLACK;
     write_cell_cur(0xb3, COLOUR(BLUE, B_BLACK)); // left box edge
@@ -178,7 +178,7 @@ void HelpHost::put_entries() {
 
 HelpHost::HelpHost(char* what, const HelpHost::Entry* loads): ents(loads), name(what) {
   // bitflags, or as many together as need be
-  config_flags = 0; // enter can exit too alright, so we dont want it as a CTRL code
+  config_flags = 0; // enter can exit too, so we dont want it as a CTRL code, but instead as a real key
 
   app_name = "helphost";
 }
