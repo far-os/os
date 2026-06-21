@@ -36,7 +36,7 @@ void nprintf(unsigned int n, const char* fmt, ...) {
   va_list args;
   va_start(args, fmt); // second parameter is the last arg before variadic
 
-  int di = 0;
+  unsigned int di = 0;
   // XXX: gcc extension to use nested functions
   void cb(char ch, unsigned char style) {
     if (di < n) __wrapper_write_advanced_cell_cur(ch, style);
@@ -53,7 +53,7 @@ void sprintf(char *dest, const char* fmt, ...) {
   va_list args;
   va_start(args, fmt); // second parameter is the last arg before variadic
 
-  int di = 0;
+  unsigned int di = 0;
   // XXX: gcc extension to use nested functions for callback (cb)
   void cb(char ch, unsigned char _) {
     dest[di++] = ch;
@@ -68,7 +68,7 @@ void snprintf(char *dest, unsigned int n, const char* fmt, ...) {
   va_list args;
   va_start(args, fmt); // second parameter is the last arg before variadic
 
-  int di = 0;
+  unsigned int di = 0;
   // XXX: gcc extension to use nested functions
   void cb(char ch, unsigned char _) {
     if (di < n) dest[di++] = ch;

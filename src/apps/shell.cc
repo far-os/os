@@ -12,32 +12,34 @@ const HelpHost::Entry comnames[] = {
   { .name = "clr", .desc = "Clears screen\xff[or shift+\23710]", .type = HelpHost::PLAIN_ENTRY },
   { .name = "exec", .desc = "Executes program\xff<u32>", .type = HelpHost::PLAIN_ENTRY },
   { .name = "f", .desc = "File I/O namespace", .type = HelpHost::PLAIN_ENTRY },
-  { .name = "del", .desc = "Deletes file\xff<filename> x2", .type = HelpHost::SUB_ENTRY },
-  { .name = "ls", .desc = "Lists all files", .type = HelpHost::SUB_ENTRY },
-  { .name = "new", .desc = "Creates file\xff<filename>", .type = HelpHost::SUB_ENTRY },
-  { .name = "ren", .desc = "Renames file\xff<filename> x2", .type = HelpHost::SUB_ENTRY },
-  { .name = "stat", .desc = "Prints info about given file\xff<filename>", .type = HelpHost::SUB_ENTRY },
-  { .type = HelpHost::SUB_ENTRY | HelpHost::DIVIDER },
-  { .name = "edit", .desc = "Text editor\xff<filename>", .type = HelpHost::SUB_ENTRY },
-  { .name = "read", .desc = "Prints file content\xff<filename>", .type = HelpHost::SUB_ENTRY },
+    { .name = "del", .desc = "Deletes file\xff<filename> x2", .type = HelpHost::SUB_ENTRY },
+    { .name = "ls", .desc = "Lists all files", .type = HelpHost::SUB_ENTRY },
+    { .name = "new", .desc = "Creates file\xff<filename>", .type = HelpHost::SUB_ENTRY },
+    { .name = "ren", .desc = "Renames file\xff<filename> x2", .type = HelpHost::SUB_ENTRY },
+    { .name = "stat", .desc = "Prints info about given file\xff<filename>", .type = HelpHost::SUB_ENTRY },
+    { .type = HelpHost::SUB_ENTRY | HelpHost::DIVIDER },
+    { .name = "edit", .desc = "Text editor\xff<filename>", .type = HelpHost::SUB_ENTRY },
+    { .name = "read", .desc = "Prints file content\xff<filename>", .type = HelpHost::SUB_ENTRY },
   { .name = "help", .desc = "Prints this help menu", .type = HelpHost::PLAIN_ENTRY },
+  { .name = "log", .desc = "Manages the internal logring", .type = HelpHost::PLAIN_ENTRY },
+    { .name = "all", .desc = "Prints out every log message", .type = HelpHost::SUB_ENTRY },
   { .name = "physic", .desc = "Launches a SIMD physics simulator", .type = HelpHost::PLAIN_ENTRY },
   { .name = "proc", .desc = "Utilities that manage running processes", .type = HelpHost::PLAIN_ENTRY },
-  { .name = "ls", .desc = "Prints currently running processes", .type = HelpHost::SUB_ENTRY },
-  { .name = "kill", .desc = "Kills the specified process\xff<@handle>", .type = HelpHost::SUB_ENTRY },
+    { .name = "ls", .desc = "Prints currently running processes", .type = HelpHost::SUB_ENTRY },
+    { .name = "kill", .desc = "Kills the specified process\xff<@handle>", .type = HelpHost::SUB_ENTRY },
   { .name = "reset", .desc = "Resets machine\xff[or ctrl+alt+del]", .type = HelpHost::PLAIN_ENTRY },
   { .name = "split", .desc = "Forms a split-screen with another open app\xff<@handle>", .type = HelpHost::PLAIN_ENTRY },
   { .name = "set", .desc = "Gets/Sets config variables (see sub-entries)", .type = HelpHost::PLAIN_ENTRY },
-  { .name = "verbose", .desc = "Sets verbose level. Max 2.\xff<u8>?", .type = HelpHost::SUB_ENTRY },
+    { .name = "verbose", .desc = "Sets verbose level. Max 2.\xff<u8>?", .type = HelpHost::SUB_ENTRY },
   { .name = "sys", .desc = "Utilities that print/dump system info", .type = HelpHost::PLAIN_ENTRY },
-  { .name = "ata", .desc = "Prints ATA disk info", .type = HelpHost::SUB_ENTRY },
-  { .name = "cpu", .desc = "Prints CPU info", .type = HelpHost::SUB_ENTRY },
-  { .name = "fs", .desc = "Prints file system info", .type = HelpHost::SUB_ENTRY },
-  { .name = "indic", .desc = "Prints keyboard LED status", .type = HelpHost::SUB_ENTRY },
-  { .name = "mem", .desc = "Prints memory info\xff-v \x1a verbose", .type = HelpHost::SUB_ENTRY },
+    { .name = "ata", .desc = "Prints ATA disk info", .type = HelpHost::SUB_ENTRY },
+    { .name = "cpu", .desc = "Prints CPU info", .type = HelpHost::SUB_ENTRY },
+    { .name = "fs", .desc = "Prints file system info", .type = HelpHost::SUB_ENTRY },
+    { .name = "indic", .desc = "Prints keyboard LED status", .type = HelpHost::SUB_ENTRY },
+    { .name = "mem", .desc = "Prints memory info\xff-v \x1a verbose", .type = HelpHost::SUB_ENTRY },
   { .name = "time", .desc = "Gets current time", .type = HelpHost::PLAIN_ENTRY },
   { .name = "util", .desc = "Utilities and tools", .type = HelpHost::PLAIN_ENTRY },
-  { .name = "to8.3", .desc = "Canonicalises a filename into 8.3\xff<string>", .type = HelpHost::SUB_ENTRY },
+    { .name = "to8.3", .desc = "Canonicalises a filename into 8.3\xff<string>", .type = HelpHost::SUB_ENTRY },
   { .type = HelpHost::TERMINATE }
 };
 
@@ -338,6 +340,11 @@ shell_f_stat:
 
     exitting = false;
     goto shell_clean;
+  } else if (strcmp(argv[0], "log:all")) {
+    const struct logring_entry * ent = logring.earliest;
+    while (ent != logring.next && ent) {
+      ent = draw_msg(ent, true);
+    }
   } else if (strcmp(argv[0], "physic")) {
     app_handle edt = instantiate(
       new Physic(),

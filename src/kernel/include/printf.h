@@ -9,6 +9,7 @@
 #include "text.h"
 
 typedef void (*putch_callback)(char ch, unsigned char style);
+unsigned int callback_str(putch_callback put, char *str, unsigned char style, unsigned int lim);
 
 void printf(const char *fmt, ...);
 void nprintf(unsigned int n, const char *fmt, ...);

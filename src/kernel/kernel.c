@@ -31,12 +31,14 @@ extern bool sse_enable();
 void main() {
 //  clear_scr();
 
+  logring_init(); // wipe logring
+
   // clear cursor location cache
   memzero(page_curloc_cache, sizeof page_curloc_cache);
   set_cur(POS(0, 0)); // cursor at top left
-   
+
   quitting_prog = 0;
-  
+
 //  cp437(); // codepage 437: for testing purposes
 
   __attribute__((aligned(0x10)))
@@ -61,7 +63,7 @@ void main() {
   hardware->has_sse = sse_enable();
 
   pic_init(); // pic
-  
+
   mem_init(); // init memory
 
   time(curr_time);
@@ -74,8 +76,7 @@ void main() {
   // do it after pic init and stuff, to avoid somewhat rare qemu race condition
 
   query_cpuid();
-
-   ata_identify(
+  ata_identify(
     ata_identity,
     hardware -> boot_disk_p.dev_path[0] & 0x01
   );

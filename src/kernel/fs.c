@@ -10,7 +10,7 @@
 #include "include/memring.h"
 
 struct fat_superblock *bpb = (struct fat_superblock *) 0x7c00; // boot location, but thats where the fat superblock is
-unsigned char *file_table = (void *) 0x20000; // in-memory copy of FAT
+unsigned char *file_table = (void *) 0x17000; // in-memory copy of FAT
 struct dir_entry *root_dir = NULL; // in-memory copy of root directory. XXX: stored directly after FAT.
 
 unsigned int root_dir_secs_n = 0;

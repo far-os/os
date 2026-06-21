@@ -10,13 +10,18 @@ struct xconf_qi *xconf = (struct config_qi *) 0xc800;
 struct hwinf *hardware = (struct hwinf *) 0xcc00;
 unsigned short ata_identity[256] = 0xd000; // until 0xd200
 
-unsigned char *memring = (unsigned char *) 0x12_000; // until 0x13_000
+unsigned char *memring = (unsigned char *) 0x12'000; // until 0x13'000
 
-struct inode file_table[] = (struct inode *) 0x20_000; // until 0x20_800
+struct inode file_table[] = (struct inode *) 0x17'000; // until 0x17'800
+
+struct logring_t logring = {
+  .start = 0x18'000,
+  .end   = 0x20'000,
+}
 
 code *kernel = 0x80000 - (KERN_LEN << 9);
 
 char *vram = (char *) 0xb8000;
 
-void *mem = (void *) 0x120_000; // until 0x130_000
+void *mem = (void *) 0x120'000; // until 0x130'000
 ```
