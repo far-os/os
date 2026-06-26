@@ -32,13 +32,16 @@ struct logring_t logring = {
 // returns next step
 const struct logring_entry * const draw_msg(const struct logring_entry * const data, bool show_more) {
   // print always, except if info, then print info if verbose enough OR showing more
-  bool do_print = show_more || (data->level == INFO && xconf->verbosity < SHOW_INFO) || (data -> level != INFO);
+  bool do_print = show_more || (data->level == INFO && xconf->verbosity >= SHOW_INFO) || (data -> level != INFO) || (data->is_panic);
 
   unsigned char msg_style;
 
   if (do_print) {
     if (get_cur() % VGA_WIDTH) { line_feed(); }; // start on a new line
-    if (data->level == INFO) {
+
+    if (data->is_panic) {
+      msg_style = COLOUR(BLACK, B_RED);
+    } else if (data->level == INFO) {
       msg_style = COLOUR(BLACK, B_CYAN);
     } else if (data->level == WARN) {
       msg_style = COLOUR(BLACK, B_YELLOW);
@@ -124,7 +127,6 @@ struct logring_entry * logring_pushf(struct logring_entry preliminary, const cha
       while (logring.next >= logring.end) {
         logring.next -= (logring.end - logring.start);
         logring.full = true;
-        printf("rotate!!!! \n");
       }
 
       unit = 0;

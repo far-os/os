@@ -29,9 +29,14 @@ private:
   char* name;
   Entry* ents;
 
-  unsigned int start_ix;
+  unsigned int top_entry;
 
-  void put_entries();
+  void put_entries() const;
+
+  // helper methods
+  void HelpHost::draw_edge(bool edge) const;
+  unsigned int HelpHost::tally_entries() const;
+  void HelpHost::put_single_entry(const Entry& ent, unsigned int row_num, unsigned int desc_indent) const;
 
 public:
   HelpHost(char* what, const Entry* loads);

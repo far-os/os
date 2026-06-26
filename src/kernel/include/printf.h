@@ -2,6 +2,7 @@
 
 #define NOT_WAITING 0x00
 #define HAS_INTEGER 0x10
+#define AFTER_ASTERISK 0x11
 #define AFTER_PERCENT -1
 
 // not really using standard library - stdarg just provides platform-dependent defines

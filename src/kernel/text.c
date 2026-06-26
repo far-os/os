@@ -114,6 +114,9 @@ curpos_t write_cell_packet(curpos_t pos, struct char_packet pack, bool advanced)
   case '\v':
     pos += VGA_WIDTH;
     break;
+  case '\b':
+    pos--; // backspace
+    break;
   plain_putch:
   default:
     CPAGE[pos++] = pack;

@@ -113,9 +113,18 @@ void vpfctprintf(putch_callback put, const char *fmt, unsigned char start_style,
         case '7':
         case '8':
         case '9':
-          waiting = HAS_INTEGER;
-          length_modif *= 10;
-          length_modif += fmt[fi] - '0';
+          if (waiting != AFTER_ASTERISK) {
+            waiting = HAS_INTEGER;
+            length_modif *= 10;
+            length_modif += fmt[fi] - '0';
+          }
+          break;
+        case '*':
+          // retrieve length_modif as parameter
+          if (waiting == AFTER_PERCENT) {
+            waiting = AFTER_ASTERISK;
+            length_modif = va_arg(args, unsigned int);
+          }
           break;
         case 'b':
           // NOTE: lesson learnt here. ALWAYS give va_arg unsigned int, nothing shorter, because otherwise gcc will emit ud2 and will only tell you in a pathetic little "note:"
@@ -166,7 +175,7 @@ void vpfctprintf(putch_callback put, const char *fmt, unsigned char start_style,
           // NOTE: %p is used by malloc/free for their errors, and verbose errors. we need this to be "malloc-safe" so that if
           // something is wrong with heap, trying to tell user doesn't shit itself and lead to an OOM.
           char emergency[9] = {0};
-          int val = va_arg(args, unsigned int);
+          unsigned int val = va_arg(args, unsigned int);
 
           to_hex(&val, 8, emergency);
           callback_str(put, emergency, style, 0);
@@ -179,6 +188,17 @@ void vpfctprintf(putch_callback put, const char *fmt, unsigned char start_style,
               callback_str(put, ptr, style, length_modif);
             } else {
               callback_str(put, ptr, style, 0);
+            }
+          }
+          goto stop_waiting;
+        case 'r': // repeat char
+          // only makes sense with a length modfier, otherwise meaningless
+          if (length_modif) {
+            char c = va_arg(args, int);
+            if (c) {
+              for (unsigned i = 0; i < length_modif; ++i) {
+                put(c, style);
+              }
             }
           }
           goto stop_waiting;
