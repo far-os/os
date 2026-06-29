@@ -21,16 +21,16 @@ char msg_symbs[5] = {
 #define LOGRING_START 0x18'000
 #define LOGRING_END 0x20'000
 struct logring_t logring = {
-  .start = LOGRING_START,
-  .end   = LOGRING_END,
+  .start = (struct logring_entry *) LOGRING_START,
+  .end   = (struct logring_entry *) LOGRING_END,
 
-  .earliest = LOGRING_START,
-  .next     = LOGRING_START,
+  .earliest = (struct logring_entry *) LOGRING_START,
+  .next     = (struct logring_entry *) LOGRING_START,
   .full     = false
 };
 
 // returns next step
-const struct logring_entry * const draw_msg(const struct logring_entry * const data, bool show_more) {
+struct logring_entry * draw_msg(const struct logring_entry * const data, bool show_more) {
   // print always, except if info, then print info if verbose enough OR showing more
   bool do_print = show_more || (data->level == INFO && xconf->verbosity >= SHOW_INFO) || (data -> level != INFO) || (data->is_panic);
 
@@ -107,7 +107,7 @@ struct logring_entry * logring_pushf(struct logring_entry preliminary, const cha
   unsigned int blocks;
 
   // XXX: gcc extension to use nested function
-  void logring_writechar(char ch, unsigned char style) {
+  void logring_writechar(char ch, unsigned char) {
     if (logring.next == logring.earliest && logring.full) {
       // traverse earliest, and advance by that many blocks
       // we don't multiply by sizeof(struct logring_entry) because pointer arithmetic does that for us

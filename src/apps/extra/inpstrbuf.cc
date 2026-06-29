@@ -3,10 +3,11 @@
 
 // already declared in an ifdef
 void inp_strbuf::delchar_at(int at) {
+  // NOTE: we want at to be signed, as strlen can return negative values
   if (at < 0 || at >= strlen(this->buf)) return; // if trying to delete out of bounds
 
   memcpy(this->buf + at + 1, this->buf + at, this->len - at - 1);
-  if (this->ix > at) { this->ix--; }
+  if (this->ix > (unsigned) at) { this->ix--; }
 }
 
 void inp_strbuf::clear() {
@@ -15,11 +16,11 @@ void inp_strbuf::clear() {
 }
 
 void inp_strbuf::resize_by(int offset) {
-  this->buf = realloc(this->buf, this->len += offset);
+  this->buf = (char *) realloc(this->buf, this->len += offset);
 }
 
 inp_strbuf::inp_strbuf(unsigned int with): len(with) {
-  buf = malloc(len);
+  buf = (char *) malloc(len);
   this->clear(); // just in case
 }
 
@@ -27,4 +28,3 @@ inp_strbuf::~inp_strbuf() {
   free(this->buf);
   this->buf = NULL;
 }
-

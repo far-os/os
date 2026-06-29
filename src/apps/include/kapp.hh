@@ -34,8 +34,8 @@ protected: // only visible to this and children
   int write_keys_to_buf(struct inp_strbuf *);
 
   // bad sleep function. basically trigger invoke again after a set amount of time to keep alive, but not hogging computer with busy wait
-  void invoke_after_centisecs(unsigned int delta);
+  void invoke_after_centisecs(unsigned int delta) const;
 
   // can have feature
-  bool can_have_feature(signed leaf_reg, unsigned flags);
+  static bool can_have_feature(signed int leaf_reg, unsigned flags);
 };

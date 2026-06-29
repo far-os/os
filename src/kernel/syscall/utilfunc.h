@@ -8,7 +8,7 @@ void sys_2(struct cpu_state *c, unsigned char rout) {
   switch (rout) {
   // itoa
   case 0x00:
-    to_dec(c -> edx, adj(c -> edi));
+    to_dec(c -> edx, (char *) adj(c -> edi));
     break;
 
   default:

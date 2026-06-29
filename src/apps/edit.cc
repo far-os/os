@@ -22,7 +22,7 @@ void Editor::invoke() {
     switch (this -> ctrl_q[i]) {
       case NO_CTRL: break; // already dealt with, should never happen
       case CTRL(H): {
-        app_handle help = instantiate(
+        instantiate(
           new HelpHost("text editor", keyb_shortcuts),
           this->app_id & 0xf,
           true

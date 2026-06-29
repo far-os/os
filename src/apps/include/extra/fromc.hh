@@ -25,7 +25,7 @@ extern "C" {
 }
 
 // execute prog.bin. omnce again, TODO, there ought to be no difference between anything of these apps and prog.bin. what we basically need is universal binary format
-extern "C" int prog(int arg);
+extern "C" enum ERRSIG prog(int arg);
 
 // stops `new' and `delete' operators from shitting themselves
 inline void* operator new(unsigned int, void* p) { return p; }

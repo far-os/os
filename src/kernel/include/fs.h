@@ -104,4 +104,6 @@ void rename_file(const char *old, const char *); // technically char *new but c+
 void read_file(const char *filename, void *where);
 struct dir_entry *create_file(const char *filename);
 void delete_file(const char *filename);
-void write_file(const char *filename, void *where, unsigned int new_size);
+
+// returns number of clusters written
+unsigned int write_file(const char *filename, void *where, unsigned int new_size);

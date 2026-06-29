@@ -32,7 +32,7 @@ struct char_packet {
 } __attribute__((packed));
 
 #define PAGE_COUNT 8
-extern struct char_packet *vram;
+extern volatile struct char_packet *vram;
 extern unsigned char page;
 extern curpos_t page_curloc_cache[PAGE_COUNT]; 
 

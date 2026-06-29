@@ -55,7 +55,7 @@ void sprintf(char *dest, const char* fmt, ...) {
 
   unsigned int di = 0;
   // XXX: gcc extension to use nested functions for callback (cb)
-  void cb(char ch, unsigned char _) {
+  void cb(char ch, unsigned char) {
     dest[di++] = ch;
   }
 
@@ -70,7 +70,7 @@ void snprintf(char *dest, unsigned int n, const char* fmt, ...) {
 
   unsigned int di = 0;
   // XXX: gcc extension to use nested functions
-  void cb(char ch, unsigned char _) {
+  void cb(char ch, unsigned char) {
     if (di < n) dest[di++] = ch;
   }
 
@@ -160,6 +160,7 @@ void vpfctprintf(putch_callback put, const char *fmt, unsigned char start_style,
           goto stop_waiting;
         case 'X':
           callback_str(put, "0x", style, 0);
+          // fallthrough
         case 'x':
           if (length_modif == 1) {
             put(nybble_to_hex(va_arg(args, unsigned int)), style);

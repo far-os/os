@@ -97,4 +97,4 @@ extern struct logring_t logring;
 #define logring_init() memzero(logring.start, (logring.end - logring.start))
 
 void msg(enum MSG_TYPE type, enum ERRSIG sig, const char* supp, ...);
-const struct logring_entry * const draw_msg(const struct logring_entry * const data, bool show_more);
+struct logring_entry * draw_msg(const struct logring_entry * const data, bool show_more);

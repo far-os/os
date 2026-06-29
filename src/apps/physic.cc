@@ -112,7 +112,7 @@ void Physic::invoke() {
     switch (this -> ctrl_q[i]) {
       case NO_CTRL: break; // already dealt with, should never happen
       case CTRL(H): {
-        app_handle help = instantiate(
+        instantiate(
           new HelpHost("physics simulator", help_data),
           this->app_id & 0xf,
           true
@@ -136,7 +136,7 @@ void Physic::invoke() {
 
   if (drawing) this->tick_and_draw();
 
-  next_step:
+  // set timer next frame
   this->invoke_after_centisecs(CENTISEC_PER_FRAME);
 }
 

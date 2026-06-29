@@ -16,10 +16,10 @@ char scan_map_en_UK[96] = { // scancode map for UK keyboard.
   '\0' /* lalt */, ' ', 0, '\0' /* f1 */, '\0' /* f2 */, '\0' /* f3 */, '\0' /* f4 */, '\0' /* f5 */, '\0' /* f6 */, '\0' /* f7 */, '\0' /* f8 */, '\0' /* f9 */, '\0' /* f10 */,
   '\0' /* numlck */, '\0' /* scrlck */,
   // keypad
-  '7', '8', '9', '-', 
-  '4', '5', '6', '+', 
-  '1', '2', '3', 
-  '0', '.', 
+  '7', '8', '9', '-',
+  '4', '5', '6', '+',
+  '1', '2', '3',
+  '0', '.',
   0 /* 0x54 */, 0 /* 0x55 */,
   '\\',
   '\0' /* f11 */, '\0' /* f12 */,
@@ -37,10 +37,10 @@ char scan_map_en_UK_shift[96] = { // scancode map for UK keyboard.
   '\0' /* lalt */, ' ', 0, '\0' /* f1 */, '\0' /* f2 */, '\0' /* f3 */, '\0' /* f4 */, '\0' /* f5 */, '\0' /* f6 */, '\0' /* f7 */, '\0' /* f8 */, '\0' /* f9 */, '\0' /* f10 */,
   '\0' /* numlck */, '\0' /* scrlck */,
   // keypad
-  '7', '8', '9', '-', 
-  '4', '5', '6', '+', 
-  '1', '2', '3', 
-  '0', '.', 
+  '7', '8', '9', '-',
+  '4', '5', '6', '+',
+  '1', '2', '3',
+  '0', '.',
   0 /* 0x54 */, 0 /* 0x55 */,
   '|',
   '\0' /* f11 */, '\0' /* f12 */,
@@ -168,18 +168,19 @@ void read_kbd() {
         keys -> modifs |= (1 << 5); // meta
       }
       break;
-    case 0x3b: 
-    case 0x3c: 
-    case 0x3d: 
-    case 0x3e: 
-    case 0x3f: 
-    case 0x40: 
-    case 0x41: 
-    case 0x42: 
-    case 0x43: 
-    case 0x44: 
-    case 0x57: 
-    case 0x58: 
+
+    case 0x3b:
+    case 0x3c:
+    case 0x3d:
+    case 0x3e:
+    case 0x3f:
+    case 0x40:
+    case 0x41:
+    case 0x42:
+    case 0x43:
+    case 0x44:
+    case 0x57:
+    case 0x58:
       putch(
         (scan % 18) - 4 + (keys -> modifs & (1 << 3) ? SHIFT_FN_BASE : FN_BASE),
         CTRL_CODE
@@ -205,6 +206,7 @@ void read_kbd() {
         break;
       }
 
+      // fallthrough, normal numpas key
     case 0x37:
     case 0x4a:
     case 0x4e:
@@ -244,6 +246,8 @@ void read_kbd() {
         }
         break;
       }
+
+      // fallthrough, as numlock is on
     default:
       char ascii;
       char is_letter = scan_map_en_UK[scan] >= 'a' && scan_map_en_UK[scan] <= 'z';
@@ -272,6 +276,8 @@ void read_kbd() {
       putch(ascii, KEY);
       break;
     }
+
+    // unset extended
     keys -> modifs &= ~(1 << 7); // fix | thanks past me, what needs fixing?
   } else {
     switch (scan) {
@@ -284,7 +290,7 @@ void read_kbd() {
       break;
     case 0xb8:
       keys -> modifs &= ~(1 << 6); // alt i think
-      
+
       altput:
         if (xgg) {
           unsigned int fl = to_uint(alt_code_buf);
@@ -300,6 +306,7 @@ void read_kbd() {
       if (keys -> modifs & (1 << 7)) { // if in extended
         keys -> modifs &= ~(1 << 5); // meta
       }
+      break;
     case 0xe0:
       keys -> modifs |= (1 << 7); // extend
       break;

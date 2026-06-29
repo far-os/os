@@ -22,7 +22,7 @@ private:
   char filename[13]; // the exact file
 
   void read();
-  void save();
+  void save(); // save shouldn't be constant as it affects dirty
 
 public:
   Editor(char *which);

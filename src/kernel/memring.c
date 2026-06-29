@@ -6,7 +6,7 @@
 unsigned char * memring = (unsigned char *) MEMRING_LOC;
 
 void mem_init() {
-  memzero(MEMRING_LOC, MEMRING_LEN);
+  memzero((void *) MEMRING_LOC, MEMRING_LEN);
 }
 
 // checks if an address is a valid memring address (i.e. not out of bounds)
@@ -25,7 +25,7 @@ void * malloc(unsigned int len) {
 
     else {
       char not_blank = 0;
-      for (int i = 0; i < blocks; ++i) {
+      for (unsigned int i = 0; i < blocks; ++i) {
         not_blank |= memring[run + i]; // if any one of them are not zero, not blank will not be zero
       }
       if (!not_blank) { break; }
@@ -79,7 +79,9 @@ void * realloc(void *ptr, unsigned int len) {
 
   unsigned int new_blk = (len / MEMBLK_SIZE) + !!(len % MEMBLK_SIZE); // new block count
 
-  unsigned int offset = TO_MEMRING(ptr - MEM_LOC);
+  // XXX: this is an abuse of the way the memring mapping works.
+  // when mapping changes, fix.
+  unsigned int offset = (unsigned int) TO_MEMRING(ptr - MEM_LOC);
 
   if (!(is_memring(ptr))) goto create_new;
 
@@ -90,7 +92,7 @@ void * realloc(void *ptr, unsigned int len) {
     return ptr;
   } else { // grow
     char not_blank = 0;
-    for (int i = blocks; i < new_blk; ++i) {
+    for (unsigned int i = blocks; i < new_blk; ++i) {
       not_blank |= memring[offset + i]; // if any one of them are not zero, not blank will not be zero
     }
     if (not_blank) { // can we just naively extend

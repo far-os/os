@@ -103,7 +103,7 @@ void KShell::invoke() { // here, is effectively equivalent to comupd and curupd
   }
   memzero(this->ctrl_q, QUEUE_LEN);
 
-comupd: 
+comupd:
   clear_ln(ln_nr());
   write_str(this->get_prompt(), COLOUR(BLACK, WHITE));
   write_str(this->work.buf, COLOUR(BLACK, WHITE));
@@ -116,7 +116,7 @@ curupd:
   line_feed();
 
   if (!strlen(this->work.buf)) goto dehistify;
-  
+
   exitting = this->shexec();
 
 histify:
@@ -148,7 +148,7 @@ void KShell::first_run() {
       &(curr_ver -> build)
     );
 
-    set_cur(POS(0, 1));
+    carriage_return();
   }
 
   {
@@ -178,7 +178,7 @@ bool KShell::shexec() {
   bool exitting = true; // whether we exit normally
 
   if (strcmp(argv[0], "calc")) {
-    app_handle help = instantiate(
+    instantiate(
       new Calc(),
       this->app_id & 0xf,
       true
@@ -192,7 +192,7 @@ bool KShell::shexec() {
   } else if (strcmp(argv[0], "exec")) {
     read_file(
       "prog.bin",
-      0x100000
+      PROG_LOC
     ); // reads disk, has to get master or slave
 
     int ar = -1;
@@ -216,7 +216,7 @@ bool KShell::shexec() {
 
     delete_file(argv[1]);
   } else if (strcmp(argv[0], "f:ls")) {
-    char *name = malloc(13);
+    char *name = (char *) malloc(13);
     for (unsigned int search = 0; EXISTS_DIRENT(root_dir[search]); search++) {
       if (VALID_DIRENT(root_dir[search])) {
         sane_name(root_dir[search].name, name);
@@ -265,7 +265,7 @@ shell_f_stat:
       .dosdate = f->adate
     });
 
-    char *name = malloc(13);
+    char *name = (char *) malloc(13);
     sane_name(f->name, name);
 
     // returns to a global buffer. be not confused, be horrified
@@ -303,7 +303,7 @@ shell_f_stat:
       if (!f) goto shell_clean;
     }
 
-    app_handle edt = instantiate(
+    instantiate(
       new Editor(argv[1]),
       this->app_id & 0xf,
       true
@@ -321,7 +321,7 @@ shell_f_stat:
     if (f->size == 0) {
       msg(WARN, E_NOFILE, "%s is zero bytes", argv[1]);
     } else {
-      char *datablk = malloc(f->size);
+      char *datablk = (char *) malloc(f->size);
       read_file(
         argv[1],
         datablk
@@ -332,7 +332,7 @@ shell_f_stat:
       line_feed();
     }
   } else if (strcmp(argv[0], "help")) {
-    app_handle help = instantiate(
+    instantiate(
       new HelpHost("shell builtins", comnames),
       this->app_id & 0xf,
       true
@@ -346,7 +346,7 @@ shell_f_stat:
       ent = draw_msg(ent, true);
     }
   } else if (strcmp(argv[0], "physic")) {
-    app_handle edt = instantiate(
+    instantiate(
       new Physic(),
       this->app_id & 0xf,
       true
@@ -502,7 +502,7 @@ shell_f_stat:
       goto shell_clean;
     }
 
-    char *name = malloc(13);
+    char *name = (char *) malloc(13);
     canonicalise_name(argv[1], name);
     printf("%$%s\n", COLOUR(RED, B_GREEN), name);
     free(name);
@@ -516,7 +516,7 @@ shell_clean:
   return exitting; // exit normally
 }
 
-const char * KShell::get_prompt() {
+const char * KShell::get_prompt() const {
   return "\r\x13> ";
 }
 
@@ -529,7 +529,7 @@ const char * _motds[MOTD_COUNT] = {
   "Type calc to try the calculator!"
 };
 
-const char * KShell::motd_msg() {
+const char * KShell::motd_msg() const {
   return _motds[curr_time->second % MOTD_COUNT];
 }
 
@@ -540,7 +540,7 @@ KShell::KShell(int comlen): KApp(), work(comlen) {
 
   app_name = "kesh";
 
-  histbuf = malloc(comlen);
+  histbuf = (char *) malloc(comlen);
 }
 
 KShell::~KShell() { // madatory cleanup

@@ -25,7 +25,7 @@ int KApp::write_keys_to_buf(struct inp_strbuf *to) {
   char n_to_put = strlen(this->key_q);
   if (!n_to_put) return strlen(to->buf); // nothing to do beyond this point
 
-  int targ_len = strlen(to->buf) + n_to_put;
+  unsigned int targ_len = strlen(to->buf) + n_to_put;
   if (targ_len >= to->len) {
     msg(PROGERR, E_BUFOVERFLOW, "Buffer size exceeded");
     return -1;
@@ -44,11 +44,12 @@ int KApp::write_keys_to_buf(struct inp_strbuf *to) {
 }
 
 // bad wait function: wrapper around set_timed_invoke
-void KApp::invoke_after_centisecs(unsigned int delta) {
+void KApp::invoke_after_centisecs(unsigned int delta) const {
   set_timed_invoke(this->app_id & 0xf, delta);
 };
 
-bool KApp::can_have_feature(signed leaf_reg, unsigned flags) {
+// leaf_reg needs to be signed to do some magic with the high bit
+bool KApp::can_have_feature(signed int leaf_reg, unsigned flags) {
   unsigned int data = 0; // data that we compare to
 
   switch (leaf_reg) { // only supporting edx/ecx leaves for now

@@ -376,7 +376,7 @@ void delete_file(const char *filename) {
   write_root();
 }
 
-void write_file(const char *filename, void *where, unsigned int new_size) {
+unsigned int write_file(const char *filename, void *where, unsigned int new_size) {
   struct dir_entry *f = get_file(filename);
 
   // create file if not exist
@@ -388,12 +388,12 @@ void write_file(const char *filename, void *where, unsigned int new_size) {
   // so to future me, NOT A BUG
   if (f -> attrib & (A_VOLID | A_DIR)) {
     msg(KERNERR, E_NOFILE, "%s is not a file", filename);
-    return;
+    return 0; // 0 sectors written
   }
 
   if (f -> attrib & A_READONLY) {
     msg(KERNERR, E_NOFILE, "Cannot write to %s; is readonly.", filename);
-    return;
+    return 0;
   }
 
   unsigned int old_size = f->size;
@@ -475,6 +475,8 @@ void write_file(const char *filename, void *where, unsigned int new_size) {
 
   write_fat();
   write_root();
+
+  return clusts_written;
 }
 
 // global buffer, just don't think about it too hard

@@ -10,7 +10,7 @@ void Calc::first_run() {
 
 // may want it to be dynamic (i.e. flashes).
 // XXX: in KShell::invoke() this is always printed in format 0x07, so flashes will basically tick until the next invoke call.
-const char * Calc::get_prompt() {
+const char * Calc::get_prompt() const {
   return "\r#> ";
 }
 
@@ -26,7 +26,7 @@ const char * Calc::get_prompt() {
                               justop = true;\
                             }
 
-bool Calc::shexec() { 
+bool Calc::shexec() {
   // TODO: use Split to handle args
   unsigned int untouched_top = this->stack.len();
 

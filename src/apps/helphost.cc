@@ -112,9 +112,9 @@ void HelpHost::put_entries() const {
 
   // draw rest of box (if we haven't filled up the window yet)
   while (ln_nr() < (ENTRY_COUNT + 1)) {
-    write_cell_cur(0xb3, COLOUR(BLUE, B_BLACK));
+    write_cell_cur('\263', COLOUR(BLUE, B_BLACK));
     paint_row(BLUE);
-    write_cell(0xb3, POS(-1, ln_nr()+1), COLOUR(BLUE, B_BLACK));
+    write_cell('\263', POS(-1, ln_nr()+1), COLOUR(BLUE, B_BLACK));
     line_feed();
   }
 
@@ -138,7 +138,7 @@ void HelpHost::draw_edge(bool edge) const {
       VGA_WIDTH, // maximum number of times to repeat border
       '\315' // top edge
     );
-    write_cell_cur(0xb8, COLOUR(BLUE, B_BLACK)); // top-right corner
+    write_cell_cur('\270', COLOUR(BLUE, B_BLACK)); // top-right corner
     // will overflow with cursor
 
     if (this->top_entry != 0) { // if can scroll up, write over with MORE
@@ -153,7 +153,7 @@ void HelpHost::draw_edge(bool edge) const {
       VGA_WIDTH, // maximum number of times to repeat border
       '\315' // bottom edge
     );
-    write_cell_cur(0xbe, COLOUR(BLUE, B_BLACK)); // bottom-right corner
+    write_cell_cur('\276', COLOUR(BLUE, B_BLACK)); // bottom-right corner
 
     if ((this->top_entry + ENTRY_COUNT) < this->tally_entries()) { // if can scroll down
       // v [MORE] v 10
@@ -170,14 +170,11 @@ unsigned int HelpHost::tally_entries() const {
 }
 
 void HelpHost::put_single_entry(const Entry& ent, unsigned int row_num, unsigned int desc_indent) const {
-  // which row are we on?
-  unsigned at_row = (row_num - top_entry) + 1;
-
   // sets whether to be bold or not. is ored with final colour
   unsigned char brightness = (ent.type & DEBUG_ENTRY) ? BLACK : B_BLACK;
 
   // left border
-  write_cell_cur(0xb3, COLOUR(BLUE, B_BLACK));
+  write_cell_cur('\263', COLOUR(BLUE, B_BLACK));
   adv_cur();
 
   if (ent.type & DIVIDER) {
@@ -187,7 +184,8 @@ void HelpHost::put_single_entry(const Entry& ent, unsigned int row_num, unsigned
     }
 
     for (int i = get_cur() % VGA_WIDTH; i < (VGA_WIDTH - 2); ++i) {
-      write_cell_cur('\304', COLOUR(BLUE, BLACK) | brightness);
+      // force cast because c++ is stupid
+      write_cell_cur('\304', (unsigned char) (COLOUR(BLUE, BLACK) | brightness));
     }
   } else if (ent.type & SYNOPSIS) {
     // simple synopsis
@@ -258,12 +256,12 @@ void HelpHost::put_single_entry(const Entry& ent, unsigned int row_num, unsigned
   }
 
   // right border
-  write_cell(0xb3, POS(-1, ln_nr() + 1), COLOUR(BLUE, B_BLACK));
+  write_cell('\263', POS(-1, ln_nr() + 1), COLOUR(BLUE, B_BLACK));
   paint_row(BLUE);
   line_feed();
 }
 
-HelpHost::HelpHost(char* what, const HelpHost::Entry* loads): ents(loads), name(what) {
+HelpHost::HelpHost(const char* title, const HelpHost::Entry* loads): name(title), ents(loads) {
   // bitflags, or as many together as need be
   config_flags = 0; // enter can exit too, so we dont want it as a CTRL code, but instead as a real key
 

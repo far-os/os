@@ -14,8 +14,8 @@ namespace Extra {
     unsigned int at = 0;
     do if (str[at] == delim || !(str[at])) {
       if (at != last) {
-        char *ptr = malloc(at - last + 1);
-        memcpy(str+last, ptr, at - last);
+        char *ptr = (char *) malloc(at - last + 1);
+        memcpy(str + last, ptr, at - last);
         this->push(ptr);
       } /**/
       last = at + 1;

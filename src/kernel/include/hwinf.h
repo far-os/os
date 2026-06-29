@@ -87,8 +87,10 @@ void query_cpuid();
 #define REG_ECX 1
 #define REG_EDX 2
 #define REG_EBX 3
-// we want arithmetic shift left, to preserve high bit
-#define CPUID_LEAF(num, reg) (((signed) num << 2) | reg)
+
+// there is absolutely no such thing as arithmetic shift left
+// so we have to manually do this to keep the "sign"
+#define CPUID_LEAF(num, reg) ((num & 0x80'00'00'00) | (num << 2) | reg)
 
 // cpu feature flags
 enum cpuid_01h_edx {

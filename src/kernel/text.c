@@ -3,7 +3,7 @@
 #include "include/port.h"
 #include "include/util.h"
 
-struct char_packet *vram = (struct char_packet *) 0xb8000;
+volatile struct char_packet *vram = (struct char_packet *) 0xb8000;
 unsigned char page = 0;
 curpos_t page_curloc_cache[PAGE_COUNT];
 unsigned char is_split = 0;

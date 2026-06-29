@@ -14,7 +14,7 @@ struct Calc : KShell {
   void first_run();
 
 protected:
-  const char* get_prompt(); // prompt function
+  const char* get_prompt() const; // prompt function
 
   bool shexec();
 

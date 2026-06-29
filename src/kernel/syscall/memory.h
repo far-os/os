@@ -11,7 +11,7 @@ void sys_1(struct cpu_state *c, unsigned char rout) {
   // Allocate memory
   case 0x00:
     void * addr = malloc(c -> ecx);
-    c -> edi = badj((unsigned int) addr);
+    c -> edi = (unsigned int) badj((unsigned int) addr);
     break;
 
   // Free memory
@@ -22,7 +22,7 @@ void sys_1(struct cpu_state *c, unsigned char rout) {
   // Reallocate memory
   case 0x02:
     addr = realloc(adj(c -> edi), c -> ecx);
-    c -> edi = badj((unsigned int) addr);
+    c -> edi = (unsigned int) badj((unsigned int) addr);
     break;
 
   default:

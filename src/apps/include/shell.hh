@@ -12,9 +12,11 @@ struct KShell : KApp {
 protected: // hidden fields (only for internal use)
   struct inp_strbuf work; // the buffer in which we work
 
-  virtual const char* get_prompt(); // prompt function
-  virtual const char* motd_msg(); // motd message
-  virtual bool shexec();
+  virtual const char* get_prompt() const; // prompt function
+  virtual const char* motd_msg() const; // motd message
+
+  // don't want this to be constant
+  virtual bool shexec(); // execute
 
 private:
   char *histbuf; // copy of the history
