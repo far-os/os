@@ -1,6 +1,6 @@
 #include "include/memring.h"
 #include "include/text.h"
-#include "include/util.h"
+#include "include/stdlib.h"
 #include "include/err.h"
 
 unsigned char * memring = (unsigned char *) MEMRING_LOC;
@@ -31,11 +31,11 @@ void * malloc(unsigned int len) {
       if (!not_blank) { break; }
     }
   }
-  
-  memset(&(memring[run]), blocks, IN_USE);
+
+  memset(&(memring[run]), IN_USE, blocks);
   memring[run] |= BLK_START;
   memring[run + blocks - 1] |= BLK_END;
-  
+
   void * ptr = (void *) MEM_LOC + (run * MEMBLK_SIZE);
 
   if (!is_memring(ptr) || !is_memring(ptr + len)) {
@@ -99,12 +99,12 @@ void * realloc(void *ptr, unsigned int len) {
       // can't naively extend
     create_new:
       void *x = malloc(len);
-      memcpy(ptr, x, blocks * MEMBLK_SIZE);
+      memcpy(x, ptr, blocks * MEMBLK_SIZE);
       free(ptr);
       return x;
     } else { // naive extension
       memring[offset + blocks - 1] &= ~BLK_END; // delete the end
-      memset(&(memring[offset + blocks]), new_blk - blocks, IN_USE);
+      memset(&(memring[offset + blocks]), IN_USE, new_blk - blocks);
       memring[offset + new_blk - 1] |= BLK_END; // new end
       return ptr;
     }

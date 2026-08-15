@@ -1,4 +1,5 @@
 #include "include/hwinf.h"
+#include "include/stdlib.h"
 #include "include/util.h"
 
 struct mem_entry* mem_table = (struct mem_entry *) 0x8000;
@@ -24,7 +25,7 @@ void query_cpuid() {
       "=c" (vendbuf[2])
     : "a" (0x00000000));
 
-  memcpy(vendbuf, &(hardware -> vendor), 12);
+  memcpy(&(hardware -> vendor), vendbuf, 12);
 
   // amount of valid extended functions
   asm volatile ("cpuid"
@@ -44,7 +45,7 @@ void query_cpuid() {
   hardware -> c_stepping = fms & 0xf; // fms[3:0]
   hardware -> c_model = ((fms >> 12) & 0xf0) | ((fms >> 4) & 0x0f); // fms[19:16] : fms[7:4]
   hardware -> c_family = ((fms >> 20) & 0xff) + ((fms >> 8) & 0x0f); // fms[27:20] + fms[11:8]
-  
+
   if ((hardware -> cpuid_ext_leaves & 0xff) >= 0x04) {
     unsigned int brandbuf[12];
     for (unsigned int i = 0; i < 12; i += 4) {
@@ -55,7 +56,7 @@ void query_cpuid() {
           "=d" (brandbuf[i + 3])
         : "a" (i / 4 + 0x80000002));
     }
-    memcpy(brandbuf, &(hardware -> brand), 48);
+    memcpy(&(hardware -> brand), brandbuf, 48);
   }
 }
 

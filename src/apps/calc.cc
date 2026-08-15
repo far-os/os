@@ -30,7 +30,7 @@ bool Calc::shexec() {
   // TODO: use Split to handle args
   unsigned int untouched_top = this->stack.len();
 
-  if (strcmp(this->work.buf, "exit")) {
+  if (strcmp(this->work.buf, "exit") == 0) {
     terminate_app(this->app_id & 0xf);
     return false;
   }

@@ -2,56 +2,12 @@
 #include "include/err.h"
 #include "include/misc.h"
 #include "include/text.h"
+#include "include/stdlib.h"
 #include "include/memring.h"
 #include "include/port.h"
 
 void idle() {
   pbyte_out(0x80, 0x0); // just passing the time (1-4 microseconds)
-}
-
-int strlen(const char *str) {
-  int i = -1;
-  while (str[++i]);
-  return i;
-}
-
-void memcpy(const void *src, void *dest, unsigned int amount) {
-  asm volatile ("cld\n"
-                "rep movsb\n" :
-    : "c" (amount),
-      "S" (src),
-      "D" (dest)
-    : "memory", "cc" );
-    src -= amount;
-}
-
-void backmemcpy(const void *srcend, void *destend, unsigned int amount) {
-  asm volatile ("std\n"
-                "rep movsb\n" :
-    : "c" (amount),
-      "S" (srcend),
-      "D" (destend)
-    : "memory", "cc" );
-}
-
-void strcpy(const char *src, char *dest) {
-  memcpy(src, dest, strlen(src));
-}
-
-unsigned char memcmp(const void *src, const void *dest, unsigned int amount) {
-  unsigned char o;
-  asm volatile ("cld\n"
-                "rep cmpsb" :
-      "=@ccz" (o)
-    : "c" (amount),
-      "S" (src),
-      "D" (dest)
-    : "cc" );
-  return o;
-}
-
-unsigned char strcmp(const char *src, const char *dest) {
-  return memcmp(src, dest, strlen(src)) && strlen(src) == strlen(dest);
 }
 
 void memrev(const char *src, int len, char *dest) {
@@ -81,7 +37,7 @@ void to_hex(const void *data, unsigned char i_len, char *out) {
 }
 
 void to_filled_dec(int input, char *out, unsigned char size, char fill) {
-  memset(out, size, fill);
+  memset(out, fill, size);
   for (int i = input, j = size - 1; i > 0; i /= 10, --j) {
     out[j] = (char) (i % 10) + '0';
   }

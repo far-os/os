@@ -78,7 +78,7 @@ void KShell::invoke() { // here, is effectively equivalent to comupd and curupd
         break;
       }
       case UP: {
-        memcpy(histbuf, this->work.buf, this->work.len);
+        memcpy(this->work.buf, histbuf, this->work.len);
         this->work.ix = strlen(this->work.buf);
         break;
       }
@@ -120,7 +120,7 @@ curupd:
   exitting = this->shexec();
 
 histify:
-  memcpy(this->work.buf, histbuf, this->work.len);
+  memcpy(histbuf, this->work.buf, this->work.len);
   this->work.clear();
 
 dehistify:
@@ -177,7 +177,7 @@ bool KShell::shexec() {
 
   bool exitting = true; // whether we exit normally
 
-  if (strcmp(argv[0], "calc")) {
+  if (strcmp(argv[0], "calc") == 0) {
     instantiate(
       new Calc(),
       this->app_id & 0xf,
@@ -186,10 +186,10 @@ bool KShell::shexec() {
 
     exitting = false;
     goto shell_clean;
-  } else if (strcmp(argv[0], "clr")) { // clear screen
+  } else if (strcmp(argv[0], "clr") == 0) { // clear screen
     clear_scr();
     set_cur(0);
-  } else if (strcmp(argv[0], "exec")) {
+  } else if (strcmp(argv[0], "exec") == 0) {
     read_file(
       "prog.bin",
       PROG_LOC
@@ -208,14 +208,14 @@ bool KShell::shexec() {
     } else {
       line_feed();
     }
-  } else if (strcmp(argv[0], "f:del")) {
+  } else if (strcmp(argv[0], "f:del") == 0) {
     if (argv.len() <= 1) {
       msg(PROGERR, E_ARGS, "Please provide a filename");
       goto shell_clean;
     }
 
     delete_file(argv[1]);
-  } else if (strcmp(argv[0], "f:ls")) {
+  } else if (strcmp(argv[0], "f:ls") == 0) {
     char *name = (char *) malloc(13);
     for (unsigned int search = 0; EXISTS_DIRENT(root_dir[search]); search++) {
       if (VALID_DIRENT(root_dir[search])) {
@@ -226,7 +226,7 @@ bool KShell::shexec() {
     free(name);
 
     line_feed();
-  } else if (strcmp(argv[0], "f:new")) {
+  } else if (strcmp(argv[0], "f:new") == 0) {
     if (argv.len() <= 1) {
       msg(PROGERR, E_ARGS, "Please provide a filename");
       goto shell_clean;
@@ -235,14 +235,14 @@ bool KShell::shexec() {
     if (create_file(argv[1])) {
       goto shell_f_stat;
     }
-  } else if (strcmp(argv[0], "f:ren")) {
+  } else if (strcmp(argv[0], "f:ren") == 0) {
     if (argv.len() <= 2) {
       msg(PROGERR, E_ARGS, "Please provide two source and destination filenames");
       goto shell_clean;
     }
 
     rename_file(argv[1], argv[2]);
-  } else if (strcmp(argv[0], "f:stat")) {
+  } else if (strcmp(argv[0], "f:stat") == 0) {
 shell_f_stat:
     struct dir_entry *f = NULL;
     if (!f) {
@@ -295,7 +295,7 @@ shell_f_stat:
     );
 
     free(name);
-  } else if (strcmp(argv[0], "f:edit")) {
+  } else if (strcmp(argv[0], "f:edit") == 0) {
     // TODO: allow no file
     struct dir_entry *f = NULL;
     if (!f) {
@@ -311,7 +311,7 @@ shell_f_stat:
 
     exitting = false;
     goto shell_clean;
-  } else if (strcmp(argv[0], "f:read")) {
+  } else if (strcmp(argv[0], "f:read") == 0) {
     struct dir_entry *f = NULL;
     if (!f) {
       f = get_file(argv[1]);
@@ -331,7 +331,7 @@ shell_f_stat:
       free(datablk);
       line_feed();
     }
-  } else if (strcmp(argv[0], "help")) {
+  } else if (strcmp(argv[0], "help") == 0) {
     instantiate(
       new HelpHost("shell builtins", comnames),
       this->app_id & 0xf,
@@ -340,12 +340,12 @@ shell_f_stat:
 
     exitting = false;
     goto shell_clean;
-  } else if (strcmp(argv[0], "log:all")) {
+  } else if (strcmp(argv[0], "log:all") == 0) {
     const struct logring_entry * ent = logring.earliest;
     while (ent != logring.next && ent) {
       ent = draw_msg(ent, true);
     }
-  } else if (strcmp(argv[0], "physic")) {
+  } else if (strcmp(argv[0], "physic") == 0) {
     instantiate(
       new Physic(),
       this->app_id & 0xf,
@@ -354,11 +354,11 @@ shell_f_stat:
 
     exitting = false;
     goto shell_clean;
-  } else if (strcmp(argv[0], "proc:ls")) {
+  } else if (strcmp(argv[0], "proc:ls") == 0) {
     for (app_handle i = 0; i < AVAILABLE_KAPPS; ++i) {
       printf("%$@%u: %s\n", app_db[i] ? 0xa : 0xc, i, app_db[i] ? app_db[i]->app_name : "-");
     }
-  } else if (strcmp(argv[0], "proc:kill")) {
+  } else if (strcmp(argv[0], "proc:kill") == 0) {
     if (argv[1][0] == '@') {
       int ar = -1;
       if (strlen(argv[1]) > 1) {
@@ -375,10 +375,10 @@ shell_f_stat:
     _kesh_proc_kill_fail:
       msg(PROGERR, E_ARGS, "No valid handle supplied");
     }
-  } else if (strcmp(argv[0], "reset")) {
+  } else if (strcmp(argv[0], "reset") == 0) {
     cpu_reset();
     // if you reach past here, something has gone very wrong indeed
-  } else if (strcmp(argv[0], "set:verbose")) {
+  } else if (strcmp(argv[0], "set:verbose") == 0) {
     int ar = -1;
     if (argv.len() > 1) {
       ar = to_uint(argv[1]);
@@ -394,8 +394,8 @@ shell_f_stat:
       ar != -1 ? COLOUR(BLUE, B_GREEN) : COLOUR(BLUE, B_YELLOW),
       xconf -> verbosity
     );
-  } else if (strcmp(argv[0], "split")) {
-    if (strcmp(argv[1], "off")) {
+  } else if (strcmp(argv[0], "split") == 0) {
+    if (strcmp(argv[1], "off") == 0) {
       split_scr(0);
     } else if (argv[1][0] == '@') {
       int ar = -1;
@@ -414,7 +414,7 @@ shell_f_stat:
     _kesh_split_fail:
       msg(PROGERR, E_ARGS, "No valid handle supplied");
     }
-  } else if (strcmp(argv[0], "sys:ata")) {
+  } else if (strcmp(argv[0], "sys:ata") == 0) {
     printf("%$IDENTIFY of disk %2xh:\n\tLBA28\t%u sectors\n\tLBA48\t%B, %l sectors\n\tUDMA\t80CC: %B, %4x\n",
       COLOUR(RED, B_GREEN),
       &(hardware -> bios_disk),
@@ -424,7 +424,7 @@ shell_f_stat:
       ATA_HAS_80CC,
       &(ATA_UDMA_MODES)
     );
-  } else if (strcmp(argv[0], "sys:cpu")) {
+  } else if (strcmp(argv[0], "sys:cpu") == 0) {
     printf("%$CPUID.\n\t\x10 %12s\n\tFamily %2xh, Model %2xh, Stepping %1xh\n\tBrand \"%s\"\n",
       COLOUR(YELLOW, B_GREEN),
       &(hardware -> vendor),
@@ -433,7 +433,7 @@ shell_f_stat:
       &(hardware -> c_stepping), // stepping
       hardware -> cpuid_ext_leaves >= 0x80000004 ? &(hardware -> brand) : NULL // brand string
     );
-  } else if (strcmp(argv[0], "sys:fs")) {
+  } else if (strcmp(argv[0], "sys:fs") == 0) {
     printf("%$%5s disk:\n\tVol. label \"%11s\"\n\tVol. ID %8X\n\tCluster size: %u sectors\n\tN. Fats: %u\n\tVolume size %uKiB\n",
       COLOUR(RED, B_YELLOW),
       &(bpb -> sys_ident),
@@ -443,7 +443,7 @@ shell_f_stat:
       bpb -> n_fats,
       (bpb -> n_sectors * bpb -> bytes_per_sec) >> 10
     );
-  } else if (strcmp(argv[0], "sys:indic")) {
+  } else if (strcmp(argv[0], "sys:indic") == 0) {
     // indicators
     printf("%$scroll: %B\nnum: %B\ncaps: %B\n",
       COLOUR(GREEN, RED),
@@ -451,13 +451,13 @@ shell_f_stat:
       bittest(&(keys -> modifs), 1),
       bittest(&(keys -> modifs), 2)
     );
-  } else if (strcmp(argv[0], "sys:mem")) {
+  } else if (strcmp(argv[0], "sys:mem") == 0) {
     void *addr = malloc(1);
     printf("%$First free memory addr: %p\n\t\tout of: %p\n\nCurrently running from: %p\n\n", COLOUR(MAGENTA, B_YELLOW), addr, MEM_END, rip_thunk());
     free(addr);
 
     // verbose mode
-    if (argv.len() > 1 && strcmp(argv[1], "-v")) {
+    if (argv.len() > 1 && strcmp(argv[1], "-v") == 0) {
       for (unsigned int ent_id = 0; ent_id < (hardware->mem_ents); ent_id++) {
         printf("%$Entry %u: from %16x, len %16x, type %d\n%$\tignore? %B\tnon_volatile? %B\n",
           COLOUR(BLUE, B_GREEN),
@@ -480,7 +480,7 @@ shell_f_stat:
         );
       }
     }
-  } else if (strcmp(argv[0], "time")) {
+  } else if (strcmp(argv[0], "time") == 0) {
     printf("%$Time since kernel load: %d.%2ds\n%s%c%4d-%2d-%2d %2d:%2d:%2d\n\n%l TSC ticks (%l/centisec)\n",
       COLOUR(RED, B_CYAN),
       uptime / 100,
@@ -496,7 +496,7 @@ shell_f_stat:
       get_tsc_thunk(),
       tsc_per_tick
     );
-  } else if (strcmp(argv[0], "util:to8.3")) {
+  } else if (strcmp(argv[0], "util:to8.3") == 0) {
     if (argv.len() <= 1) {
       msg(PROGERR, E_ARGS, "Please provide a filename");
       goto shell_clean;

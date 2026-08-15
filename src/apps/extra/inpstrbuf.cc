@@ -6,7 +6,7 @@ void inp_strbuf::delchar_at(int at) {
   // NOTE: we want at to be signed, as strlen can return negative values
   if (at < 0 || at >= strlen(this->buf)) return; // if trying to delete out of bounds
 
-  memcpy(this->buf + at + 1, this->buf + at, this->len - at - 1);
+  memmove(this->buf + at, this->buf + at + 1, this->len - at - 1);
   if (this->ix > (unsigned) at) { this->ix--; }
 }
 

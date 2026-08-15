@@ -1,6 +1,7 @@
 #include "include/cmos.h"
 #include "include/err.h"
 #include "include/misc.h"
+#include "include/stdlib.h"
 #include "include/util.h"
 #include "include/port.h"
 #include "include/memring.h"
@@ -85,7 +86,7 @@ void read_rtc(struct timestamp *ts) {
     msg(INFO, E_TIME, "Invalid weekday");
     ts -> weekday = 0;
   }
-  
+
   // bcd mode - if bit 2 of B is clear we are in bcd mode.
   if (!(get_cmos_reg(RTC_STAT_B) & 0x04)) {
     MK_BCD(ts -> second);
@@ -154,7 +155,7 @@ void time(void *tbuf) {
   read_rtc(temp);
   read_rtc(next);
 
-  while (!memcmp(temp, next, sizeof(struct timestamp))) {
+  while (memcmp(temp, next, sizeof(struct timestamp)) != 0) {
     free(temp);
     temp = next;
     next = malloc(sizeof(struct timestamp));
@@ -162,7 +163,7 @@ void time(void *tbuf) {
   }
 
   free(temp);
-  memcpy(next, tbuf, sizeof(struct timestamp));
+  memcpy(tbuf, next, sizeof(struct timestamp));
   free(next);
 }
 

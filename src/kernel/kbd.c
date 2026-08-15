@@ -4,6 +4,7 @@
 #include "include/util.h"
 #include "include/ih.h"
 #include "include/kappldr.h"
+#include "include/stdlib.h"
 
 struct keystates *keys = &((struct keystates) { .states_high = 0x0, .states_low = 0x0, .modifs = 0b00000000 });
 

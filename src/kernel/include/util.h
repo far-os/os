@@ -8,17 +8,11 @@
 
 extern void idle();
 
-int strlen(const char *str);
-void memcpy(const void *src, void *dest, unsigned int amount);
-void backmemcpy(const void *srcend, void *destend, unsigned int amount);
-void strcpy(const char *src, char *dest);
-unsigned char memcmp(const void *src, const void *dest, unsigned int amount);
-
 extern unsigned int rip_thunk();
 
 static inline unsigned char bittest(const void *src, unsigned int bit) {
   unsigned char o;
-  asm volatile ("bt %2, (%1)" : 
+  asm volatile ("bt %2, (%1)" :
       "=@ccc" (o)
       : "r" (src),
         "ir" (bit)
@@ -28,7 +22,7 @@ static inline unsigned char bittest(const void *src, unsigned int bit) {
 
 static inline unsigned char bitinv(const void *src, unsigned int bit) {
   unsigned char o;
-  asm volatile ("btc %2, (%1)" : 
+  asm volatile ("btc %2, (%1)" :
       "=@ccc" (o)
       : "r" (src),
         "ir" (bit)
@@ -38,7 +32,7 @@ static inline unsigned char bitinv(const void *src, unsigned int bit) {
 
 static inline unsigned char bitclear(const void *src, unsigned int bit) {
   unsigned char o;
-  asm volatile ("btr %2, (%1)" : 
+  asm volatile ("btr %2, (%1)" :
       "=@ccc" (o)
       : "r" (src),
         "ir" (bit)
@@ -48,27 +42,13 @@ static inline unsigned char bitclear(const void *src, unsigned int bit) {
 
 static inline unsigned char bitset(const void *src, unsigned int bit) {
   unsigned char o;
-  asm volatile ("bts %2, (%1)" : 
+  asm volatile ("bts %2, (%1)" :
       "=@ccc" (o)
       : "r" (src),
         "ir" (bit)
       : "cc" );
   return o;
 }
-
-
-unsigned char strcmp(const char *src, const char *dest);
-
-static inline void memset(void *dest, unsigned int amount, unsigned char val) {
-  asm volatile ("cld\n"
-                "rep stosb\n":
-    : "a" (val),
-      "c" (amount),
-      "D" (dest)
-    : "memory", "cc" );
-}
-
-#define memzero(dest, amount) memset(dest, amount, 0)
 
 void memrev(const char *src, int len, char *dest);
 
@@ -81,10 +61,6 @@ unsigned int to_uint(const char *input);
 
 char to_upper(char);
 
-static inline char *strcat(char *out, const char *in) {
-  strcpy(in, endof(out));
-  return out;
-}
 
 #define trace_ch_until(a,b) trace_ch_until_with(a,b,0)
 unsigned short trace_ch_until_with(const char *str, int until, int start);

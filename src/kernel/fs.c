@@ -5,6 +5,7 @@
 #include "include/err.h"
 #include "include/hwinf.h"
 #include "include/misc.h"
+#include "include/stdlib.h"
 #include "include/util.h"
 #include "include/text.h"
 #include "include/memring.h"
@@ -46,7 +47,7 @@ void read_fat() {
   int n = bpb -> sec_per_fat << 9;
   root_dir = (struct dir_entry *) (file_table + n);
 
-  if (!memcmp(file_table, file_table + n, n)) { // check the two FATs. if they're different, file system is likely borked
+  if (memcmp(file_table, file_table + n, n) != 0) { // check the two FATs. if they're different, file system is likely borked
     msg(KERNERR, E_NOSTORAGE, "FATs are not identical (%x, %x)", file_table, file_table + n);
   }
 }
@@ -157,7 +158,7 @@ void write_root() {
 // e.g. abcdefgh.xyz => ABCDEFGHXYZ
 void canonicalise_name(const char *from, char *to) {
   // pad with spaces
-  memset(to, FAT_FILENAME_LEN, ' ');
+  memset(to, ' ', FAT_FILENAME_LEN);
 
   unsigned char dots = 0; // counting the number of dots. not exactly a bool
   int si = 0;
@@ -225,7 +226,7 @@ struct dir_entry *get_file(const char *name) {
   for (unsigned int search = 0; EXISTS_DIRENT(root_dir[search]); search++) {
     if (!VALID_DIRENT(root_dir[search])) continue;
 
-    if (memcmp(nbuf, root_dir[search].name, FAT_FILENAME_LEN)) return &root_dir[search];
+    if (strncmp(nbuf, root_dir[search].name, FAT_FILENAME_LEN) == 0) return &root_dir[search];
   }
   msg(PROGERR, E_NOFILE, "File not found");
   return NULL;
@@ -238,7 +239,7 @@ bool does_exist(const char *name) {
   for (unsigned int search = 0; EXISTS_DIRENT(root_dir[search]); search++) {
     if (!VALID_DIRENT(root_dir[search])) continue;
 
-    if (memcmp(nbuf, root_dir[search].name, FAT_FILENAME_LEN)) return true;
+    if (strncmp(nbuf, root_dir[search].name, FAT_FILENAME_LEN) == 0) return true;
   }
 
   return false;
@@ -279,9 +280,9 @@ void read_file(const char *filename, void * where) {
         hardware -> boot_disk_p.dev_path[0] & 0x01
       ); // reads disk for config, has to get master or slave
 
-      memcpy(tmp, where, bytes_left);
+      memcpy(where, tmp, bytes_left);
       free(tmp);
-      
+
       // although considered illegal, it is possible to have a cluster chain longer than the file size, so we just stop here
       break; // just in case
     } else {
@@ -439,7 +440,7 @@ unsigned int write_file(const char *filename, void *where, unsigned int new_size
   do {
     if (bytes_left < bytes_per_clust) {
       void *tmp = malloc(bytes_per_clust); // to avoid overwriting, we put it in a buf first. there are umpteen better ways of doing this, but no
-      memcpy(where, tmp, bytes_left);
+      memcpy(tmp, where, bytes_left);
 
       write_pio28(
         tmp,
@@ -483,7 +484,7 @@ unsigned int write_file(const char *filename, void *where, unsigned int new_size
 char attribify_buf[9] = {0};
 
 void attribify(unsigned char att) {
-  strcpy("RHSVDA L", attribify_buf);
+  strcpy(attribify_buf, "RHSVDA L");
   for (int z = 0; z < 6; ++z) {
     if (!(att & (1 << z))) {
       attribify_buf[z] = '-';

@@ -11,6 +11,7 @@
 #include "include/err.h"
 #include "include/kappldr.h"
 #include "include/printf.h"
+#include "include/stdlib.h"
 
 struct idt_entry {
   unsigned short offset_low; // low 16 bits of offset

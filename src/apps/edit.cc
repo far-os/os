@@ -106,13 +106,13 @@ void Editor::first_run() {
   clear_scr();
   set_cur(0);
   write_str(contents.buf, COLOUR(BLACK, WHITE));
-  memcpy(header.buf, addr_of_loc(POS(0, VP_HEIGHT - 1)), header.len);
+  memcpy(addr_of_loc(POS(0, VP_HEIGHT - 1)), header.buf, header.len);
   set_cur(trace_ch_until(contents.buf, contents.ix)); // trace character
 
   if (dirty == SHOW_EXIT_MODAL) {
-    memset(addr_of_loc(POS((80 - 66) / 2, (VP_HEIGHT / 2) - 1)), modal.len, 0x11);
-    memcpy(modal.buf, addr_of_loc(POS((80 - 66) / 2, (VP_HEIGHT / 2))), modal.len);
-    memset(addr_of_loc(POS((80 - 66) / 2, (VP_HEIGHT / 2) + 1)), modal.len, 0x11);
+    memset(addr_of_loc(POS((80 - 66) / 2, (VP_HEIGHT / 2) - 1)), 0x11, modal.len);
+    memcpy(addr_of_loc(POS((80 - 66) / 2, (VP_HEIGHT / 2))), modal.buf, modal.len);
+    memset(addr_of_loc(POS((80 - 66) / 2, (VP_HEIGHT / 2) + 1)), 0x11, modal.len);
   }
 }
 

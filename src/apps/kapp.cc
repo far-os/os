@@ -32,11 +32,11 @@ int KApp::write_keys_to_buf(struct inp_strbuf *to) {
   };
 
   backmemcpy(
-    to->buf + to->len - (n_to_put + 1), // end of src
     to->buf + to->len - 1, // end of dest
+    to->buf + to->len - (n_to_put + 1), // end of src
     to->len - (to->ix + n_to_put) // length of memory to copy
   );
-  strcpy(this->key_q, to->buf + to->ix);
+  strcpy(to->buf + to->ix, this->key_q);
   memzero(this->key_q, QUEUE_LEN);
   to->ix++;
 
