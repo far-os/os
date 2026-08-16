@@ -1,5 +1,7 @@
 #pragma once
 
+#include "stdlib.h"
+
 #define BLACK     0x0
 #define BLUE      0x1
 #define GREEN     0x2
@@ -34,7 +36,7 @@ struct char_packet {
 #define PAGE_COUNT 8
 extern volatile struct char_packet *vram;
 extern unsigned char page;
-extern curpos_t page_curloc_cache[PAGE_COUNT]; 
+extern curpos_t page_curloc_cache[PAGE_COUNT];
 
 // viewport
 #define VP_HEIGHT (is_split ? 12 : VGA_HEIGHT)
@@ -51,17 +53,17 @@ extern curpos_t page_curloc_cache[PAGE_COUNT];
 #define QUEUE_LEN 8
 struct inp_strbuf {
   char *buf;
-  unsigned int len;
-  unsigned int ix;
+  size_t len;
+  size_t ix;
 
   // methods used with c++ interfacing (im too lazy to create a new definition)
   #ifdef __cplusplus
-    void delchar_at(int at);
+    void delchar_at(size_t at);
     void clear();
 
     void resize_by(int offset);
 
-    inp_strbuf(unsigned int with);
+    inp_strbuf(size_t with);
     ~inp_strbuf();
   #endif
 };

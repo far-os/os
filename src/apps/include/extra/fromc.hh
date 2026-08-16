@@ -29,10 +29,10 @@ extern "C" {
 extern "C" enum ERRSIG prog(int arg);
 
 // stops `new' and `delete' operators from shitting themselves
-inline void* operator new(unsigned int, void* p) { return p; }
-inline void* operator new[](unsigned int, void* p) { return p; }
-inline void* operator new(unsigned int size) { return malloc(size); }
+inline void* operator new(size_t, void* p) { return p; }
+inline void* operator new[](size_t, void* p) { return p; }
+inline void* operator new(size_t size) { return malloc(size); }
 
 // hmmm
 inline void operator delete(void* p) { free(p); }
-inline void operator delete(void* p, unsigned int) { free(p); }
+inline void operator delete(void* p, size_t) { free(p); }

@@ -21,7 +21,9 @@
 
 extern unsigned char * memring;
 
+#include "stdlib.h"
+
 void mem_init();
-void * malloc(unsigned int len);
+void * malloc(size_t len);
 void free(void * ptr);
-void * realloc(void *ptr, unsigned int len);
+void * realloc(void *ptr, size_t len);

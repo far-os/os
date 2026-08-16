@@ -1,5 +1,5 @@
 #include "sched.h"
-#include "misc.h"
+#include "stdlib.h"
 #pragma once
 
 // error message

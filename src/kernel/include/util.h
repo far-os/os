@@ -10,8 +10,8 @@ extern void idle();
 
 extern unsigned int rip_thunk();
 
-static inline unsigned char bittest(const void *src, unsigned int bit) {
-  unsigned char o;
+static inline bool bittest(const void *src, unsigned int bit) {
+  bool o;
   asm volatile ("bt %2, (%1)" :
       "=@ccc" (o)
       : "r" (src),
@@ -20,8 +20,8 @@ static inline unsigned char bittest(const void *src, unsigned int bit) {
   return o;
 }
 
-static inline unsigned char bitinv(const void *src, unsigned int bit) {
-  unsigned char o;
+static inline bool bitinv(const void *src, unsigned int bit) {
+  bool o;
   asm volatile ("btc %2, (%1)" :
       "=@ccc" (o)
       : "r" (src),
@@ -30,8 +30,8 @@ static inline unsigned char bitinv(const void *src, unsigned int bit) {
   return o;
 }
 
-static inline unsigned char bitclear(const void *src, unsigned int bit) {
-  unsigned char o;
+static inline bool bitclear(const void *src, unsigned int bit) {
+  bool o;
   asm volatile ("btr %2, (%1)" :
       "=@ccc" (o)
       : "r" (src),
@@ -40,8 +40,8 @@ static inline unsigned char bitclear(const void *src, unsigned int bit) {
   return o;
 }
 
-static inline unsigned char bitset(const void *src, unsigned int bit) {
-  unsigned char o;
+static inline bool bitset(const void *src, unsigned int bit) {
+  bool o;
   asm volatile ("bts %2, (%1)" :
       "=@ccc" (o)
       : "r" (src),
@@ -65,4 +65,4 @@ char to_upper(char);
 #define trace_ch_until(a,b) trace_ch_until_with(a,b,0)
 unsigned short trace_ch_until_with(const char *str, int until, int start);
 
-unsigned char is_whitespace(char x);
+bool is_whitespace(char x);

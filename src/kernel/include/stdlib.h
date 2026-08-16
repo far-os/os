@@ -40,5 +40,6 @@ void backmemcpy(void *dest, const void *src, size_t n);
 // string bestions of above
 char *strcpy(char *dest, const char *src);
 int strcmp(const char *dest, const char *src);
+int strncmp(const char *dest, const char *src, size_t n);
 
 char *strcat(char *dest, const char *src);

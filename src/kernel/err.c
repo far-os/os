@@ -1,3 +1,4 @@
+#include "include/stdlib.h"
 #include "include/err.h"
 #include "include/misc.h"
 #include "include/text.h"

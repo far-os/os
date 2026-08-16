@@ -29,8 +29,6 @@ struct fat_superblock {
 
 extern struct fat_superblock *bpb;
 
-typedef unsigned short dostime;
-typedef unsigned short dosdate;
 
 // fat file entry structure
 struct dir_entry {
@@ -39,12 +37,12 @@ struct dir_entry {
   unsigned char attrib;
   unsigned char rsrvd;
   unsigned char ctime_cs;
-  dostime ctime;
-  dosdate cdate;
-  dosdate adate;
+  dostime_t ctime;
+  dosdate_t cdate;
+  dosdate_t adate;
   unsigned short first_cluster_hi; // always zero on fat12/16
-  dostime mtime;
-  dosdate mdate;
+  dostime_t mtime;
+  dosdate_t mdate;
   unsigned short first_cluster_lo;
   unsigned int size;
 } __attribute__((packed));

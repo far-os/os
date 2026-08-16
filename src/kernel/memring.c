@@ -11,11 +11,11 @@ void mem_init() {
 
 // checks if an address is a valid memring address (i.e. not out of bounds)
 static inline char is_memring(void *ptr) {
-  unsigned int addr = (unsigned int) TO_MEMRING(ptr) - MEMRING_LOC;
+  size_t addr = (size_t) TO_MEMRING(ptr) - MEMRING_LOC;
   return addr < MEMRING_LEN;
 }
 
-void * malloc(unsigned int len) {
+void * malloc(size_t len) {
   if (!len) { return NULL; }
 
   unsigned int blocks = (len / MEMBLK_SIZE) + !!(len % MEMBLK_SIZE); // amount of blocks taken up
@@ -71,7 +71,7 @@ void free(void * ptr) {
   memzero(at_inring, blocks);
 }
 
-void * realloc(void *ptr, unsigned int len) {
+void * realloc(void *ptr, size_t len) {
   // if (!(is_memring(ptr))) {
   unsigned int blocks = 1; // amount of blocks taken up
   for (unsigned char * ptr_lc = TO_MEMRING(ptr); !(*(ptr_lc++) & BLK_END);)
