@@ -8,10 +8,11 @@
 #include "include/pic.h"
 #include "include/sched.h"
 #include "include/hwinf.h"
+#include "include/config.h"
 
-unsigned char quitting_prog = 0;
+bool quitting_prog = false;
 
-static inline void retto_progeh(struct stack_state *s) {
+static inline void retto_progeh(volatile struct stack_state *s) {
   if (s -> cs != 0x08) { // if not called by kernel
     s -> eip = prog_head -> eh_ptr; // set eip to error handler
   }
@@ -19,13 +20,15 @@ static inline void retto_progeh(struct stack_state *s) {
 
 // there was an exception.
 // means loads ebx as jump to if fail, IF AND ONLY IF KERNEL.
-static inline void jump_if_fail(struct cpu_state * c, struct stack_state *s) {
+static inline void jump_if_fail(volatile struct cpu_state * c, volatile struct stack_state *s) {
   if (s -> cs == 0x08) { // if called by kernel
     s -> eip = c -> ebx;
   }
 }
 
-void eh_c(struct cpu_state c, unsigned int i, struct stack_state s) {
+// volatile here, as they are read after function returns, acting as de-facto return values.
+// this avoid compiler optimising away writes to them
+void eh_c(volatile struct cpu_state c, unsigned int i, volatile struct stack_state s) {
   switch (i) {
   case 0x00: // #DE - Divide by zero error
     // TODO: make better.
@@ -66,7 +69,7 @@ void eh_c(struct cpu_state c, unsigned int i, struct stack_state s) {
   case 0x21: // PS/2 keyboard
     read_kbd(); // send to the keyboard
     if (quitting_prog) {
-      quitting_prog = 0;
+      quitting_prog = false;
       retto_progeh(&s);
     }
     break;

@@ -22,6 +22,6 @@ struct stack_state {
   unsigned int eflags;
 } __attribute__((packed)); // stack
 
-extern unsigned char quitting_prog;
+extern bool quitting_prog;
 
-void eh_c(struct cpu_state c, unsigned int i, struct stack_state s);
+void eh_c(volatile struct cpu_state c, unsigned int i, volatile struct stack_state s);

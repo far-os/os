@@ -1,4 +1,5 @@
 #include "misc.h"
+#include "stdlib.h"
 
 #pragma once
 
@@ -10,9 +11,9 @@ extern void idle();
 
 extern unsigned int rip_thunk();
 
-static inline bool bittest(const void *src, unsigned int bit) {
+static inline bool bittest(const void *src, uint32_t bit) {
   bool o;
-  asm volatile ("bt %2, (%1)" :
+  asm volatile ("btl %2, (%1)" :
       "=@ccc" (o)
       : "r" (src),
         "ir" (bit)
@@ -20,9 +21,9 @@ static inline bool bittest(const void *src, unsigned int bit) {
   return o;
 }
 
-static inline bool bitinv(const void *src, unsigned int bit) {
+static inline bool bitinv(const void *src, uint32_t bit) {
   bool o;
-  asm volatile ("btc %2, (%1)" :
+  asm volatile ("btcl %2, (%1)" :
       "=@ccc" (o)
       : "r" (src),
         "ir" (bit)
@@ -30,9 +31,9 @@ static inline bool bitinv(const void *src, unsigned int bit) {
   return o;
 }
 
-static inline bool bitclear(const void *src, unsigned int bit) {
+static inline bool bitclear(const void *src, uint32_t bit) {
   bool o;
-  asm volatile ("btr %2, (%1)" :
+  asm volatile ("btrl %2, (%1)" :
       "=@ccc" (o)
       : "r" (src),
         "ir" (bit)
@@ -40,9 +41,9 @@ static inline bool bitclear(const void *src, unsigned int bit) {
   return o;
 }
 
-static inline bool bitset(const void *src, unsigned int bit) {
+static inline bool bitset(const void *src, uint32_t bit) {
   bool o;
-  asm volatile ("bts %2, (%1)" :
+  asm volatile ("btsl %2, (%1)" :
       "=@ccc" (o)
       : "r" (src),
         "ir" (bit)

@@ -14,7 +14,7 @@ unsigned int callback_str(putch_callback put, char *str, unsigned char style, un
     put(str[count], style);
     count++;
 
-    if (lim && count > lim) {
+    if (lim && count >= lim) {
       break;
     }
   }
@@ -84,6 +84,9 @@ void vpfctprintf(putch_callback put, const char *fmt, unsigned char start_style,
   // we trust that dest has already been zero'd
   char waiting = NOT_WAITING;
   unsigned int length_modif = 0;
+
+  // spare length_modif
+  size_t width;
 
   unsigned char style = start_style;
   int fi;
@@ -158,17 +161,30 @@ void vpfctprintf(putch_callback put, const char *fmt, unsigned char start_style,
 
           callback_str(put, convbuf, style, 0);
           goto stop_waiting;
-        case 'X':
-          callback_str(put, "0x", style, 0);
-          // fallthrough
         case 'x':
           if (length_modif == 1) {
             put(nybble_to_hex(va_arg(args, unsigned int)), style);
             goto stop_waiting;
           }
 
-          convbuf = malloc((length_modif ? length_modif : 8) + 1); // +1 to include null byte
-          to_hex((void *) va_arg(args, unsigned int), length_modif ? length_modif : 8, convbuf);
+          width = length_modif ? length_modif : 8;
+          convbuf = malloc(width + 1); // +1 to include null byte
+          to_hex((void *) va_arg(args, unsigned int), width, convbuf);
+          callback_str(put, convbuf, style, 0);
+
+          goto stop_waiting;
+        case 'X':
+          // uppercase variant of above
+          if (length_modif == 1) {
+            put(to_upper(nybble_to_hex(va_arg(args, unsigned int))), style);
+            goto stop_waiting;
+          }
+
+          width = length_modif ? length_modif : 8;
+          convbuf = malloc(width + 1); // +1 to include null byte
+          to_hex((void *) va_arg(args, unsigned int), width, convbuf);
+
+          for (size_t i = 0; i < width; ++i) convbuf[i] = to_upper(convbuf[i]);
           callback_str(put, convbuf, style, 0);
 
           goto stop_waiting;
@@ -234,6 +250,7 @@ void vpfctprintf(putch_callback put, const char *fmt, unsigned char start_style,
             convbuf = NULL;
           }
 
+          width = 0;
           length_modif = 0;
           waiting = NOT_WAITING;
           break;

@@ -36,7 +36,6 @@ size_t strlen(const char *s);
 
 #define memzero(dest, amount) memset(dest, 0, amount)
 
-void backmemcpy(void *dest, const void *src, size_t n);
 // string bestions of above
 char *strcpy(char *dest, const char *src);
 int strcmp(const char *dest, const char *src);

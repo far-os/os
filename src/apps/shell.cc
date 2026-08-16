@@ -271,7 +271,7 @@ shell_f_stat:
     // returns to a global buffer. be not confused, be horrified
     attribify(f->attrib);
 
-    printf("%$%s\n\t%u bytes, intial cluster %3X\n\tAttributes: %s\n\tCreated  %4d-%2d-%2d %2d:%2d:%2d\n\tModified %4d-%2d-%2d %2d:%2d:%2d\n\tAccessed %4d-%2d-%2d\n",
+    printf("%$%s\n\t%u bytes, intial cluster 0x%3x\n\tAttributes: %s\n\tCreated  %4d-%2d-%2d %2d:%2d:%2d\n\tModified %4d-%2d-%2d %2d:%2d:%2d\n\tAccessed %4d-%2d-%2d\n",
       COLOUR(BLUE, B_YELLOW),
       name,
       f->size,
@@ -434,10 +434,11 @@ shell_f_stat:
       hardware -> cpuid_ext_leaves >= 0x80000004 ? &(hardware -> brand) : NULL // brand string
     );
   } else if (strcmp(argv[0], "sys:fs") == 0) {
-    printf("%$%5s disk:\n\tVol. label \"%11s\"\n\tVol. ID %8X\n\tCluster size: %u sectors\n\tN. Fats: %u\n\tVolume size %uKiB\n",
+    printf("%$%5s disk:\n\tVol. label \"%11s\"\n\tVol. ID %4X-%4X\n\tCluster size: %u sectors\n\tN. Fats: %u\n\tVolume size %uKiB\n",
       COLOUR(RED, B_YELLOW),
       &(bpb -> sys_ident),
       &(bpb -> vol_lbl),
+      ((uintptr_t) &(bpb -> serial_no)) + 2,
       &(bpb -> serial_no),
       bpb -> sec_per_clust,
       bpb -> n_fats,

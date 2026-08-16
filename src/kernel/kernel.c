@@ -38,7 +38,7 @@ void main() {
   memzero(page_curloc_cache, sizeof page_curloc_cache);
   set_cur(POS(0, 0)); // cursor at top left
 
-  quitting_prog = 0;
+  quitting_prog = true;
 
 //  cp437(); // codepage 437: for testing purposes
 

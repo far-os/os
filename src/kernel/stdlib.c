@@ -16,7 +16,7 @@ void *memcpy(void *dest, const void *src, size_t n) {
 }
 
 // helper function for memmove
-void backmemcpy(void *destend, const void *srcend, size_t n) {
+void _backmemcpy(void *destend, const void *srcend, size_t n) {
   // do nothing if 0: don't fail even if one of dest and src is NULL
   if (n == 0) return;
 
@@ -37,7 +37,7 @@ void *memmove(void *dest, const void *src, size_t n) {
     memcpy(dest, src, n);
   } else {
     // if dest is after src, then backward will work.
-    backmemcpy((void *) ((size_t) dest) + n, (const void *) ((size_t) src) + n, n);
+    _backmemcpy((void *) ((uintptr_t) dest) + n, (const void *) ((uintptr_t) src) + n, n);
   }
 
   return dest;

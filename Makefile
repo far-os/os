@@ -11,9 +11,9 @@ export DISK_OFFSET := 0
 
 # Size allocated to kernel in sectors. This must be able to fit boot.kern.bin, otherwise bad things will happen
 # Also used to determine load location in memory (loaded at 0x80_000 - KERN_SIZE{in bytes}. done so that it resides in the highest possible region in 640k that's not possible hoarded by bios).
-export KERN_SIZE := 128
+export KERN_SIZE := 80
 
-CFLAGS := -falign-functions=1 -fno-stack-protector -ffreestanding -m32 -march=i686 -Wall -Wextra -Werror=return-type -fpermissive -no-pie -Wimplicit-fallthrough=2 -D"KERN_SIZE=$(KERN_SIZE)"
+CFLAGS := -falign-functions=1 -fno-stack-protector -ffreestanding -m32 -march=i686 -Wall -Wextra -Werror=return-type -fpermissive -no-pie -Wimplicit-fallthrough=2 -D"KERN_SIZE=$(KERN_SIZE)" -Oz
 CPPFLAGS := -fno-exceptions -fno-rtti -nostdinc++ $(CFLAGS)
 # -static-libgcc. contains some long long arithmetic stuff
 
