@@ -6,6 +6,21 @@
 #include "include/memring.h"
 #include "include/port.h"
 
+// xnor fibonacci lfsr with taps (32, 30, 26, 25)
+uint32_t lfsr() {
+  static uint32_t state;
+
+  unsigned _scratch;
+
+  asm volatile ("testb $0xc5, %b1; setpe %b0; shrdl $1, %0, %1" :
+      "=&r" (_scratch),
+      "+r" (state)
+    :
+    : "cc");
+
+  return state;
+}
+
 void idle() {
   pbyte_out(0x80, 0x0); // just passing the time (1-4 microseconds)
 }

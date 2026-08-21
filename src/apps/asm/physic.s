@@ -5,6 +5,7 @@
 .globl _ZN6Physic12compute_pairEPjS0_
 .globl _ZN6Physic10get_linearEjb
 .globl _ZN6Physic14euclidean_normEPKjPt
+.globl _ZN6Physic5nudgeEPjj
 .globl _ZN6Physic6deinitEv
 
 # performs packed euclidean norm of vectors
@@ -26,6 +27,21 @@ _ZN6Physic14euclidean_normEPKjPt: # mm* velocity vectors, u16* norm vector
   movd %mm2, (%ecx) # load to output address
 
   ret
+
+# nudge. add random value to each velocity.
+_ZN6Physic5nudgeEPjj: # mm* vel_packet, u32 shaking
+  movl 4(%esp), %edx # load velocity ptr into edx
+
+  punpcklbw 8(%esp), %mm1 # load bytes from shaking into high bytes of each word in mm1
+  # there may be some data in mm1. it's too insignificant for us to care
+
+  psraw $5, %mm1 ## arithmetic shift right by 5. this has effect of keeping the sign
+
+  paddsw (%edx), %mm1 # signed add this to our velocity packet
+  movq   %mm1, (%edx) # write data. can't be done in one instruction, so done in two
+
+  ret
+
 
 _ZN6Physic4initEjss: # u16 tick, i16 gravity, i16 wind
   movw 4(%esp), %ax # load tick

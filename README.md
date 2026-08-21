@@ -33,10 +33,11 @@ The kernel's source files are explained below:
 - `printf.c`: Contains `printf` and its variations. TODO: move this into a stdlib
 - `pic.c`: Utilities for initialising the PIC, masking the PIC, etc.
 - `sched.c`: Contains code for the kernel scheduler for kapps.
+- `stdlib.c`: POSIX-compatile standard library utilities, such as `memcpy`, `strcpy`, `memcmp`, etc.
 - `syscall.c`: Contains code for `syscall`ing.
 - `text.c`: Code for writing to the screen.
 - `timer.c`: Code to control the PIT.
-- `util.c`: Miscellaneous utilities, such as `memcpy`, `strcpy`, `memcmp`, etc.
+- `util.c`: Miscellaneous utilities, such as `is_whitespace`, `memrev`, etc.
 
 There is also the `src/syscall/` directory: each header file inside contains a different ABI service.
 
@@ -95,4 +96,3 @@ To syscall to the kernel, use `int 0x33`. The service code goes in `ah`, and the
 | `18` | Error in configuration |
 | `23` | Buffer space exceeded (Command too long) |
 | `28` | Error in allocating handle (app handle, file handle, etc) |
-

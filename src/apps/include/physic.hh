@@ -3,7 +3,7 @@
 #include "kapp.hh"
 #include "extra/fromc.hh"
 
-typedef unsigned int packet_t;
+typedef uint32_t packet_t;
 
 // number of pieces
 #define N_PIECES 2
@@ -15,7 +15,7 @@ struct Physic : KApp {
 
 private:
   bool has_failed;
-  unsigned int frame; // frame number
+  unsigned frame; // frame number
 
   // linear addresses of current pieces
   curpos_t linear[N_PIECES];
@@ -25,17 +25,19 @@ private:
   packet_t vel[N_PIECES];
 
   // euclidean norms of velocity
-  unsigned short vel_norm[N_PIECES];
+  uint16_t vel_norm[N_PIECES];
 
   struct char_packet pieces[N_PIECES];
 
   /* runtime variables */
 
   // x and y axis acceleration respectively
-  short tilt;
-  short gravity;
+  int16_t tilt;
+  int16_t gravity;
 
   bool paused; // true if paused
+
+  unsigned nudge_cooldown;
 
   void tick_and_draw();
   void title();
@@ -48,6 +50,7 @@ private:
   static void compute_pair(packet_t *pos_packet, packet_t *vel_packet);
   static curpos_t get_linear(packet_t pos, bool is_squashed);
   static void euclidean_norm(const packet_t *vel_packet, unsigned short *norms);
+  static void nudge(packet_t *vel_packet, unsigned int shaking);
   static void deinit();
 
 public:

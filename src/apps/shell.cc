@@ -39,6 +39,7 @@ const HelpHost::Entry comnames[] = {
     { .name = "mem", .desc = "Prints memory info\xff-v \x1a verbose", .type = HelpHost::SUB_ENTRY },
   { .name = "time", .desc = "Gets current time", .type = HelpHost::PLAIN_ENTRY },
   { .name = "util", .desc = "Utilities and tools", .type = HelpHost::PLAIN_ENTRY },
+    { .name = "rand", .desc = "Generates a random 32-bit integer", .type = HelpHost::SUB_ENTRY },
     { .name = "to8.3", .desc = "Canonicalises a filename into 8.3\xff<string>", .type = HelpHost::SUB_ENTRY },
   { .type = HelpHost::TERMINATE }
 };
@@ -497,6 +498,9 @@ shell_f_stat:
       get_tsc_thunk(),
       tsc_per_tick
     );
+  } else if (strcmp(argv[0], "util:rand") == 0) {
+    unsigned r = lfsr();
+    printf("%u (%p)\n", r, r);
   } else if (strcmp(argv[0], "util:to8.3") == 0) {
     if (argv.len() <= 1) {
       msg(PROGERR, E_ARGS, "Please provide a filename");

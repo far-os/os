@@ -4,8 +4,8 @@
 #ifndef SYS_MEMORY_H
 #define SYS_MEMORY_H
 
-// String Service 
-void sys_1(struct cpu_state *c, unsigned char rout) {
+// String Service
+void sys_1(volatile struct cpu_state *c, unsigned char rout) {
   switch (rout) {
 
   // Allocate memory

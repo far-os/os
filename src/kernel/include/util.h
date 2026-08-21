@@ -11,6 +11,8 @@ extern void idle();
 
 extern unsigned int rip_thunk();
 
+uint32_t lfsr();
+
 static inline bool bittest(const void *src, uint32_t bit) {
   bool o;
   asm volatile ("btl %2, (%1)" :

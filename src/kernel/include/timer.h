@@ -13,3 +13,4 @@
 #define get_divisor(freq) (PIT_FREQ_HZ / freq)
 
 void init_timer(unsigned short divisor);
+void timer_ticked();

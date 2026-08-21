@@ -7,7 +7,7 @@
 
 #define SYSCALL_AMOUNT 3
 
-void (*sys_table[SYSCALL_AMOUNT])(struct cpu_state *c, unsigned char rout) = {
+void (*sys_table[SYSCALL_AMOUNT])(volatile struct cpu_state *c, unsigned char rout) = {
   sys_0,
   sys_1,
   sys_2,

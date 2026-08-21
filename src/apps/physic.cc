@@ -57,6 +57,7 @@ const HelpHost::Entry help_data[] = {
   { .name = "[HJKL]", .desc = "Control gravity", .type = HelpHost::PLAIN_ENTRY },
   { .name = "J/K", .desc = "Set gravity to point down/up", .type = HelpHost::SUB_ENTRY },
   { .name = "H/L", .desc = "Increase left/right tilt by one", .type = HelpHost::SUB_ENTRY },
+  { .name = "N", .desc = "Nudge: add a random velocity to each object", .type = HelpHost::PLAIN_ENTRY },
   { .name = "Space", .desc = "Play/pause", .type = HelpHost::PLAIN_ENTRY },
   { .type = HelpHost::DIVIDER },
   { .desc = "Topbar shows co-ords and speed (in 65536ths of arena, i.e. \xeb) of each piece,", .type = HelpHost::SYNOPSIS }, // 0xeb is the lowercase delta, representing the delta
@@ -72,6 +73,13 @@ void Physic::invoke() {
       terminate_app(this->app_id & 0xf);
     }
     return;
+  }
+
+  if (this->nudge_cooldown) {
+    if (--this->nudge_cooldown == 0) {
+      this->pieces[0].style &= COLOUR(0, 0xf);
+      this->pieces[1].style &= COLOUR(0, 0xf);
+    }
   }
 
   for (int i = 0; i < QUEUE_LEN && !!this->key_q[i]; ++i) { // loop over each arrow key
@@ -92,6 +100,16 @@ void Physic::invoke() {
     case 'l':
       this->tilt++;
       goto reset;
+    case 'N': // nudge
+    case 'n':
+      if (this->nudge_cooldown == 0) {
+        this->nudge(this->vel, lfsr());
+        this->nudge_cooldown = 50; // cooldown after 10 ticks
+
+        this->pieces[0].style |= COLOUR(B_RED, 0);
+        this->pieces[1].style |= COLOUR(B_RED, 0);
+      }
+      break;
     case ' ': // space to pause
       this->paused = !paused;
       this->title(); // update pause indicator
@@ -142,7 +160,7 @@ void Physic::invoke() {
 
 void Physic::first_run() {
   if (!this->can_have_feature(
-    CPUID_LEAF(01, REG_EDX),
+    CPUID_LEAF(0x01, REG_EDX),
     CPUID_01H_EDX_MMX | CPUID_01H_EDX_SSE | CPUID_01H_EDX_SSE2
   )) {
     msg(PROGERR, E_UNSUPPORT, "%s requires MMX, SSE, and SSE2 to run.", this->app_name);
@@ -242,7 +260,7 @@ void Physic::title() {
   write_cell(paused ? '\xfe' : '\xff', POS(VGA_WIDTH - 2, 0), COLOUR(B_BLUE, B_RED));
 }
 
-Physic::Physic() {
+Physic::Physic() : nudge_cooldown(0) {
   // bitflags, or as many together as need be
   config_flags = 0; // we frankly don't care about enter, so its flag is just your favourite bit
 

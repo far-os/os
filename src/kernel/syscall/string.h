@@ -5,8 +5,8 @@
 #ifndef SYS_STRING_H
 #define SYS_STRING_H
 
-// String Service 
-void sys_0(struct cpu_state *c, unsigned char rout) {
+// String Service
+void sys_0(volatile struct cpu_state *c, unsigned char rout) {
   switch (rout) {
 
   // Move cursor forward
@@ -62,7 +62,7 @@ void sys_0(struct cpu_state *c, unsigned char rout) {
   case 0x08:
     scroll_scr();
     break;
-  
+
   // Write character at specific location
   case 0x09:
     asm volatile ("movb %%ch, %%dl" : "=d" (ch), "=c" (fmt) : "c" (c -> ebx));
